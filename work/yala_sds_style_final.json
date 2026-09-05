@@ -1,0 +1,171 @@
+{
+  "input": "C:\\Users\\vuong\\Documents\\Codex\\2026-08-27\\d-a\\outputs\\SDS_YouTube_AI_Learning_Assistant_V1.docx",
+  "fonts_by_char_count": {
+    "Arial": 13527,
+    "Consolas": 471
+  },
+  "direct_run_formatting_runs": 340,
+  "direct_paragraph_formatting_paragraphs": 67,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "SOFTWARE DESIGN SPECIFICATION",
+      "style": "Normal"
+    },
+    {
+      "para_index": 2,
+      "text": "YouTube AI Learning Assistant",
+      "style": "Title"
+    },
+    {
+      "para_index": 146,
+      "text": "Thu\u1ed9c t\u00ednh",
+      "style": "Normal"
+    },
+    {
+      "para_index": 147,
+      "text": "Gi\u00e1 tr\u1ecb",
+      "style": "Normal"
+    },
+    {
+      "para_index": 158,
+      "text": "Phi\u00ean b\u1ea3n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 159,
+      "text": "Ng\u00e0y",
+      "style": "Normal"
+    },
+    {
+      "para_index": 160,
+      "text": "N\u1ed9i dung",
+      "style": "Normal"
+    },
+    {
+      "para_index": 161,
+      "text": "Tr\u1ea1ng th\u00e1i",
+      "style": "Normal"
+    },
+    {
+      "para_index": 166,
+      "text": "Vai tr\u00f2",
+      "style": "Normal"
+    },
+    {
+      "para_index": 167,
+      "text": "H\u1ecd v\u00e0 t\u00ean",
+      "style": "Normal"
+    },
+    {
+      "para_index": 168,
+      "text": "Ch\u1eef k\u00fd",
+      "style": "Normal"
+    },
+    {
+      "para_index": 169,
+      "text": "Ng\u00e0y",
+      "style": "Normal"
+    },
+    {
+      "para_index": 182,
+      "text": "Nh\u00f3m",
+      "style": "Normal"
+    },
+    {
+      "para_index": 183,
+      "text": "R\u00e0ng bu\u1ed9c thi\u1ebft k\u1ebf",
+      "style": "Normal"
+    },
+    {
+      "para_index": 198,
+      "text": "Th\u00e0nh ph\u1ea7n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 199,
+      "text": "Ch\u1ecbu tr\u00e1ch nhi\u1ec7m",
+      "style": "Normal"
+    },
+    {
+      "para_index": 200,
+      "text": "Kh\u00f4ng ch\u1ecbu tr\u00e1ch nhi\u1ec7m",
+      "style": "Normal"
+    },
+    {
+      "para_index": 213,
+      "text": "Module",
+      "style": "Normal"
+    },
+    {
+      "para_index": 214,
+      "text": "Tr\u00e1ch nhi\u1ec7m ch\u00ednh",
+      "style": "Normal"
+    },
+    {
+      "para_index": 227,
+      "text": "Module",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "SOFTWARE DESIGN SPECIFICATION",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 10,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 12,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 23,
+        "text": "Chrome Extension ch\u1ea1y trong sidebar tr\u00ean trang YouTube.",
+        "style": "List Bullet"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "SOFTWARE DESIGN SPECIFICATION",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": "YouTube AI Learning Assistant",
+        "style": "Title"
+      },
+      {
+        "para_index": 3,
+        "run_text": "Thi\u1ebft k\u1ebf phi\u00ean b\u1ea3n V1 cho \u0111\u1ed3 \u00e1n m\u00f4n h\u1ecdc",
+        "style": "Normal"
+      },
+      {
+        "para_index": 7,
+        "run_text": "T\u00e0i li\u1ec7u n\u00e0y m\u00f4 t\u1ea3 c\u1ea5u tr\u00fac v\u00e0 h\u00e0nh vi c\u1ee7a V1. C\u00e1c y\u00eau c\u1ea7u s\u1ea3n ph\u1ea9m chi ti\u1ebft \u0111\u01b0\u1ee3",
+        "style": "Normal"
+      },
+      {
+        "para_index": 14,
+        "run_text": "SDS t\u1eadp trung v\u00e0o c\u00e1c quy\u1ebft \u0111\u1ecbnh thi\u1ebft k\u1ebf c\u1ea7n \u0111\u1ec3 nh\u00f3m c\u00f9ng x\u00e2y m\u1ed9t h\u1ec7 th\u1ed1ng th\u1ed1n",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

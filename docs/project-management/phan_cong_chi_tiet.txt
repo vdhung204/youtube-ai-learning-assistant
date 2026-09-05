@@ -1,0 +1,1176 @@
+PHÂN CÔNG VÀ HƯỚNG DẪN CÔNG VIỆC CHI TIẾT
+DỰ ÁN YOUTUBE AI LEARNING ASSISTANT - PHIÊN BẢN V1
+Ngày cập nhật: 05/09/2026
+
+======================================================================
+1. MỤC ĐÍCH TÀI LIỆU
+======================================================================
+
+Tài liệu này được dùng để giao việc cho bốn thành viên trong nhóm. Mỗi thành
+viên cần đọc toàn bộ phần quy định chung, sau đó thực hiện đúng phần việc và
+thư mục được giao để hạn chế xung đột mã nguồn.
+
+Luồng sản phẩm V1 cần hoàn thành:
+
+Người dùng mở video YouTube
+-> Mở Chrome Extension
+-> Đăng nhập Google nếu chưa được cấp quyền
+-> Extension lấy transcript kèm timestamp
+-> Local RAG Service chuẩn hóa và chia transcript thành chunk
+-> Tạo embedding và lưu chunk trong ChromaDB cục bộ
+-> Truy xuất context để tạo quiz hoặc flashcard bằng Gemini
+-> Người dùng làm quiz hoặc tự đánh giá flashcard
+-> Hệ thống chấm điểm và phân tích theo chủ đề
+-> Hiển thị phần đã học tốt, phần cần cải thiện
+-> Đề xuất timestamp cần xem lại trong chính video đó
+
+V1 KHÔNG thực hiện các nội dung sau:
+
+- Không dùng MySQL hoặc database nghiệp vụ.
+- Không có server lưu trữ tập trung trên Internet.
+- Không lưu tài khoản, email, OAuth token hoặc cookie.
+- Không đọc hoặc tái sử dụng cookie Google AI Studio.
+- Không lưu câu trả lời, điểm số hoặc lịch sử học tập lâu dài.
+- Không đồng bộ dữ liệu giữa nhiều máy.
+- Không gợi ý video mới và không xây dựng lộ trình học dài hạn.
+- Không phát triển summary, chapter, notes, bookmark hoặc hỏi đáp tự do như
+  một yêu cầu bắt buộc của V1.
+
+======================================================================
+2. CẤU TRÚC REPOSITORY VÀ NGUYÊN TẮC SỬ DỤNG
+======================================================================
+
+youtube-ai-learning-assistant/
+|-- extension/                         Thành viên 1 phụ trách chính
+|   |-- public/
+|   `-- src/
+|       |-- background/
+|       |-- content/
+|       |-- sidebar/
+|       |-- features/
+|       |   |-- authentication/
+|       |   |-- video/
+|       |   |-- quiz/
+|       |   |-- flashcard/
+|       |   `-- learning-assessment/
+|       |-- integrations/
+|       |   |-- local-service/
+|       |   |-- google-oauth/
+|       |   `-- gemini/
+|       |-- ai-content/                Thành viên 3 phụ trách
+|       |   |-- prompts/
+|       |   |-- validation/
+|       |   `-- mappers/
+|       |-- session/
+|       |-- types/
+|       `-- tests/
+|
+|-- local-rag-service/
+|   |-- app/
+|   |   |-- core/                      Thành viên 2 phụ trách
+|   |   |-- transport/                 Thành viên 2 phụ trách
+|   |   |-- transcript/                Thành viên 3 phụ trách
+|   |   |-- chunking/                  Thành viên 3 phụ trách
+|   |   |-- embedding/                 Thành viên 3 phụ trách
+|   |   |-- vector_store/              Thành viên 3 phụ trách
+|   |   |-- retrieval/                 Thành viên 3 phụ trách
+|   |   `-- assessment/                Thành viên 3 phụ trách
+|   `-- tests/
+|       |-- service/                   Thành viên 2 phụ trách
+|       `-- rag/                       Thành viên 3 phụ trách
+|
+|-- shared/contracts/                  Dùng chung, bắt buộc review chéo
+|-- scripts/                           Thành viên 2 phụ trách
+|-- tests/e2e/                         Thành viên 4 phụ trách
+|-- docs/testing/                      Thành viên 4 phụ trách
+|-- docs/architecture/                 Tài liệu dùng chung
+`-- docs/project-management/           Tài liệu dùng chung
+
+Nguyên tắc sử dụng thư mục:
+
+1. Mỗi thành viên chỉ sửa trực tiếp thư mục mình sở hữu.
+2. Nếu cần sửa thư mục của thành viên khác, phải trao đổi trước và yêu cầu
+   owner của thư mục review Pull Request.
+3. File trong shared/contracts phải được thống nhất trước khi Frontend và
+   Local Service code song song.
+4. Không đặt logic RAG trong transport, sidebar hoặc component giao diện.
+5. Không đặt logic UI trong Local RAG Service.
+6. Không hardcode prompt rải rác trong component React hoặc endpoint service.
+7. Không commit .env, token, cookie, transcript người dùng, dữ liệu ChromaDB,
+   model tải về, cache hoặc file sinh trong outputs/.
+
+======================================================================
+3. QUY ĐỊNH CHUNG CHO CẢ NHÓM
+======================================================================
+
+3.1. Quy trình Git
+
+- Không commit trực tiếp lên nhánh main.
+- Mỗi task sử dụng một branch riêng.
+- Tên branch đề xuất:
+  + feat/tv1-youtube-adapter
+  + feat/tv1-quiz-ui
+  + feat/tv2-local-service-health
+  + feat/tv3-timestamp-chunking
+  + feat/tv3-chromadb-retrieval
+  + test/tv4-oauth-e2e
+  + docs/update-test-report
+- Trước khi bắt đầu task, cập nhật branch từ main mới nhất.
+- Không format, đổi tên hoặc di chuyển hàng loạt file ngoài phạm vi task.
+- Commit nhỏ, mỗi commit mô tả một thay đổi có ý nghĩa.
+- Pull Request phải ghi: nội dung đã làm, cách chạy, cách kiểm thử, kết quả
+  kiểm thử, contract bị ảnh hưởng và hạn chế còn lại.
+
+3.2. Định nghĩa hoàn thành một nhiệm vụ
+
+Một nhiệm vụ chỉ được coi là hoàn thành khi:
+
+- Code nằm đúng thư mục được giao.
+- Hoạt động đúng với input hợp lệ và có xử lý input lỗi.
+- Có test tương ứng hoặc có bằng chứng kiểm thử thủ công rõ ràng.
+- Không làm hỏng chức năng đã tích hợp.
+- Không chứa secret hoặc dữ liệu người dùng.
+- Có mô tả cách chạy và cách sử dụng.
+- Được ít nhất một thành viên liên quan review.
+
+3.3. Contract dùng chung cần chốt trước
+
+Nhóm phải thống nhất schema trong shared/contracts/ cho các dữ liệu tối thiểu:
+
+- VideoInfo: videoId, title, durationSec, language.
+- TranscriptSegment: text, startSec, endSec, position.
+- IndexRequest và IndexStatus.
+- RetrievedChunk: chunkId, videoId, text, startSec, endSec, score.
+- Quiz: question, options, correctAnswer, explanation, topic, sourceTimestamp.
+- Flashcard: front, back, topic, sourceTimestamp.
+- QuizSubmission và QuizResult trong phiên hiện tại.
+- LearningAssessment: score, strongTopics, weakTopics, reviewTimestamps.
+- ErrorResponse: code, message, retryable và details an toàn.
+
+Quy tắc thay đổi contract:
+
+1. Tạo hoặc cập nhật contract trước.
+2. Ghi rõ trường mới, trường bị bỏ và tính tương thích.
+3. Thành viên tạo dữ liệu và thành viên sử dụng dữ liệu cùng review.
+4. Sau khi contract được duyệt mới sửa producer và consumer.
+
+======================================================================
+4. THÀNH VIÊN 1 - EXTENSION FRONTEND
+======================================================================
+
+4.1. Mục tiêu
+
+Xây dựng Chrome Extension chạy trên trang xem video YouTube, cung cấp sidebar
+cho toàn bộ trải nghiệm người dùng: xác thực Google, nhận diện video, lấy
+transcript, tạo và làm quiz/flashcard, hiển thị kết quả học tập và điều hướng
+video theo timestamp.
+
+4.2. Thư mục được sử dụng
+
+Thành viên 1 sở hữu:
+
+- extension/public/
+- extension/src/background/
+- extension/src/content/
+- extension/src/sidebar/
+- extension/src/features/authentication/
+- extension/src/features/video/
+- extension/src/features/quiz/
+- extension/src/features/flashcard/
+- extension/src/features/learning-assessment/
+- extension/src/integrations/local-service/
+- extension/src/integrations/google-oauth/
+- extension/src/integrations/gemini/
+- extension/src/session/
+- extension/src/types/
+- extension/src/tests/
+
+Không tự sửa:
+
+- extension/src/ai-content/ do Thành viên 3 sở hữu.
+- Các module RAG và ChromaDB trong local-rag-service/app/.
+- Prompt, AI output schema và logic đánh giá học tập.
+
+4.3. Công việc cụ thể theo thư mục
+
+A. extension/public/
+
+- Tạo manifest.json theo Manifest V3.
+- Khai báo side panel, background service worker và content script.
+- Chỉ xin các permission thật sự cần thiết.
+- Cấu hình OAuth theo phương án nhóm đã kiểm chứng.
+- Không khai báo quyền đọc cookie Google/AI Studio.
+- Chuẩn bị icon đúng kích thước và tên được manifest sử dụng.
+
+B. extension/src/background/
+
+- Khởi tạo background service worker.
+- Điều phối message giữa content script, sidebar và Chrome API.
+- Quản lý lifecycle của extension và side panel.
+- Xử lý các tác vụ cần quyền Chrome mà component React không gọi trực tiếp.
+- Không lưu OAuth token vào localStorage hoặc log.
+- Xử lý service worker bị tạm dừng và khởi tạo lại an toàn.
+
+Các module gợi ý:
+
+- index.ts: entry point của service worker.
+- message-router.ts: định tuyến message theo type.
+- side-panel.ts: mở/đóng side panel.
+
+C. extension/src/content/
+
+- Viết YouTube Adapter độc lập với UI.
+- Lấy Video ID từ URL hiện tại.
+- Phát hiện YouTube chuyển video theo kiểu SPA mà không reload trang.
+- Lấy tiêu đề, thời lượng và transcript kèm timestamp.
+- Đọc trạng thái playback khi cần.
+- Điều khiển video nhảy đến timestamp được đề xuất.
+- Hạn chế phụ thuộc vào CSS selector dễ thay đổi.
+- Hủy listener/request của video cũ khi người dùng chuyển video.
+
+Các module gợi ý:
+
+- youtube-adapter.ts
+- video-observer.ts
+- transcript-reader.ts
+- timestamp-controller.ts
+
+D. extension/src/sidebar/
+
+- Khởi tạo React application cho side panel/sidebar.
+- Tạo layout và điều hướng giữa các trạng thái học tập.
+- Không đặt logic OAuth, YouTube DOM hoặc RAG trực tiếp trong component.
+- Hiển thị rõ loading, empty, success và error state.
+- Bảo đảm sidebar không bị tạo trùng khi chuyển video.
+- Có accessibility cơ bản: keyboard focus, label và thông báo lỗi dễ hiểu.
+
+E. extension/src/features/authentication/
+
+- Khi mở extension, kiểm tra trạng thái quyền hiện có ở chế độ không tương tác.
+- Nếu chưa có quyền, hiển thị nút Đăng nhập bằng Google.
+- Chỉ mở OAuth sau khi người dùng chủ động bấm nút.
+- Hiển thị các trạng thái: checking, login-required, authorizing, ready,
+  denied, expired, quota-error và service-error.
+- Hỗ trợ đăng xuất/xóa token đã cache bằng Chrome Identity API.
+- Không kiểm tra trạng thái đăng nhập bằng cách đọc cookie AI Studio.
+
+F. extension/src/features/video/
+
+- Hiển thị video hiện tại và trạng thái transcript.
+- Bắt đầu luồng index sau khi có transcript hợp lệ.
+- Reset session của video cũ khi Video ID thay đổi.
+- Thông báo rõ khi video không có transcript hoặc transcript không đọc được.
+- Cung cấp nút nhảy đến timestamp từ kết quả RAG/assessment.
+
+G. extension/src/features/quiz/
+
+- Nhận Quiz đã được validate từ lớp AI content.
+- Hiển thị câu hỏi và đáp án, không để component phụ thuộc response thô Gemini.
+- Quản lý lựa chọn của người dùng trong session hiện tại.
+- Chấm điểm theo đáp án đã chuẩn hóa hoặc gọi hàm scoring dùng chung.
+- Sau khi nộp bài, hiển thị đáp án, giải thích và timestamp nguồn.
+- Không lưu bài làm/điểm số qua nhiều phiên trong V1.
+
+H. extension/src/features/flashcard/
+
+- Hiển thị mặt trước/mặt sau và điều khiển chuyển thẻ.
+- Cho phép người dùng tự đánh giá đã nhớ/chưa nhớ trong session hiện tại.
+- Hiển thị chủ đề và timestamp nguồn của thẻ.
+- Loại trạng thái flashcard khi đổi video hoặc kết thúc session.
+
+I. extension/src/features/learning-assessment/
+
+- Hiển thị tổng điểm quiz.
+- Hiển thị strongTopics và weakTopics do logic assessment trả về.
+- Hiển thị danh sách timestamp cần xem lại.
+- Mỗi timestamp phải là nút bấm gọi Timestamp Controller.
+- Không tự suy luận chủ đề mạnh/yếu trong component UI.
+
+J. extension/src/integrations/local-service/
+
+- Tạo client giao tiếp với Local RAG Service qua localhost.
+- Kiểm tra health trước khi index/retrieve.
+- Có timeout, cancel request và xử lý trường hợp service chưa chạy.
+- Chỉ gửi transcript và dữ liệu cần thiết; không gửi OAuth token.
+- Mapping lỗi kỹ thuật thành trạng thái mà UI có thể hiển thị.
+- Dùng type từ shared/contracts thay vì tự tạo schema khác.
+- Cài đặt đầy đủ các hàm client tương ứng với Local REST API:
+  + getHealth() gọi GET /api/v1/health.
+  + indexVideo(videoId, payload) gọi POST /api/v1/videos/{videoId}/index.
+  + getIndexStatus(videoId) gọi GET /api/v1/videos/{videoId}/index-status.
+  + retrieve(videoId, request) gọi POST /api/v1/videos/{videoId}/retrieve.
+  + assessQuiz(videoId, request) gọi POST /api/v1/videos/{videoId}/assessments/quiz.
+  + deleteVideoCache(videoId) gọi DELETE /api/v1/videos/{videoId}/cache.
+- Không tự đổi path, field hoặc error code khi chưa cập nhật shared/contracts.
+
+K. extension/src/integrations/google-oauth/
+
+- Đóng gói Chrome Identity API trong một adapter riêng.
+- Cung cấp các hàm kiểm tra quyền, yêu cầu đăng nhập và đăng xuất.
+- Không để component tự thao tác token.
+- Không in token trong console, log hoặc error message.
+
+L. extension/src/integrations/gemini/
+
+- Chỉ chịu trách nhiệm transport gọi Gemini bằng Google OAuth.
+- Nhận prompt/request đã được Thành viên 3 xây dựng.
+- Trả response thô về lớp validation của Thành viên 3.
+- Xử lý timeout, quota, quyền bị từ chối và token hết hạn.
+- Không chứa logic thiết kế prompt hoặc tự sửa nội dung response AI.
+
+M. extension/src/session/
+
+- Quản lý Video ID hiện tại, quiz/flashcard hiện tại, câu trả lời và kết quả.
+- Xóa session khi đổi video, reload extension hoặc người dùng yêu cầu reset.
+- Không biến session thành lịch sử học tập lâu dài trong V1.
+
+N. extension/src/types/ và extension/src/tests/
+
+- types/ chỉ chứa type riêng của extension; contract liên hệ thống đặt ở shared/.
+- Test Video ID parser, SPA navigation, timestamp seek, auth state reducer,
+  session reset, quiz scoring và error mapping.
+
+4.4. Trình tự thực hiện đề xuất
+
+1. Khởi tạo React + TypeScript + Manifest V3 và load unpacked thành công.
+2. Làm YouTube Adapter: Video ID, SPA navigation và timestamp seek.
+3. Tạo sidebar với các trạng thái giả lập.
+4. Làm Google OAuth proof of concept.
+5. Làm Local Service client bằng contract/mocked response.
+6. Tích hợp Gemini transport với prompt/validator của Thành viên 3.
+7. Hoàn thiện quiz, flashcard và assessment UI.
+8. Viết test và bàn giao build cho QA.
+
+4.5. Đầu ra phải bàn giao
+
+- Extension build được và load unpacked được trên Chrome.
+- Manifest và permission được giải thích rõ.
+- YouTube Adapter và timestamp controller.
+- Google OAuth UI và adapter.
+- Local Service client và Gemini transport.
+- Sidebar, quiz, flashcard và learning-assessment UI.
+- Unit test cho các luồng quan trọng.
+- Hướng dẫn build/load extension đã kiểm chứng trong extension/README.md.
+
+4.6. Tiêu chí hoàn thành
+
+- Nhận đúng Video ID khi mở và chuyển video.
+- Không tạo nhiều sidebar/listener khi điều hướng nhiều lần.
+- Transcript giữ đúng text và timestamp đầu vào.
+- Người chưa có quyền thấy nút đăng nhập; OAuth chỉ mở sau khi bấm.
+- Người đã có quyền đi thẳng vào màn hình học tập.
+- Khi Local Service chưa chạy, UI hiển thị hướng dẫn rõ ràng.
+- Click timestamp đưa video đến đúng đoạn.
+- Không có API key, cookie hoặc token trong source/build/log.
+
+======================================================================
+5. THÀNH VIÊN 2 - LOCAL SERVICE VÀ TÍCH HỢP HỆ THỐNG
+======================================================================
+
+5.1. Mục tiêu
+
+Xây dựng khung Local RAG Service chạy ổn định trên máy người dùng, nhận dữ liệu
+từ extension, gọi đúng module AI/RAG do Thành viên 3 cung cấp và trả kết quả
+theo contract. Thành viên 2 phụ trách vận hành/tích hợp, không sở hữu thuật
+toán RAG.
+
+5.2. Thư mục được sử dụng
+
+Thành viên 2 sở hữu:
+
+- local-rag-service/app/core/
+- local-rag-service/app/transport/
+- local-rag-service/tests/service/
+- scripts/
+- local-rag-service/README.md ở phần setup/vận hành.
+
+Không tự sửa:
+
+- transcript/, chunking/, embedding/, vector_store/, retrieval/, assessment/.
+- ChromaDB collection schema và metadata.
+- Embedding model, top-k, threshold, prompt hoặc learning-assessment logic.
+
+5.3. Công việc cụ thể theo thư mục
+
+A. local-rag-service/app/core/
+
+- Tạo entry point cho FastAPI hoặc HTTP service tối giản đã thống nhất.
+- Cấu hình host mặc định là 127.0.0.1, không tự mở ra mạng LAN/Internet.
+- Quản lý port, thư mục data/cache và environment configuration.
+- Tạo health check phản ánh service có sẵn sàng hay không.
+- Thiết lập logging nhưng không log transcript đầy đủ hoặc dữ liệu nhạy cảm.
+- Thiết lập exception handler và shutdown sạch.
+- Khởi tạo dependency của module RAG qua interface rõ ràng.
+
+Các module gợi ý:
+
+- main.py: entry point service.
+- config.py: đọc cấu hình không chứa secret.
+- lifecycle.py: startup/shutdown dependency.
+- errors.py: mã lỗi nội bộ.
+- logging.py: cấu hình log an toàn.
+
+B. local-rag-service/app/transport/
+
+- Nhận request từ extension và validate kích thước/kiểu dữ liệu.
+- Mapping request contract sang input của module AI/RAG.
+- Mapping output module AI/RAG sang response contract.
+- Cung cấp health, index, retrieval và assessment transport cần cho V1.
+- Có timeout/cancel và lỗi có mã rõ ràng.
+- Chỉ chấp nhận origin/extension hợp lệ theo cấu hình đã thống nhất.
+- Không nhận, lưu hoặc chuyển tiếp OAuth token.
+- Không nhúng thuật toán chunking/retrieval vào route/controller.
+
+Các lớp gợi ý:
+
+- routes hoặc handlers: nhận/trả HTTP.
+- request_models và response_models: ánh xạ shared contracts.
+- rag_facade: gọi các module Thành viên 3 qua interface.
+
+C. local-rag-service/tests/service/
+
+- Test service khởi động và health check.
+- Test input thiếu trường, sai kiểu hoặc vượt giới hạn.
+- Test lỗi module RAG được mapping đúng.
+- Test origin không hợp lệ bị từ chối.
+- Test request không yêu cầu OAuth token.
+- Test shutdown/start lại không làm hỏng cache hợp lệ.
+
+D. scripts/
+
+Chuẩn bị script Windows:
+
+- setup-local-service: tạo môi trường và cài dependency sau khi được nhóm chốt.
+- start-local-service: khởi động service với thư mục làm việc đúng.
+- stop-local-service: dừng tiến trình do dự án tạo ra một cách an toàn.
+- clear-local-data: xóa đúng cache ChromaDB của dự án sau khi hiển thị đường dẫn.
+
+Yêu cầu an toàn cho script:
+
+- Không dùng đường dẫn xóa rộng như ổ đĩa, HOME hoặc thư mục repo.
+- Trước khi xóa phải kiểm tra đích nằm trong thư mục data của dự án.
+- Không thay đổi chính sách PowerShell toàn hệ thống.
+- Không ghi secret vào script hoặc command line.
+- Ghi hướng dẫn chạy và lỗi thường gặp trong scripts/README.md.
+
+E. Local REST API do Thành viên 2 hiện thực
+
+Quy ước chung:
+
+- Base URL dùng http://127.0.0.1:<port>/api/v1.
+- Request và response dùng JSON, field tại biên API dùng camelCase.
+- Service mặc định chỉ bind 127.0.0.1.
+- Không endpoint nào nhận Google OAuth token.
+- Kiểm tra Origin/extension ID theo cấu hình đã thống nhất.
+- Lớp route/controller chỉ làm HTTP, validation và mapping; không chứa thuật
+  toán chunking, embedding, retrieval hoặc assessment.
+
+1. GET /api/v1/health
+
+Thành viên 2 phải làm:
+
+- Tạo route và tổng hợp trạng thái lifecycle/service.
+- Trả status, serviceVersion, pipelineVersion, vectorStoreReady và
+  embeddingModelReady.
+- Trả HTTP 200 khi sẵn sàng; HTTP 503 với SERVICE_NOT_READY khi dependency
+  chưa sẵn sàng.
+
+Thành viên 3 cung cấp hàm kiểm tra embedding model và ChromaDB.
+Thành viên 1 gọi endpoint trước các tác vụ RAG.
+Thành viên 4 kiểm thử ready, not ready và service offline.
+
+2. POST /api/v1/videos/{videoId}/index
+
+Request tối thiểu:
+
+- video: videoId, title, durationSec và language.
+- transcriptSegments: text, startSec, endSec và position.
+
+Response:
+
+- HTTP 200 khi dùng lại cache: videoId, indexStatus=ready, cached=true,
+  chunkCount và pipelineVersion.
+- HTTP 202 khi bắt đầu index: videoId, indexStatus=indexing, cached=false và
+  pipelineVersion.
+
+Thành viên 2 phải code route, DTO, kiểm tra videoId, giới hạn payload và mapping
+lỗi. Thành viên 3 phải cung cấp transcript processor, chunker, embedder,
+ChromaDB adapter và index service. Thành viên 1 gửi transcript qua API client.
+Thành viên 4 kiểm thử cache hit, transcript rỗng, timestamp sai, request quá
+lớn và hai video độc lập.
+
+Mã lỗi: INVALID_REQUEST, VIDEO_ID_MISMATCH, PAYLOAD_TOO_LARGE,
+TRANSCRIPT_INVALID, INDEX_FAILED và SERVICE_NOT_READY.
+
+3. GET /api/v1/videos/{videoId}/index-status
+
+Response gồm videoId, indexStatus, chunkCount, pipelineVersion và error nếu có.
+indexStatus chỉ nhận: not_indexed, indexing, ready hoặc failed.
+
+Thành viên 2 code route/response. Thành viên 3 cung cấp index repository và
+trạng thái collection. Thành viên 1 dùng endpoint để điều khiển loading/retry.
+Thành viên 4 kiểm thử toàn bộ trạng thái và trường hợp restart service.
+
+4. POST /api/v1/videos/{videoId}/retrieve
+
+Request gồm:
+
+- query.
+- purpose: quiz, flashcard hoặc review.
+- maxResults tùy chọn; Local Service vẫn phải áp dụng giới hạn cấu hình.
+
+Response gồm videoId, purpose và chunks. Mỗi chunk có chunkId, text, startSec,
+endSec, score và position. Khi không đủ căn cứ, trả chunks rỗng và reason bằng
+NO_RELEVANT_CONTEXT.
+
+Thành viên 2 code route, validation và response mapping. Thành viên 3 code
+query embedding, filter videoId, ranking, top-k, threshold, deduplication và
+Context Builder. Thành viên 1 dùng kết quả làm context cho Gemini. Thành viên 4
+kiểm thử relevance, expected timestamp và không trộn dữ liệu giữa video.
+
+Mã lỗi: INVALID_REQUEST, INDEX_NOT_FOUND, QUERY_INVALID, RETRIEVAL_FAILED và
+SERVICE_NOT_READY.
+
+5. POST /api/v1/videos/{videoId}/assessments/quiz
+
+Request gồm quiz/questions đã được validate và userAnswers trong phiên. Không
+gửi OAuth token, email hoặc thông tin tài khoản.
+
+Response gồm score, correctCount, totalCount, questionResults, strongTopics,
+weakTopics và reviewTimestamps. Mỗi review timestamp có topic, reason,
+startSec, endSec và chunkId.
+
+Thành viên 2 code route, DTO và validation. Thành viên 3 code scoring,
+topic analyzer, truy vấn câu sai/chủ đề yếu và xây assessment result. Thành
+viên 1 hiển thị kết quả và nút xem lại. Thành viên 4 kiểm thử điểm, câu bỏ
+trống, topic mạnh/yếu, timestamp và xác minh không lưu bài làm lâu dài.
+
+Mã lỗi: INVALID_REQUEST, INDEX_NOT_FOUND, QUIZ_INVALID, ASSESSMENT_FAILED và
+SERVICE_NOT_READY.
+
+6. DELETE /api/v1/videos/{videoId}/cache
+
+Response HTTP 200 gồm videoId, deleted và deletedChunkCount. Gọi lại khi không
+còn dữ liệu vẫn phải an toàn với deleted=false.
+
+Thành viên 2 code route và kiểm tra input. Thành viên 3 cung cấp hàm xóa record
+theo videoId trong ChromaDB. Thành viên 1 cung cấp thao tác xóa cache phù hợp.
+Thành viên 4 xác minh video được chọn bị xóa nhưng cache video khác còn nguyên.
+
+Mã lỗi: INVALID_VIDEO_ID, CACHE_DELETE_FAILED và SERVICE_NOT_READY.
+
+7. Cấu trúc lỗi chung
+
+Response lỗi phải có:
+
+{
+  "error": {
+    "code": "INDEX_NOT_FOUND",
+    "message": "Video chưa được lập chỉ mục.",
+    "retryable": false,
+    "details": null
+  }
+}
+
+Không trả stack trace, đường dẫn nhạy cảm, transcript đầy đủ hoặc credential
+trong message/details.
+
+5.4. Trình tự thực hiện đề xuất
+
+1. Chốt contract Extension <-> Local Service với Thành viên 1 và 3.
+2. Tạo service skeleton, config, lifecycle và health check.
+3. Tạo transport bằng mock RAG facade.
+4. Tích hợp transcript/index/retrieval module của Thành viên 3.
+5. Hoàn thiện lỗi, input limit, origin và logging.
+6. Viết script setup/start/stop/clear local data.
+7. Viết integration test và hướng dẫn chạy trên máy mới.
+
+5.5. Đầu ra phải bàn giao
+
+- Local RAG Service chạy trên localhost.
+- Health check và cơ chế báo service chưa sẵn sàng.
+- Transport adapter theo shared contracts.
+- Tích hợp module AI/RAG mà không thay đổi logic của module.
+- Test service và transport.
+- Script setup/start/stop/clear local data.
+- Hướng dẫn vận hành đã kiểm chứng trong local-rag-service/README.md.
+
+5.6. Tiêu chí hoàn thành
+
+- Service chỉ bind loopback theo cấu hình mặc định.
+- Extension có thể kiểm tra health và gọi luồng V1.
+- Input lỗi được từ chối bằng response có mã rõ ràng.
+- Lỗi RAG/ChromaDB không làm service crash.
+- Restart service vẫn truy cập cache ChromaDB hợp lệ.
+- OAuth token không xuất hiện trong request, log hoặc data local.
+- Một máy mới có thể setup/start service theo tài liệu.
+
+======================================================================
+6. THÀNH VIÊN 3 - AI/RAG LEAD VÀ ĐÁNH GIÁ HỌC TẬP
+======================================================================
+
+6.1. Mục tiêu
+
+Sở hữu toàn bộ pipeline AI/RAG của dự án: xử lý transcript, chunking có
+timestamp, embedding, ChromaDB, semantic retrieval, Context Builder, prompt,
+validation kết quả Gemini, tạo quiz/flashcard, phân tích phần học tốt/chưa tốt
+và truy xuất timestamp cần xem lại.
+
+Đây là phạm vi kỹ thuật chính của Thành viên 3. Mọi thay đổi liên quan embedding
+model, chunking strategy, collection schema, top-k, threshold, prompt hoặc
+assessment logic phải do Thành viên 3 thực hiện hoặc phê duyệt.
+
+6.2. Thư mục được sử dụng
+
+Thành viên 3 sở hữu:
+
+- extension/src/ai-content/prompts/
+- extension/src/ai-content/validation/
+- extension/src/ai-content/mappers/
+- local-rag-service/app/transcript/
+- local-rag-service/app/chunking/
+- local-rag-service/app/embedding/
+- local-rag-service/app/vector_store/
+- local-rag-service/app/retrieval/
+- local-rag-service/app/assessment/
+- local-rag-service/tests/rag/
+
+Thành viên 3 phối hợp nhưng không tự sửa:
+
+- integrations/gemini/ và UI extension của Thành viên 1.
+- core/, transport/ và scripts/ của Thành viên 2.
+- tests/e2e/ và docs/testing/ của Thành viên 4.
+
+6.3. Công việc cụ thể theo thư mục
+
+A. local-rag-service/app/transcript/
+
+- Định nghĩa input transcript segment thống nhất với shared contracts.
+- Chuẩn hóa khoảng trắng, ký tự lỗi và text rỗng.
+- Giữ nguyên thứ tự và timestamp gốc.
+- Loại bỏ noise có quy tắc, không xóa nội dung có ý nghĩa.
+- Merge segment quá ngắn nhưng không gộp các đoạn cách nhau quá xa.
+- Xử lý transcript tiếng Việt, tiếng Anh và transcript tự động.
+- Trả lỗi rõ ràng khi transcript rỗng/không hợp lệ.
+
+Các module gợi ý:
+
+- models.py: kiểu dữ liệu nội bộ.
+- normalizer.py: chuẩn hóa text/segment.
+- merger.py: gộp segment ngắn.
+- processor.py: điều phối pipeline transcript.
+
+B. local-rag-service/app/chunking/
+
+- Thiết kế chunk theo token/ký tự/câu sau khi benchmark.
+- Hỗ trợ overlap có cấu hình.
+- Mỗi chunk phải giữ videoId, chunkId, position, text, startSec, endSec,
+  language và pipelineVersion.
+- Không làm mất thứ tự hoặc tạo timestamp ngoài thời lượng video.
+- Có chiến lược xử lý một segment dài hơn chunk size.
+- Ghi rõ lý do chọn chunk size và overlap.
+
+Các module gợi ý:
+
+- chunker.py
+- token_counter.py
+- config.py
+- models.py
+
+C. local-rag-service/app/embedding/
+
+- Khảo sát model embedding đa ngôn ngữ chạy được trên máy mục tiêu.
+- Benchmark tối thiểu: chất lượng retrieval, tốc độ, RAM và kích thước model.
+- Chọn một model mặc định phù hợp V1 và ghi model/version trong metadata.
+- Tạo embedding theo batch.
+- Chuẩn hóa vector nếu metric yêu cầu.
+- Không tạo lại embedding nếu cache cùng pipelineVersion còn hợp lệ.
+- Cung cấp interface để retrieval không phụ thuộc trực tiếp thư viện model.
+
+Các module gợi ý:
+
+- embedder.py: interface chung.
+- sentence_transformer_embedder.py: adapter model.
+- batcher.py: chia batch.
+- config.py: model, batch size và device.
+
+D. local-rag-service/app/vector_store/
+
+- Thiết kế ChromaDB collection và metadata.
+- Dùng PersistentClient với đường dẫn data do core cung cấp.
+- Quy định collection name/version rõ ràng.
+- Lưu document, embedding và metadata timestamp.
+- Luôn filter theo videoId khi truy vấn để không trộn video.
+- Xây dựng cơ chế kiểm tra video đã index cùng pipelineVersion chưa.
+- Hỗ trợ xóa cache theo đúng video hoặc toàn bộ cache dự án qua interface.
+- Không lưu OAuth token, quiz answer, score hoặc learning history.
+
+Metadata tối thiểu:
+
+- videoId
+- chunkId
+- position
+- startSec
+- endSec
+- language
+- embeddingModel
+- pipelineVersion
+
+Các module gợi ý:
+
+- schema.py: collection/metadata schema.
+- chroma_store.py: ChromaDB adapter.
+- index_repository.py: trạng thái index theo video.
+- migration.py: xử lý thay đổi pipeline version nếu cần.
+
+E. local-rag-service/app/retrieval/
+
+- Tạo embedding cho query bằng cùng model/version dùng khi index.
+- Semantic search bắt buộc filter theo videoId.
+- Benchmark và cấu hình top-k, similarity threshold.
+- Loại chunk trùng/overlap quá nhiều trong kết quả.
+- Context Builder sắp xếp chunk theo logic phù hợp và giới hạn token.
+- Bảo toàn timestamp để downstream tạo citation/review link.
+- Trả kết quả không đủ căn cứ khi score thấp hơn threshold.
+- Viết metric Recall@k/MRR hoặc metric retrieval phù hợp bộ đánh giá.
+
+Các module gợi ý:
+
+- retriever.py
+- ranking.py
+- deduplicator.py
+- context_builder.py
+- config.py
+
+F. extension/src/ai-content/prompts/
+
+- Tập trung prompt trong một vị trí, có version và mục đích rõ ràng.
+- Viết prompt tạo quiz chỉ dựa trên context RAG.
+- Viết prompt tạo flashcard chỉ dựa trên context RAG.
+- Viết prompt nhận xét học tập dựa trên kết quả và chunk đã truy xuất.
+- Yêu cầu Gemini trả dữ liệu có cấu trúc thống nhất.
+- Không cho transcript thay thế hoặc điều khiển instruction của hệ thống.
+- Yêu cầu trả trạng thái không đủ dữ kiện thay vì bịa nội dung.
+- Mọi câu hỏi/thẻ/nhận xét phải dẫn tới source timestamp hợp lệ.
+
+Các file gợi ý:
+
+- quiz-prompt.ts
+- flashcard-prompt.ts
+- assessment-prompt.ts
+- prompt-version.ts
+
+G. extension/src/ai-content/validation/
+
+- Tạo schema validator cho Quiz, Flashcard và LearningAssessment.
+- Kiểm tra đủ field, đúng kiểu, option hợp lệ và correctAnswer tồn tại.
+- Kiểm tra timestamp không âm và không vượt duration video.
+- Loại kết quả trùng hoặc không có căn cứ.
+- Không đưa response thô Gemini trực tiếp vào UI.
+- Phân loại lỗi để UI có thể retry hoặc yêu cầu tạo lại.
+
+Các file gợi ý:
+
+- quiz-schema.ts
+- flashcard-schema.ts
+- assessment-schema.ts
+- validate-ai-response.ts
+
+H. extension/src/ai-content/mappers/
+
+- Mapping response đã validate sang model mà feature UI sử dụng.
+- Chuẩn hóa topic, explanation và timestamp.
+- Không chứa component React hoặc code gọi Gemini.
+- Giữ mapper deterministic để có thể unit test.
+
+I. local-rag-service/app/assessment/
+
+- Nhận QuizResult trong session hiện tại.
+- Nhóm câu đúng/sai theo topic.
+- Xác định strongTopics và weakTopics bằng quy tắc có thể giải thích.
+- Chuyển câu sai/chủ đề yếu thành retrieval query.
+- Truy xuất chunk và timestamp phù hợp cho từng điểm yếu.
+- Loại đề xuất trùng và ưu tiên đoạn có score tốt.
+- Trả reviewTimestamps có lý do, topic và source chunk.
+- Không lưu kết quả thành learning history lâu dài.
+
+Các module gợi ý:
+
+- scorer.py: tính điểm và kết quả từng câu.
+- topic_analyzer.py: nhóm kết quả theo chủ đề.
+- review_retriever.py: tìm đoạn cần xem lại.
+- assessment_service.py: kết hợp kết quả cuối.
+
+J. local-rag-service/tests/rag/
+
+Viết test cho:
+
+- Transcript rỗng, timestamp lỗi, ký tự lỗi và segment rất dài.
+- Chunk không mất nội dung/thứ tự/timestamp.
+- Overlap đúng cấu hình.
+- Embedding có đúng dimension và batch ổn định.
+- ChromaDB lưu/đọc đúng video và không trộn dữ liệu hai video.
+- Retrieval trả chunk liên quan và loại query không đủ căn cứ.
+- Context Builder không vượt giới hạn.
+- Validation từ chối JSON thiếu/sai field hoặc timestamp không hợp lệ.
+- Assessment nhóm đúng strong/weak topic.
+- Câu sai trả đúng timestamp dự kiến trong bộ đánh giá.
+
+K. Logic AI/RAG cung cấp cho từng endpoint
+
+- GET /health: cung cấp trạng thái embedding model và ChromaDB readiness.
+- POST /videos/{videoId}/index: sở hữu toàn bộ pipeline transcript -> chunk ->
+  embedding -> ChromaDB và quyết định cache theo pipelineVersion.
+- GET /videos/{videoId}/index-status: cung cấp trạng thái index và chunkCount.
+- POST /videos/{videoId}/retrieve: sở hữu query embedding, filter videoId,
+  ranking, top-k, threshold, deduplication và Context Builder.
+- POST /videos/{videoId}/assessments/quiz: sở hữu scoring, topic analyzer,
+  strong/weak topic và retrieval timestamp cần xem lại.
+- DELETE /videos/{videoId}/cache: sở hữu thao tác xóa đúng record theo videoId.
+
+Thành viên 3 không code route HTTP hoặc CORS nhưng phải công bố interface Python
+ổn định để Thành viên 2 gọi. Khi thay đổi input/output nội bộ có ảnh hưởng API,
+phải cập nhật shared/contracts và yêu cầu Thành viên 1, 2 review.
+
+6.4. Bộ đánh giá AI/RAG phải chuẩn bị
+
+- Chọn một bộ video kiểm thử tiếng Việt và tiếng Anh, ngắn và trung bình.
+- Với mỗi video, lưu transcript mẫu được phép dùng trong test.
+- Chuẩn bị query/câu hỏi và expected chunk/timestamp.
+- Có trường hợp câu hỏi không xuất hiện trong video.
+- Đo chất lượng retrieval, độ chính xác timestamp và thời gian xử lý.
+- Ghi model, chunk size, overlap, top-k và threshold của mỗi lần benchmark.
+- Báo cáo lý do chọn cấu hình cuối, không chọn chỉ dựa trên cảm giác.
+
+6.5. Trình tự thực hiện đề xuất
+
+1. Chốt TranscriptSegment và RetrievedChunk contract.
+2. Làm transcript processor và timestamp-aware chunker.
+3. Benchmark embedding model và chốt model mặc định.
+4. Thiết kế ChromaDB schema và index một video mẫu.
+5. Làm semantic retrieval và Context Builder.
+6. Tạo prompt/validator quiz và flashcard.
+7. Làm scoring/topic assessment và review retrieval.
+8. Hoàn thiện bộ đánh giá, unit test và báo cáo metric.
+9. Bàn giao interface ổn định cho Thành viên 1 và 2 tích hợp.
+
+6.6. Đầu ra phải bàn giao
+
+- Transcript Processor.
+- Timestamp-aware Chunking Module.
+- Embedding Pipeline và báo cáo chọn model.
+- ChromaDB Collection Schema và Vector Store Adapter.
+- Semantic Retriever, deduplication và Context Builder.
+- Prompt tạo quiz, flashcard và nhận xét học tập.
+- Schema/validator/mapper cho đầu ra Gemini.
+- Quiz Scoring và Learning Assessment Module.
+- Cơ chế truy xuất timestamp cho chủ đề yếu/câu sai.
+- Bộ dữ liệu đánh giá và expected timestamps.
+- Unit test và báo cáo metric AI/RAG.
+
+6.7. Tiêu chí hoàn thành
+
+- Transcript/chunk không mất thứ tự hoặc timestamp.
+- Index và retrieval luôn cô lập theo videoId.
+- Cache được phân biệt theo embeddingModel và pipelineVersion.
+- Retrieval đạt ngưỡng chất lượng do nhóm chốt trên bộ đánh giá.
+- Quiz/flashcard chỉ dựa trên context và có timestamp nguồn hợp lệ.
+- Response AI sai schema không được đưa lên UI.
+- Assessment xác định được phần mạnh/yếu và timestamp xem lại.
+- Chunk size, overlap, model, top-k và threshold có thể cấu hình.
+- Không lưu OAuth token, bài làm, điểm hoặc learning history lâu dài.
+
+======================================================================
+7. THÀNH VIÊN 4 - QA, INTEGRATION VÀ TÀI LIỆU
+======================================================================
+
+7.1. Mục tiêu
+
+Xây dựng kế hoạch kiểm thử từ đầu dự án, xác minh bốn thành phần hoạt động cùng
+nhau, kiểm tra OAuth/bảo mật/dữ liệu cục bộ và chuẩn bị đầy đủ bằng chứng nghiệm
+thu, tài liệu sử dụng, slide và video demo.
+
+7.2. Thư mục được sử dụng
+
+Thành viên 4 sở hữu:
+
+- tests/e2e/
+- docs/testing/
+- README/tài liệu hướng dẫn ở phần tổng hợp sau khi được owner kỹ thuật xác minh.
+
+Không tự sửa source của thành viên khác để làm test pass. Khi phát hiện lỗi,
+tạo bug report và chuyển cho owner module sửa.
+
+7.3. Công việc cụ thể theo thư mục
+
+A. docs/testing/
+
+Tạo và quản lý:
+
+- test-plan: phạm vi, môi trường, loại test và điều kiện vào/ra.
+- test-cases: mã test, tiền điều kiện, bước chạy, expected result và owner.
+- oauth-security-matrix: các trạng thái tài khoản/quyền/quota.
+- privacy-checklist: token, cookie, log, ChromaDB và session data.
+- regression-checklist: chức năng cần chạy lại trước demo/release.
+- test-report: kết quả, bug còn lại và kết luận nghiệm thu.
+- known-limitations: giới hạn của transcript, Gemini, model và máy demo.
+
+B. tests/e2e/
+
+Xây dựng test tự động hoặc kịch bản có thể lặp lại cho các luồng:
+
+1. Mở video có transcript -> mở extension -> index thành công.
+2. Chưa cấp quyền -> hiển thị login -> người dùng bấm -> OAuth thành công.
+3. Đã cấp quyền -> không hiện login tương tác không cần thiết.
+4. OAuth bị từ chối, token hết hạn hoặc hết quota.
+5. Local RAG Service chưa chạy -> extension hướng dẫn đúng.
+6. Video không có transcript -> dừng pipeline và báo lỗi rõ.
+7. Đổi video theo YouTube SPA -> xóa session cũ và dùng đúng video mới.
+8. Tạo quiz -> làm bài -> chấm đúng -> assessment đúng chủ đề.
+9. Tạo flashcard -> xem thẻ -> timestamp nguồn hoạt động.
+10. Câu sai/chủ đề yếu -> click đề xuất -> video nhảy đúng timestamp.
+11. Hai video đã index -> retrieval không lấy chunk chéo video.
+12. Restart Local Service -> cache ChromaDB vẫn hoạt động.
+13. Reset session -> quiz/score cũ không còn.
+14. Clear local data -> chỉ xóa đúng dữ liệu dự án.
+
+Kiểm thử API bắt buộc:
+
+- Kiểm tra method/path/status code của toàn bộ sáu Local REST API.
+- Kiểm tra request/response khớp shared contracts.
+- Kiểm tra error body luôn có code, message, retryable và details.
+- Kiểm tra 400, 404, 409, 413, 422, 500 và 503 ở các endpoint liên quan.
+- Kiểm tra API không nhận hoặc ghi log Google OAuth token.
+- Kiểm tra route/controller không làm thay đổi dữ liệu video khác.
+- Kiểm tra Gemini generateContent với OAuth: success, 401, 403, 429, 5xx và
+  response JSON sai schema.
+
+C. Kiểm thử OAuth và bảo mật
+
+- Kiểm tra OAuth chỉ mở sau hành động người dùng.
+- Kiểm tra extension không đọc cookie Google AI Studio.
+- Quét source, build output và log để tìm API key/token/cookie.
+- Xác minh OAuth token không được gửi đến localhost.
+- Kiểm tra service mặc định chỉ lắng nghe 127.0.0.1.
+- Kiểm tra origin/extension không hợp lệ bị từ chối.
+- Kiểm tra dữ liệu ChromaDB không chứa token, đáp án người dùng hoặc điểm số.
+- Che thông tin nhạy cảm trong screenshot/video/log báo lỗi.
+
+D. Kiểm thử chất lượng AI/RAG
+
+- Sử dụng bộ query và expected timestamp do Thành viên 3 cung cấp.
+- Kiểm tra retrieval đúng video và timestamp hợp lệ.
+- Kiểm tra quiz/flashcard bám transcript, không bịa nội dung.
+- Kiểm tra response sai schema bị từ chối.
+- Kiểm tra assessment phản ánh đúng câu đúng/sai theo topic.
+- Ghi lỗi có input, output, cấu hình model/pipelineVersion và bước tái hiện.
+
+E. Bug report
+
+Mỗi bug phải có:
+
+- Mã lỗi và tiêu đề ngắn.
+- Phiên bản branch/commit.
+- Môi trường Chrome, Windows và model/service.
+- Tiền điều kiện và các bước tái hiện.
+- Kết quả thực tế và kết quả mong đợi.
+- Screenshot/video/log đã loại secret.
+- Mức độ Critical, High, Medium hoặc Low.
+- Owner module cần xử lý.
+- Kết quả retest và regression sau khi sửa.
+
+F. Tài liệu và demo
+
+- Xác minh README chỉ chứa lệnh đã chạy thử.
+- Viết hướng dẫn load unpacked extension.
+- Viết hướng dẫn setup/start Local RAG Service.
+- Viết hướng dẫn đăng nhập và xử lý lỗi thường gặp.
+- Tổng hợp test report và known limitations.
+- Chuẩn bị slide và video demo không lộ credential.
+- Chuẩn bị một video mẫu có transcript và cache hợp lệ để demo dự phòng.
+- Không giả lập kết quả thành công mà không ghi rõ đó là fixture/demo fallback.
+
+7.4. Trình tự thực hiện đề xuất
+
+1. Tạo test plan và acceptance checklist ngay từ tuần đầu.
+2. Review contract để bảo đảm dữ liệu có thể kiểm thử.
+3. Viết test case song song với từng feature.
+4. Chạy integration test khi Extension và Local Service có mock/stub.
+5. Chạy E2E thật khi Gemini/RAG được tích hợp.
+6. Retest bug và chạy regression trước mỗi mốc demo.
+7. Tổng hợp báo cáo, tài liệu, slide và video cuối kỳ.
+
+7.5. Đầu ra phải bàn giao
+
+- Test plan và acceptance checklist.
+- Test case cho toàn bộ luồng V1.
+- OAuth/security/privacy matrix.
+- Bộ integration/E2E test.
+- Bug report và regression checklist.
+- Test report cuối kỳ và known limitations.
+- README/hướng dẫn sử dụng đã xác minh.
+- Slide, kịch bản demo và video demo.
+
+7.6. Tiêu chí hoàn thành
+
+- Mọi tiêu chí nghiệm thu V1 có ít nhất một test case.
+- Không còn lỗi Critical/High trước khi demo/release.
+- Lỗi Medium còn lại được ghi rõ trong known limitations.
+- OAuth, service unavailable, no transcript và SPA navigation đã được test.
+- Không phát hiện secret trong source/build/log/dữ liệu local.
+- Timestamp được kiểm tra trên nhiều vị trí của video.
+- Một thành viên mới có thể chạy dự án theo README.
+
+======================================================================
+8. MA TRẬN PHỐI HỢP VÀ REVIEW
+======================================================================
+
+Hạng mục                              Người chính   Người review/hỗ trợ
+----------------------------------------------------------------------
+Manifest, sidebar, YouTube Adapter    Thành viên 1  Thành viên 4
+Google OAuth UI và adapter            Thành viên 1  Thành viên 4
+Gemini transport                      Thành viên 1  Thành viên 3, 4
+Local Service core/transport          Thành viên 2  Thành viên 1, 4
+Script vận hành local                 Thành viên 2  Thành viên 4
+Transcript và chunking                Thành viên 3  Thành viên 2, 4
+Embedding và ChromaDB                 Thành viên 3  Thành viên 2, 4
+Retrieval và Context Builder          Thành viên 3  Thành viên 2, 4
+Prompt và AI validation               Thành viên 3  Thành viên 1, 4
+Scoring và learning assessment        Thành viên 3  Thành viên 1, 4
+UI quiz/flashcard/assessment           Thành viên 1  Thành viên 3, 4
+Shared contracts                      Owner tạo     Thành viên 1, 2, 3
+Integration/E2E                       Thành viên 4  Cả nhóm
+README và tài liệu cuối kỳ            Thành viên 4  Owner kỹ thuật liên quan
+
+MA TRẬN SỞ HỮU API
+
+API/Hạng mục                          Code HTTP/API  Logic nghiệp vụ  Client/UI     Test
+------------------------------------------------------------------------------------------------
+GET /api/v1/health                                      Thành viên 2   TV2 và TV3       Thành viên 1  Thành viên 4
+POST /api/v1/videos/{videoId}/index                     Thành viên 2   Thành viên 3     Thành viên 1  Thành viên 4
+GET /api/v1/videos/{videoId}/index-status               Thành viên 2   Thành viên 3     Thành viên 1  Thành viên 4
+POST /api/v1/videos/{videoId}/retrieve                  Thành viên 2   Thành viên 3     Thành viên 1  Thành viên 4
+POST /api/v1/videos/{videoId}/assessments/quiz          Thành viên 2   Thành viên 3     Thành viên 1  Thành viên 4
+DELETE /api/v1/videos/{videoId}/cache                   Thành viên 2   Thành viên 3     Thành viên 1  Thành viên 4
+Chrome Identity OAuth                 Thành viên 1   Thành viên 1     Thành viên 1  Thành viên 4
+Gemini generateContent transport      Thành viên 1   Prompt TV3       Thành viên 1  Thành viên 3, 4
+
+Trong bảng trên, các Local REST API đều có tiền tố /api/v1. Thành viên 2 chịu
+trách nhiệm giao diện HTTP; Thành viên 3 chịu trách nhiệm module Python được
+endpoint gọi. Một endpoint chỉ được coi là hoàn thành khi route, logic, client
+và test đã cùng tuân theo shared contract.
+
+Ranh giới bắt buộc:
+
+- Thành viên 1 không tự thay đổi prompt hoặc output schema AI.
+- Thành viên 2 không tự thay đổi thuật toán/chỉ số/cấu hình RAG.
+- Thành viên 3 không tự thay đổi UI, OAuth transport hoặc service lifecycle.
+- Thành viên 4 không sửa source module thay cho owner để làm test pass.
+- Thay đổi shared contract phải có review của Thành viên 1, 2 và 3.
+
+======================================================================
+9. THỨ TỰ BÀN GIAO ĐỂ CÓ THỂ LÀM SONG SONG
+======================================================================
+
+MỐC 1 - PROOF OF CONCEPT
+
+- TV1: extension load được, lấy Video ID và nhảy timestamp.
+- TV2: Local Service chạy và health check được.
+- TV3: transcript -> chunk -> embedding -> ChromaDB -> retrieval cho một video.
+- TV4: test plan, OAuth matrix và acceptance checklist.
+
+Chỉ đi tiếp khi chứng minh được:
+
+1. Lấy transcript giữ đúng timestamp.
+2. Extension điều khiển video đến timestamp.
+3. Google OAuth/Gemini hoạt động theo phương án đã thống nhất.
+4. ChromaDB local lưu và truy vấn được một video mẫu.
+
+MỐC 2 - CONTRACT VÀ TÍCH HỢP CƠ BẢN
+
+- Chốt shared contracts.
+- TV1 tích hợp Local Service client bằng mock.
+- TV2 tích hợp RAG facade bằng module của TV3.
+- TV3 hoàn thành retrieval/context và quiz/flashcard validator.
+- TV4 chạy integration cho video/transcript/index/retrieval.
+
+MỐC 3 - LUỒNG HỌC TẬP HOÀN CHỈNH
+
+- Tạo quiz/flashcard từ context RAG.
+- Làm bài và chấm điểm trong session.
+- Phân tích strong/weak topics.
+- Retrieval lại timestamp cần xem.
+- Click timestamp và quay lại video.
+
+MỐC 4 - ỔN ĐỊNH VÀ NGHIỆM THU
+
+- Xử lý no transcript, OAuth error, quota và service unavailable.
+- Chạy unit, integration, E2E và security/privacy checklist.
+- Kiểm tra trên máy mới/môi trường sạch.
+- Hoàn thiện README, test report, slide và video demo.
+
+======================================================================
+10. CHECKLIST BÀN GIAO CỦA MỖI THÀNH VIÊN
+======================================================================
+
+Tên nhiệm vụ:
+Người thực hiện:
+Issue/Task:
+Branch/Pull Request:
+Thư mục đã sửa:
+
+Nội dung đã hoàn thành:
+-
+
+Contract/interface liên quan:
+-
+
+Cách chạy:
+1.
+
+Cách kiểm thử:
+1.
+
+Kết quả kiểm thử:
+-
+
+Ảnh/video/log minh chứng:
+-
+
+Hạn chế hoặc lỗi còn lại:
+-
+
+Người cần review:
+-
+
+======================================================================
+11. TIÊU CHÍ NGHIỆM THU CHUNG V1
+======================================================================
+
+- Load extension và khởi động Local RAG Service theo README.
+- Extension nhận đúng video hiện tại và khi chuyển video.
+- Google OAuth chỉ mở sau khi người dùng chủ động bấm đăng nhập.
+- Không đọc cookie AI Studio và không chứa provider API key.
+- Transcript/chunk giữ đúng thứ tự và timestamp.
+- ChromaDB lưu chunk, embedding và timestamp trên máy người dùng.
+- Retrieval thuộc đúng video và có timestamp hợp lệ.
+- Quiz/flashcard dựa trên context transcript đã truy xuất.
+- Quiz được chấm đúng theo đáp án đã validate.
+- Kết quả chỉ ra strong topics và weak topics.
+- Mỗi phần cần cải thiện có timestamp để quay lại video.
+- Không lưu OAuth token, bài làm, điểm hoặc lịch sử học tập lâu dài.
+- Không có chức năng gợi ý video mới trong V1.
+
+======================================================================
+KẾT LUẬN
+======================================================================
+
+Mỗi thành viên có một phạm vi source rõ ràng để có thể phát triển song song mà
+không chồng chéo. Thành viên 1 sở hữu trải nghiệm Extension; Thành viên 2 sở
+hữu khung và vận hành Local Service; Thành viên 3 sở hữu toàn bộ AI/RAG,
+ChromaDB và đánh giá học tập; Thành viên 4 sở hữu QA, tích hợp và tài liệu.
+
+Ưu tiên của nhóm là hoàn thành ổn định một luồng V1 trên một video:
+
+Đăng nhập -> Transcript -> RAG local -> Quiz/Flashcard -> Làm bài -> Chấm điểm
+-> Phần học tốt/chưa tốt -> Timestamp cần xem lại.

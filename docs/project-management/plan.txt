@@ -1,0 +1,520 @@
+KẾ HOẠCH DỰ ÁN YOUTUBE AI LEARNING ASSISTANT
+Phiên bản: 1.0
+Ngày cập nhật: 05/09/2026
+
+============================================================
+1. MỤC TIÊU DỰ ÁN
+============================================================
+
+YouTube AI Learning Assistant là Chrome Extension hỗ trợ người dùng học chủ
+động từ video YouTube. Sau khi đọc nội dung video, hệ thống tạo quiz và
+flashcard, chấm kết quả, xác định phần kiến thức đã nắm tốt, chỉ ra phần cần
+cải thiện và đưa người dùng về đúng timestamp nên xem lại.
+
+Kết quả V1 cần chứng minh được một luồng hoàn chỉnh:
+
+Mở video YouTube
+-> Mở extension
+-> Đăng nhập Google nếu cần
+-> Đọc transcript
+-> Chia đoạn và tạo embedding
+-> Lưu chunk cùng timestamp vào ChromaDB cục bộ
+-> Tạo quiz hoặc flashcard
+-> Người dùng làm bài
+-> Chấm điểm
+-> Phân tích phần đã hiểu và phần cần cải thiện
+-> Đề xuất timestamp cần xem lại trong chính video đó
+
+============================================================
+2. PHẠM VI V1
+============================================================
+
+2.1. Chức năng bắt buộc
+
+- Chrome Extension chạy trên trang xem video YouTube.
+- Sidebar hiển thị trạng thái video và các hoạt động học tập.
+- Kiểm tra trạng thái Google OAuth khi mở extension.
+- Chỉ mở luồng đăng nhập sau thao tác của người dùng khi chưa có quyền.
+- Không đọc hoặc tái sử dụng cookie của Google AI Studio.
+- Nhận diện video hiện tại và phát hiện khi người dùng chuyển video.
+- Thu thập transcript, giữ thứ tự và timestamp gốc.
+- Làm sạch và chia transcript thành các chunk.
+- Tạo embedding cho từng chunk.
+- Lưu chunk, embedding và timestamp trong ChromaDB trên máy người dùng.
+- Truy xuất các chunk liên quan để tạo quiz và flashcard có căn cứ.
+- Cho phép người dùng làm quiz và tự đánh giá flashcard.
+- Chấm quiz theo đáp án đã được tạo và kiểm tra.
+- Tổng hợp kết quả theo chủ đề kiến thức.
+- Chỉ ra phần học tốt và phần cần cải thiện.
+- Truy xuất lại chunk liên quan đến câu sai hoặc chủ đề yếu.
+- Hiển thị timestamp để người dùng quay lại đúng đoạn trong video.
+
+2.2. Dữ liệu được phép lưu cục bộ
+
+ChromaDB chỉ lưu dữ liệu phục vụ RAG:
+
+- Video ID.
+- Tiêu đề video ở mức cần thiết để nhận diện cache.
+- Nội dung chunk transcript.
+- Embedding của chunk.
+- Thứ tự chunk.
+- Thời gian bắt đầu và kết thúc.
+- Ngôn ngữ và phiên bản xử lý.
+
+Quiz, câu trả lời, điểm số và nhận xét học tập chỉ tồn tại trong phiên hiện tại.
+V1 không xây dựng hồ sơ học tập lâu dài.
+
+2.3. Ngoài phạm vi V1
+
+- Không có MySQL hoặc database nghiệp vụ.
+- Không có server lưu trữ tập trung trên Internet.
+- Không lưu tài khoản, email, OAuth token hoặc cookie.
+- Không lưu lịch sử học tập qua nhiều phiên.
+- Không đồng bộ dữ liệu giữa nhiều thiết bị.
+- Không phân tích nhiều video cùng lúc.
+- Không đề xuất video mới.
+- Không xây dựng lộ trình học dài hạn.
+- Không có bảng xếp hạng, mạng xã hội hoặc thanh toán.
+- Hỏi đáp tự do với video không phải luồng bắt buộc của V1.
+
+============================================================
+3. KIẾN TRÚC V1
+============================================================
+
+Kiến trúc được tổ chức theo hướng local first:
+
+YouTube Page
+    |
+    | Video ID, transcript, timestamp
+    v
+Chrome Extension
+    |-- Sidebar UI
+    |-- YouTube Adapter
+    |-- Google OAuth
+    |-- Quiz và Flashcard UI
+    |-- Quiz Scoring
+    |-- Learning Assessment UI
+    |
+    | Giao tiếp nội bộ trên localhost
+    v
+Local RAG Service
+    |-- Transcript Processor
+    |-- Chunker
+    |-- Embedding Service
+    |-- Retriever
+    |-- Context Builder
+    |
+    v
+ChromaDB PersistentClient
+    |-- Chunk text
+    |-- Embedding
+    `-- Timestamp metadata
+
+Chrome Extension gọi Gemini bằng Google OAuth để tạo quiz, flashcard và nhận
+xét học tập. OAuth token không đi qua Local RAG Service và không được ghi vào
+ChromaDB.
+
+Local RAG Service chạy trên máy người dùng. Đây không phải server Internet và
+không quản lý tài khoản. V1 có thể khởi động service bằng file BAT. Việc đóng
+gói thành ứng dụng nền hoặc Native Messaging được để sau V1.
+
+============================================================
+4. LUỒNG XỬ LÝ CHÍNH
+============================================================
+
+4.1. Khởi động và xác thực
+
+1. Người dùng mở sidebar trên trang YouTube.
+2. Extension kiểm tra quyền Google hiện có mà không mở cửa sổ đăng nhập.
+3. Nếu chưa có quyền, extension hiển thị nút đăng nhập.
+4. Sau khi người dùng bấm nút, extension chạy Google OAuth.
+5. Nếu xác thực thành công, extension kiểm tra Local RAG Service.
+6. Khi các thành phần sẵn sàng, màn hình học tập được hiển thị.
+
+4.2. Lập chỉ mục video
+
+1. Extension lấy Video ID và transcript có timestamp.
+2. Local RAG Service chuẩn hóa transcript.
+3. Transcript được chia thành các chunk có phần chồng lấn vừa đủ.
+4. Mỗi chunk được tạo embedding.
+5. ChromaDB lưu document, embedding và metadata timestamp.
+6. Nếu video đã có index cùng phiên bản, hệ thống sử dụng lại cache cục bộ.
+
+4.3. Tạo quiz và flashcard
+
+1. Hệ thống xác định phạm vi nội dung của video.
+2. Retriever lấy các chunk đại diện và liên quan.
+3. Context Builder sắp xếp context theo thứ tự thời gian.
+4. Extension gửi context đã giới hạn sang Gemini.
+5. Gemini trả quiz hoặc flashcard theo cấu trúc đã thống nhất.
+6. Extension kiểm tra dữ liệu trước khi hiển thị.
+
+4.4. Chấm điểm và đề xuất xem lại
+
+1. Người dùng hoàn thành quiz.
+2. Quiz Scoring tính điểm và nhóm kết quả theo chủ đề.
+3. Các câu sai hoặc chủ đề yếu được chuyển thành truy vấn RAG.
+4. ChromaDB trả về chunk và timestamp liên quan.
+5. Gemini tạo nhận xét dựa trên kết quả và context được truy xuất.
+6. Extension hiển thị điểm mạnh, phần cần cải thiện và nút xem lại timestamp.
+
+============================================================
+5. TỔ CHỨC REPOSITORY
+============================================================
+
+youtube-ai-learning-assistant/
+|-- extension/
+|   |-- public/
+|   |   |-- icons/
+|   |   `-- manifest.json
+|   |-- src/
+|   |   |-- background/
+|   |   |-- content/
+|   |   |-- sidebar/
+|   |   |-- features/
+|   |   |   |-- authentication/
+|   |   |   |-- video/
+|   |   |   |-- quiz/
+|   |   |   |-- flashcard/
+|   |   |   `-- learning-assessment/
+|   |   |-- services/
+|   |   |-- session/
+|   |   |-- prompts/
+|   |   |-- types/
+|   |   `-- tests/
+|   |-- package.json
+|   `-- tsconfig.json
+|
+|-- local-rag-service/
+|   |-- app/
+|   |   |-- transcript/
+|   |   |-- chunking/
+|   |   |-- embedding/
+|   |   |-- retrieval/
+|   |   |-- vector_store/
+|   |   `-- main.py
+|   |-- tests/
+|   |-- requirements.txt
+|   `-- .env.example
+|
+|-- shared/
+|   `-- schemas/
+|
+|-- scripts/
+|   |-- setup-local-service.bat
+|   |-- start-local-service.bat
+|   `-- clear-local-data.bat
+|
+|-- docs/
+|   |-- SDS.docx
+|   |-- test-plan.docx
+|   `-- test-report.docx
+|
+|-- .gitignore
+`-- README.md
+
+============================================================
+6. CÔNG NGHỆ DỰ KIẾN
+============================================================
+
+Chrome Extension:
+- React.
+- TypeScript.
+- Manifest V3.
+- Chrome Side Panel.
+- Chrome Identity API.
+
+Local RAG Service:
+- Python.
+- FastAPI hoặc service HTTP tối giản chạy trên localhost.
+- Sentence Transformers hoặc embedding model đa ngôn ngữ phù hợp.
+- ChromaDB PersistentClient.
+
+AI sinh nội dung:
+- Gemini.
+- Google OAuth.
+- Kết quả có cấu trúc để extension kiểm tra.
+
+Kiểm thử:
+- Vitest hoặc Jest cho extension.
+- Pytest cho Local RAG Service.
+- Playwright hoặc kiểm thử thủ công có kịch bản cho luồng end to end.
+
+============================================================
+7. KẾ HOẠCH 12 TUẦN
+============================================================
+
+GIAI ĐOẠN 1 - KHẢO SÁT VÀ PROTOTYPE - TUẦN 1 ĐẾN 2
+
+Công việc:
+- Khởi tạo repository theo cấu trúc thống nhất.
+- Prototype sidebar và nhận diện Video ID.
+- Kiểm chứng cách lấy transcript và timestamp.
+- Prototype Google OAuth và khả năng gọi Gemini.
+- Khởi động Local RAG Service trên localhost.
+- Thử ChromaDB PersistentClient và embedding cho một video mẫu.
+
+Điều kiện hoàn thành:
+- Extension đọc được Video ID và timestamp.
+- Lấy được transcript của ít nhất một video kiểm thử.
+- Tạo và truy vấn được embedding trong ChromaDB.
+- Google OAuth và Gemini có kết quả thử nghiệm rõ ràng.
+
+GIAI ĐOẠN 2 - EXTENSION VÀ YOUTUBE - TUẦN 3 ĐẾN 4
+
+Công việc:
+- Hoàn thiện sidebar và các trạng thái giao diện.
+- Phát hiện YouTube chuyển video theo kiểu SPA.
+- Điều khiển player đến timestamp được chọn.
+- Hoàn thiện màn hình đăng nhập và kiểm tra Local RAG Service.
+- Tạo luồng gửi transcript từ extension sang service cục bộ.
+
+Kết quả:
+- Extension hoạt động ổn định khi mở, tải lại và chuyển video.
+- Người dùng có thể bấm một timestamp mẫu để quay lại video.
+
+GIAI ĐOẠN 3 - RAG CỤC BỘ - TUẦN 5 ĐẾN 6
+
+Công việc:
+- Làm sạch và chia transcript thành chunk.
+- Thiết kế metadata timestamp.
+- Tạo embedding theo batch.
+- Lưu và truy vấn ChromaDB theo Video ID.
+- Tạo Context Builder và giới hạn số chunk trả về.
+- Thêm chức năng xóa cache cục bộ.
+
+Kết quả:
+- Mỗi kết quả truy xuất có nội dung và timestamp hợp lệ.
+- Mở lại video đã xử lý có thể sử dụng index cục bộ.
+
+GIAI ĐOẠN 4 - QUIZ VÀ FLASHCARD - TUẦN 7 ĐẾN 8
+
+Công việc:
+- Xây dựng prompt tạo quiz và flashcard từ context RAG.
+- Xác định cấu trúc dữ liệu chung.
+- Validate kết quả Gemini.
+- Xây dựng giao diện làm quiz và xem flashcard.
+- Tạo Quiz Scoring cho câu hỏi trắc nghiệm.
+
+Kết quả:
+- Tạo và hoàn thành được quiz dựa trên video.
+- Flashcard có chủ đề và timestamp nguồn.
+
+GIAI ĐOẠN 5 - ĐÁNH GIÁ VIỆC HỌC - TUẦN 9 ĐẾN 10
+
+Công việc:
+- Nhóm kết quả quiz theo chủ đề.
+- Xác định chủ đề làm tốt và chưa tốt.
+- Truy vấn RAG cho các câu sai.
+- Tạo nhận xét và đề xuất cải thiện bằng Gemini.
+- Hiển thị nút quay lại timestamp cần xem.
+
+Kết quả:
+- Báo cáo sau bài làm chỉ ra được điểm mạnh, điểm yếu và vị trí cần xem lại.
+
+GIAI ĐOẠN 6 - KIỂM THỬ VÀ BÀN GIAO - TUẦN 11 ĐẾN 12
+
+Công việc:
+- Unit test cho các module chính.
+- Integration test giữa extension, Local RAG Service, ChromaDB và Gemini.
+- Kiểm thử video tiếng Việt, tiếng Anh, video dài và video thiếu transcript.
+- Kiểm thử OAuth, quyền bị từ chối và service cục bộ chưa chạy.
+- Hoàn thiện README, SDS, test report, slide và video demo.
+
+Kết quả:
+- Luồng V1 chạy ổn định theo kịch bản nghiệm thu.
+- Có hướng dẫn cài extension và Local RAG Service trên máy mới.
+
+============================================================
+8. PHÂN CÔNG BỐN THÀNH VIÊN
+============================================================
+
+THÀNH VIÊN 1 - EXTENSION FRONTEND
+
+Phụ trách:
+- React, TypeScript và Manifest V3.
+- Sidebar và các màn hình học tập.
+- YouTube Adapter, Video ID và timestamp navigation.
+- Google OAuth UI.
+- Tích hợp quiz, flashcard và báo cáo kết quả vào giao diện.
+
+Đầu ra:
+- Extension build được và load unpacked được.
+- Các màn hình chính và trạng thái lỗi.
+- Kiểm thử module giao diện, Video ID và timestamp.
+
+THÀNH VIÊN 2 - LOCAL SERVICE VÀ TÍCH HỢP HỆ THỐNG
+
+Phụ trách:
+- Service Python chạy trên localhost.
+- Xây dựng khung chạy và vòng đời của Local RAG Service.
+- Nhận request từ extension và chuyển dữ liệu đến module AI/RAG.
+- Trả kết quả retrieval từ module AI/RAG về extension.
+- Health check và kiểm tra trạng thái service.
+- Cấu hình loopback, giới hạn dữ liệu đầu vào và xử lý lỗi giao tiếp.
+- Quản lý thư mục dữ liệu cục bộ ở mức vận hành.
+- Viết script cài đặt, khởi động, dừng và xóa dữ liệu cục bộ.
+- Hướng dẫn chạy service trên máy mới và máy demo.
+
+Ranh giới trách nhiệm:
+- Không phụ trách thiết kế chunking, embedding hoặc retrieval.
+- Không tự thay đổi schema collection và metadata ChromaDB.
+- Không phụ trách prompt hoặc logic đánh giá học tập.
+- Tích hợp các module AI/RAG do Thành viên 3 bàn giao vào service.
+
+Đầu ra:
+- Local RAG Service chạy bằng script chung.
+- Luồng giao tiếp extension với service hoạt động ổn định.
+- Health check và thông báo service chưa chạy.
+- Script setup, start, stop và clear local data.
+- Tài liệu cấu hình và hướng dẫn vận hành cục bộ.
+
+THÀNH VIÊN 3 - AI RAG LEAD VÀ ĐÁNH GIÁ HỌC TẬP
+
+Phụ trách:
+- Xây dựng Transcript Processor và chuẩn hóa transcript.
+- Thiết kế chunking có overlap và giữ timestamp gốc.
+- Xác định cấu trúc chunk và phiên bản pipeline.
+- Lựa chọn, benchmark và đánh giá embedding model đa ngôn ngữ.
+- Xây dựng luồng tạo embedding theo batch.
+- Thiết kế collection và metadata trong ChromaDB.
+- Xây dựng ChromaDB Vector Store Adapter.
+- Lưu chunk, embedding, Video ID, thứ tự và timestamp.
+- Xây dựng semantic retrieval theo từng video.
+- Thiết kế bộ lọc Video ID để không trộn dữ liệu giữa các video.
+- Lựa chọn top k, similarity threshold và cách loại chunk trùng.
+- Xây dựng Context Builder để sắp xếp và giới hạn context.
+- Thiết kế prompt tạo quiz dựa trên transcript được truy xuất.
+- Thiết kế prompt tạo flashcard có chủ đề và timestamp nguồn.
+- Thiết kế schema và validation cho kết quả Gemini.
+- Xây dựng logic nhóm câu đúng và sai theo chủ đề kiến thức.
+- Truy vấn lại ChromaDB dựa trên câu sai hoặc chủ đề yếu.
+- Xác định nội dung người dùng đã học tốt.
+- Xác định nội dung người dùng cần cải thiện.
+- Đề xuất chunk và timestamp cần xem lại trong video.
+- Đánh giá độ liên quan của retrieval và độ chính xác timestamp.
+- Viết unit test cho chunking, embedding, retrieval và assessment.
+
+Quyền sở hữu kỹ thuật:
+- Thành viên 3 là người chịu trách nhiệm chính cho toàn bộ pipeline AI/RAG.
+- Mọi thay đổi embedding model, chunking strategy, collection schema, top k,
+  threshold, prompt và assessment logic phải do Thành viên 3 thực hiện hoặc
+  phê duyệt.
+- Thành viên 2 hỗ trợ khung service và vận hành nhưng không sở hữu logic RAG.
+- Thành viên 1 chỉ tích hợp kết quả AI/RAG vào giao diện extension.
+- Thành viên 4 xây dựng test case và xác minh chất lượng đầu ra.
+
+Đầu ra:
+- Transcript Processor và Chunking Module.
+- Embedding Pipeline và báo cáo lựa chọn model.
+- ChromaDB Collection Schema và Vector Store Adapter.
+- Semantic Retriever và Context Builder.
+- Prompt tạo quiz, flashcard và nhận xét học tập.
+- Schema và validation cho đầu ra AI.
+- Learning Assessment Module.
+- Cơ chế truy xuất timestamp cho phần kiến thức cần xem lại.
+- Bộ video, câu hỏi và expected timestamp để đánh giá.
+- Báo cáo metric retrieval, timestamp và chất lượng kết quả AI.
+
+THÀNH VIÊN 4 - QA INTEGRATION VÀ TÀI LIỆU
+
+Phụ trách:
+- Test plan và test case.
+- Integration và end to end test.
+- Kiểm thử OAuth, dữ liệu cục bộ và quyền extension.
+- Kiểm tra không lộ token, cookie hoặc dữ liệu nhạy cảm.
+- README, test report, slide và video demo.
+
+Đầu ra:
+- Bộ test và báo cáo lỗi.
+- Báo cáo nghiệm thu.
+- Hướng dẫn cài đặt và kịch bản demo.
+
+============================================================
+9. TIÊU CHÍ NGHIỆM THU V1
+============================================================
+
+- Người dùng có thể load extension và khởi động Local RAG Service theo README.
+- Extension nhận đúng video khi mở và khi chuyển video.
+- Người chưa có quyền thấy nút đăng nhập; OAuth chỉ mở sau khi bấm nút.
+- Extension không đọc cookie AI Studio và không chứa API key provider.
+- Transcript giữ đúng thứ tự và timestamp.
+- ChromaDB lưu được chunk, embedding và timestamp trên máy người dùng.
+- Kết quả retrieval thuộc đúng video và có timestamp hợp lệ.
+- Quiz và flashcard dựa trên context lấy từ transcript.
+- Quiz được chấm đúng theo đáp án.
+- Báo cáo kết quả chỉ ra chủ đề làm tốt và chưa tốt.
+- Mỗi nội dung cần cải thiện có thể dẫn người dùng tới timestamp liên quan.
+- Không lưu OAuth token, câu trả lời, điểm số hoặc lịch sử học tập lâu dài.
+- Không có chức năng gợi ý video mới trong V1.
+
+============================================================
+10. RỦI RO VÀ CÁCH XỬ LÝ
+============================================================
+
+1. Không lấy được transcript
+   - Kiểm chứng ngay trong hai tuần đầu.
+   - Dừng pipeline và hiển thị thông báo rõ ràng khi không có dữ liệu.
+
+2. OAuth hoặc quyền Gemini không hoạt động như giả định
+   - Làm prototype trước khi phát triển chức năng AI đầy đủ.
+   - Không coi cookie hoặc phiên web AI Studio là thông tin xác thực API.
+
+3. Người dùng chưa chạy Local RAG Service
+   - Extension kiểm tra trạng thái khi mở.
+   - Hiển thị hướng dẫn chạy script thay vì báo lỗi chung.
+
+4. Embedding model nặng hoặc chậm
+   - Benchmark trên máy cấu hình trung bình.
+   - Chọn model đa ngôn ngữ nhỏ và xử lý theo batch.
+
+5. Dữ liệu ChromaDB tăng theo số video
+   - Cho phép xóa cache từ extension hoặc script.
+   - Quy định giới hạn cache và chính sách dọn dữ liệu.
+
+6. Gemini tạo quiz không bám transcript
+   - Chỉ gửi context RAG đã truy xuất.
+   - Validate cấu trúc và timestamp trước khi hiển thị.
+
+7. YouTube thay đổi giao diện
+   - Tách YouTube Adapter khỏi UI.
+   - Duy trì regression test cho Video ID, transcript và timestamp.
+
+============================================================
+11. KỊCH BẢN DEMO CUỐI KỲ
+============================================================
+
+1. Chạy Local RAG Service.
+2. Load extension trong Chrome.
+3. Mở một video YouTube có transcript.
+4. Mở sidebar và đăng nhập Google nếu cần.
+5. Hệ thống lập chỉ mục transcript vào ChromaDB.
+6. Tạo quiz và làm một số câu đúng, một số câu sai.
+7. Nộp bài và xem điểm.
+8. Xem phần kiến thức đã nắm tốt.
+9. Xem phần kiến thức cần cải thiện.
+10. Bấm timestamp được đề xuất để quay lại đúng đoạn video.
+11. Mở flashcard và đánh dấu thẻ cần xem lại.
+12. Mở thư mục ChromaDB để chứng minh dữ liệu được lưu cục bộ.
+
+============================================================
+12. QUY TẮC LÀM VIỆC CHUNG
+============================================================
+
+- Mỗi chức năng có issue hoặc task riêng.
+- Không đẩy trực tiếp lên nhánh main.
+- Pull request phải ghi cách chạy, cách kiểm thử và hạn chế còn lại.
+- Không commit token, cookie, secret hoặc dữ liệu người dùng.
+- Schema dùng chung phải được cập nhật trước khi thay đổi hai phía.
+- Cuối mỗi giai đoạn phải có bản demo tích hợp.
+- Chức năng ngoài phạm vi V1 chỉ được thêm sau khi luồng nghiệm thu đã ổn định.
+
+============================================================
+KẾT LUẬN
+============================================================
+
+V1 tập trung vào một trải nghiệm học hoàn chỉnh trên một video. RAG và ChromaDB
+được dùng để nối kết nội dung, embedding và timestamp trên máy người dùng.
+Extension chịu trách nhiệm trải nghiệm học và Google OAuth; Local RAG Service
+chịu trách nhiệm lập chỉ mục và truy xuất. Hệ thống không cần MySQL, không có
+server lưu trữ tập trung, không lưu lịch sử học tập và không gợi ý video mới.

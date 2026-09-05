@@ -1,0 +1,171 @@
+{
+  "input": "C:\\Users\\vuong\\Documents\\Codex\\2026-08-27\\d-a\\outputs\\SDS_YouTube_Learning_Companion.docx",
+  "fonts_by_char_count": {
+    "Arial": 26831,
+    "Consolas": 1216
+  },
+  "direct_run_formatting_runs": 849,
+  "direct_paragraph_formatting_paragraphs": 796,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "\u0110\u1eb7c t\u1ea3 thi\u1ebft k\u1ebf ph\u1ea7n m\u1ec1m YouTube Learning Companion",
+      "style": "Title"
+    },
+    {
+      "para_index": 204,
+      "text": "T\u00e0i li\u1ec7u n\u1ed9i b\u1ed9",
+      "style": "Normal"
+    },
+    {
+      "para_index": 208,
+      "text": "T\u00e0i li\u1ec7u k\u1ef9 thu\u1eadt ch\u00ednh th\u1ee9c",
+      "style": "Normal"
+    },
+    {
+      "para_index": 216,
+      "text": "Thu\u1ed9c t\u00ednh",
+      "style": "Normal"
+    },
+    {
+      "para_index": 217,
+      "text": "Gi\u00e1 tr\u1ecb",
+      "style": "Normal"
+    },
+    {
+      "para_index": 230,
+      "text": "Phi\u00ean b\u1ea3n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 231,
+      "text": "Ng\u00e0y",
+      "style": "Normal"
+    },
+    {
+      "para_index": 232,
+      "text": "N\u1ed9i dung",
+      "style": "Normal"
+    },
+    {
+      "para_index": 233,
+      "text": "Tr\u1ea1ng th\u00e1i",
+      "style": "Normal"
+    },
+    {
+      "para_index": 238,
+      "text": "M\u00e3",
+      "style": "Normal"
+    },
+    {
+      "para_index": 239,
+      "text": "Quy\u1ebft \u0111\u1ecbnh",
+      "style": "Normal"
+    },
+    {
+      "para_index": 240,
+      "text": "\u0110\u1ec1 xu\u1ea5t",
+      "style": "Normal"
+    },
+    {
+      "para_index": 241,
+      "text": "\u0110i\u1ec1u ki\u1ec7n",
+      "style": "Normal"
+    },
+    {
+      "para_index": 262,
+      "text": "M\u1ee5c",
+      "style": "Normal"
+    },
+    {
+      "para_index": 263,
+      "text": "N\u1ed9i dung",
+      "style": "Normal"
+    },
+    {
+      "para_index": 264,
+      "text": "M\u1ee5c",
+      "style": "Normal"
+    },
+    {
+      "para_index": 265,
+      "text": "N\u1ed9i dung",
+      "style": "Normal"
+    },
+    {
+      "para_index": 266,
+      "text": "M\u1ee5c",
+      "style": "Normal"
+    },
+    {
+      "para_index": 267,
+      "text": "N\u1ed9i dung",
+      "style": "Normal"
+    },
+    {
+      "para_index": 304,
+      "text": "Thu\u1eadt ng\u1eef",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "\u0110\u1eb7c t\u1ea3 thi\u1ebft k\u1ebf ph\u1ea7n m\u1ec1m YouTube Learning Companion",
+        "style": "Title"
+      },
+      {
+        "para_index": 3,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 9,
+        "text": "",
+        "style": "Normal"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "\u0110\u1eb7c t\u1ea3 thi\u1ebft k\u1ebf ph\u1ea7n m\u1ec1m YouTube Learning Companion",
+        "style": "Title"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Ph\u1ee5c v\u1ee5 tri\u1ec3n khai n\u1ed9i b\u1ed9 v\u00e0 b\u00e1o c\u00e1o qu\u1ea3n l\u00fd",
+        "style": "Subtitle"
+      },
+      {
+        "para_index": 6,
+        "run_text": "T\u00e0i li\u1ec7u n\u00e0y x\u00e1c \u0111\u1ecbnh thi\u1ebft k\u1ebf m\u1ee5c ti\u00eau cho Chrome Extension h\u1ed7 tr\u1ee3 h\u1ecdc t\u1eadp tr\u00ean",
+        "style": "Normal"
+      },
+      {
+        "para_index": 11,
+        "run_text": "YouTube Learning Companion b\u1ed5 sung m\u1ed9t sidebar tr\u00ean trang YouTube \u0111\u1ec3 ng\u01b0\u1eddi d\u00f9ng ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 12,
+        "run_text": "Baseline k\u1ef9 thu\u1eadt s\u1eed d\u1ee5ng React v\u00e0 TypeScript cho Chrome Extension Manifest V3, ",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}
