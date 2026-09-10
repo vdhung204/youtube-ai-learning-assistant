@@ -1,0 +1,2305 @@
+{
+  "createdAt": "2026-09-09T14:05:04.221802+00:00",
+  "datasetVersion": "synthetic-bilingual-v1",
+  "provenance": "Original synthetic educational text authored for this repository. Not transcribed from actual YouTube videos. Test fixture identifiers are not YouTube sources. May be used and modified with this project.",
+  "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2@e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+  "dimension": 384,
+  "maxSequenceTokens": 128,
+  "modelLoadSeconds": 8.57252950000111,
+  "modelCacheBytes": 499568933,
+  "sampledPeakRssBytes": 1006567424,
+  "python": "3.11.16",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "logicalCpus": 16,
+  "developmentRuns": [
+    {
+      "split": "development",
+      "chunking": {
+        "max_tokens": 64,
+        "overlap_tokens": 8,
+        "max_gap_sec": 5.0,
+        "merge_min_chars": 24,
+        "merge_gap_sec": 1.0
+      },
+      "retrieval": {
+        "top_k": 3,
+        "threshold": 0.35,
+        "context_budget": 6000,
+        "dedup_overlap": 0.8,
+        "strong_topic_ratio": 0.7
+      },
+      "indexSeconds": 0.20878910000101314,
+      "metrics": {
+        "queryCount": 12,
+        "answerableCount": 10,
+        "recallAtK": 0.9,
+        "mrr": 0.8333333333333334,
+        "abstentionAccuracy": 1,
+        "meanTimestampStartErrorSecOnHits": 0.0,
+        "meanQueryMs": 23.611783333156684
+      },
+      "queries": [
+        {
+          "videoId": "fixturevi01",
+          "query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 24.462200000925804,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.4642866849899292
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.36955201625823975
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.35854649543762207
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Vì sao không gán lại một phần tử trong tuple?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.544499999436084,
+          "returned": [
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.6174970269203186
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Lưu dữ liệu theo khóa và giá trị như thế nào?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 24.433700000372482,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.6238078474998474
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5718541145324707
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Cách dừng vòng lặp đang chạy?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 25.175700000545476,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.6337161064147949
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 22.245199999815668,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5917370915412903
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.46385300159454346
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.3665059208869934
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 22.302399998807232,
+          "returned": []
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I choose which columns to read from a table?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 32.102899998790235,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.745021402835846
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.45326095819473267
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "Which clause removes rows that do not satisfy a condition?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 0.3333333333333333,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 25.110500000664615,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.5810787677764893
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.5748901963233948
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.48884761333465576
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How can I count rows for each group?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.532299999307725,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.7300877571105957
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.45733529329299927
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.44753146171569824
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How are matching records from two tables combined?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.9378999988985,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.639592170715332
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.502383291721344
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.49580395221710205
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I sort values from highest to lowest?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.595300000626594,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5462085008621216
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "What is the recipe for baking a chocolate cake?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 21.8987999996898,
+          "returned": []
+        }
+      ]
+    },
+    {
+      "split": "development",
+      "chunking": {
+        "max_tokens": 64,
+        "overlap_tokens": 8,
+        "max_gap_sec": 5.0,
+        "merge_min_chars": 24,
+        "merge_gap_sec": 1.0
+      },
+      "retrieval": {
+        "top_k": 3,
+        "threshold": 0.5,
+        "context_budget": 6000,
+        "dedup_overlap": 0.8,
+        "strong_topic_ratio": 0.7
+      },
+      "indexSeconds": 0.1508668000005855,
+      "metrics": {
+        "queryCount": 12,
+        "answerableCount": 10,
+        "recallAtK": 0.8,
+        "mrr": 0.8,
+        "abstentionAccuracy": 1,
+        "meanTimestampStartErrorSecOnHits": 0.0,
+        "meanQueryMs": 21.07265833319616
+      },
+      "queries": [
+        {
+          "videoId": "fixturevi01",
+          "query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 21.3739999999234,
+          "returned": []
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Vì sao không gán lại một phần tử trong tuple?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.31410000017786,
+          "returned": [
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.6174970269203186
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Lưu dữ liệu theo khóa và giá trị như thế nào?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.301000000472413,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.6238078474998474
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5718541145324707
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Cách dừng vòng lặp đang chạy?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 17.68150000134483,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.6337161064147949
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 22.526999999172403,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5917370915412903
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 22.744699999748264,
+          "returned": []
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I choose which columns to read from a table?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.00910000121803,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.745021402835846
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "Which clause removes rows that do not satisfy a condition?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 23.63629999854311,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.5810787677764893
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.5748901963233948
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How can I count rows for each group?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 18.691600000238395,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.7300877571105957
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How are matching records from two tables combined?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.855099999607773,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.639592170715332
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.502383291721344
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I sort values from highest to lowest?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.456799999214127,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5462085008621216
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "What is the recipe for baking a chocolate cake?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 20.280699998693308,
+          "returned": []
+        }
+      ]
+    },
+    {
+      "split": "development",
+      "chunking": {
+        "max_tokens": 64,
+        "overlap_tokens": 8,
+        "max_gap_sec": 5.0,
+        "merge_min_chars": 24,
+        "merge_gap_sec": 1.0
+      },
+      "retrieval": {
+        "top_k": 5,
+        "threshold": 0.35,
+        "context_budget": 6000,
+        "dedup_overlap": 0.8,
+        "strong_topic_ratio": 0.7
+      },
+      "indexSeconds": 0.1682390000023588,
+      "metrics": {
+        "queryCount": 12,
+        "answerableCount": 10,
+        "recallAtK": 1.0,
+        "mrr": 0.8583333333333333,
+        "abstentionAccuracy": 1,
+        "meanTimestampStartErrorSecOnHits": 0.0,
+        "meanQueryMs": 23.329141666636133
+      },
+      "queries": [
+        {
+          "videoId": "fixturevi01",
+          "query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 0.25,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.767300001054537,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.4642866849899292
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.36955201625823975
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.35854649543762207
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.35293906927108765
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Vì sao không gán lại một phần tử trong tuple?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.745399999213987,
+          "returned": [
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.6174970269203186
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Lưu dữ liệu theo khóa và giá trị như thế nào?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 19.840799999656156,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.6238078474998474
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5718541145324707
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Cách dừng vòng lặp đang chạy?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 28.005900001517148,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.6337161064147949
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 31.44869999960065,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5917370915412903
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.46385300159454346
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.3665059208869934
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 26.881600000706385,
+          "returned": []
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I choose which columns to read from a table?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.59100000062608,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.745021402835846
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.45326095819473267
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "Which clause removes rows that do not satisfy a condition?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 0.3333333333333333,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.082499999873107,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.5810787677764893
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.5748901963233948
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.48884761333465576
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.40567588806152344
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How can I count rows for each group?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.692399999461486,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.7300877571105957
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.45733529329299927
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.44753146171569824
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.4225185513496399
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How are matching records from two tables combined?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.290399999794317,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.639592170715332
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.502383291721344
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.49580395221710205
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.3574680685997009
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I sort values from highest to lowest?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.633499998642947,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5462085008621216
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "What is the recipe for baking a chocolate cake?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 21.970199999486795,
+          "returned": []
+        }
+      ]
+    },
+    {
+      "split": "development",
+      "chunking": {
+        "max_tokens": 64,
+        "overlap_tokens": 8,
+        "max_gap_sec": 5.0,
+        "merge_min_chars": 24,
+        "merge_gap_sec": 1.0
+      },
+      "retrieval": {
+        "top_k": 5,
+        "threshold": 0.5,
+        "context_budget": 6000,
+        "dedup_overlap": 0.8,
+        "strong_topic_ratio": 0.7
+      },
+      "indexSeconds": 0.15450690000034228,
+      "metrics": {
+        "queryCount": 12,
+        "answerableCount": 10,
+        "recallAtK": 0.8,
+        "mrr": 0.8,
+        "abstentionAccuracy": 1,
+        "meanTimestampStartErrorSecOnHits": 0.0,
+        "meanQueryMs": 22.868916666539008
+      },
+      "queries": [
+        {
+          "videoId": "fixturevi01",
+          "query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 19.367099999726634,
+          "returned": []
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Vì sao không gán lại một phần tử trong tuple?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.907199999783188,
+          "returned": [
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.6174970269203186
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Lưu dữ liệu theo khóa và giá trị như thế nào?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.35900000030233,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.6238078474998474
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5718541145324707
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Cách dừng vòng lặp đang chạy?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 18.584900000860216,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.6337161064147949
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 19.528799999534385,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5917370915412903
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 21.26270000007935,
+          "returned": []
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I choose which columns to read from a table?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 28.217299999596435,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.745021402835846
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "Which clause removes rows that do not satisfy a condition?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 31.38070000022708,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.5810787677764893
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.5748901963233948
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How can I count rows for each group?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 24.824399999488378,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.7300877571105957
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How are matching records from two tables combined?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.326999998971587,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.639592170715332
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.502383291721344
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I sort values from highest to lowest?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 22.82579999882728,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5462085008621216
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "What is the recipe for baking a chocolate cake?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 22.84210000107123,
+          "returned": []
+        }
+      ]
+    },
+    {
+      "split": "development",
+      "chunking": {
+        "max_tokens": 96,
+        "overlap_tokens": 16,
+        "max_gap_sec": 5.0,
+        "merge_min_chars": 24,
+        "merge_gap_sec": 1.0
+      },
+      "retrieval": {
+        "top_k": 3,
+        "threshold": 0.35,
+        "context_budget": 6000,
+        "dedup_overlap": 0.8,
+        "strong_topic_ratio": 0.7
+      },
+      "indexSeconds": 0.15641019999929995,
+      "metrics": {
+        "queryCount": 12,
+        "answerableCount": 10,
+        "recallAtK": 0.9,
+        "mrr": 0.8333333333333334,
+        "abstentionAccuracy": 1,
+        "meanTimestampStartErrorSecOnHits": 0.0,
+        "meanQueryMs": 22.291683333151013
+      },
+      "queries": [
+        {
+          "videoId": "fixturevi01",
+          "query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 20.95290000033856,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.4642866849899292
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.36955201625823975
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.35854649543762207
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Vì sao không gán lại một phần tử trong tuple?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.759700000984594,
+          "returned": [
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.6174970269203186
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Lưu dữ liệu theo khóa và giá trị như thế nào?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.89890000045125,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.6238078474998474
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5718541145324707
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Cách dừng vòng lặp đang chạy?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.495999999388005,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.6337161064147949
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.02109999982349,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5917370915412903
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.46385300159454346
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.3665059208869934
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 20.410299999639392,
+          "returned": []
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I choose which columns to read from a table?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 24.6540999996796,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.745021402835846
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.45326095819473267
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "Which clause removes rows that do not satisfy a condition?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 0.3333333333333333,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.51259999886679,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.5810787677764893
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.5748901963233948
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.48884761333465576
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How can I count rows for each group?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.617499999090796,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.7300877571105957
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.45733529329299927
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.44753146171569824
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How are matching records from two tables combined?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 18.702000001212582,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.639592170715332
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.502383291721344
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.49580395221710205
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I sort values from highest to lowest?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 22.861199999169912,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5462085008621216
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "What is the recipe for baking a chocolate cake?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 24.613899999167188,
+          "returned": []
+        }
+      ]
+    },
+    {
+      "split": "development",
+      "chunking": {
+        "max_tokens": 96,
+        "overlap_tokens": 16,
+        "max_gap_sec": 5.0,
+        "merge_min_chars": 24,
+        "merge_gap_sec": 1.0
+      },
+      "retrieval": {
+        "top_k": 3,
+        "threshold": 0.5,
+        "context_budget": 6000,
+        "dedup_overlap": 0.8,
+        "strong_topic_ratio": 0.7
+      },
+      "indexSeconds": 0.16310999999950582,
+      "metrics": {
+        "queryCount": 12,
+        "answerableCount": 10,
+        "recallAtK": 0.8,
+        "mrr": 0.8,
+        "abstentionAccuracy": 1,
+        "meanTimestampStartErrorSecOnHits": 0.0,
+        "meanQueryMs": 21.843608333104687
+      },
+      "queries": [
+        {
+          "videoId": "fixturevi01",
+          "query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 24.98629999900004,
+          "returned": []
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Vì sao không gán lại một phần tử trong tuple?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.466700000019046,
+          "returned": [
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.6174970269203186
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Lưu dữ liệu theo khóa và giá trị như thế nào?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 18.95929999955115,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.6238078474998474
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5718541145324707
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Cách dừng vòng lặp đang chạy?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 18.928999999843654,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.6337161064147949
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.540800000162562,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5917370915412903
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 21.08310000039637,
+          "returned": []
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I choose which columns to read from a table?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 25.352099999508937,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.745021402835846
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "Which clause removes rows that do not satisfy a condition?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 25.454599999648053,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.5810787677764893
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.5748901963233948
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How can I count rows for each group?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.134000000325614,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.7300877571105957
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How are matching records from two tables combined?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 22.038199998860364,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.639592170715332
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.502383291721344
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I sort values from highest to lowest?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.518199999060016,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5462085008621216
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "What is the recipe for baking a chocolate cake?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 22.66100000088045,
+          "returned": []
+        }
+      ]
+    },
+    {
+      "split": "development",
+      "chunking": {
+        "max_tokens": 96,
+        "overlap_tokens": 16,
+        "max_gap_sec": 5.0,
+        "merge_min_chars": 24,
+        "merge_gap_sec": 1.0
+      },
+      "retrieval": {
+        "top_k": 5,
+        "threshold": 0.35,
+        "context_budget": 6000,
+        "dedup_overlap": 0.8,
+        "strong_topic_ratio": 0.7
+      },
+      "indexSeconds": 0.1673404000011942,
+      "metrics": {
+        "queryCount": 12,
+        "answerableCount": 10,
+        "recallAtK": 1.0,
+        "mrr": 0.8583333333333333,
+        "abstentionAccuracy": 1,
+        "meanTimestampStartErrorSecOnHits": 0.0,
+        "meanQueryMs": 22.493825000310608
+      },
+      "queries": [
+        {
+          "videoId": "fixturevi01",
+          "query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 0.25,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.92520000062359,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.4642866849899292
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.36955201625823975
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.35854649543762207
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.35293906927108765
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Vì sao không gán lại một phần tử trong tuple?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 22.913099999641418,
+          "returned": [
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.6174970269203186
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Lưu dữ liệu theo khóa và giá trị như thế nào?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 25.697700000819168,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.6238078474998474
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5718541145324707
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Cách dừng vòng lặp đang chạy?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.447799999805284,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.6337161064147949
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.957200000542798,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5917370915412903
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.46385300159454346
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.3665059208869934
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 22.415100000216626,
+          "returned": []
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I choose which columns to read from a table?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 25.472700001046178,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.745021402835846
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.45326095819473267
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "Which clause removes rows that do not satisfy a condition?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 0.3333333333333333,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.648500000083004,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.5810787677764893
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.5748901963233948
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.48884761333465576
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.40567588806152344
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How can I count rows for each group?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.516400000517024,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.7300877571105957
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.45733529329299927
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.44753146171569824
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.4225185513496399
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How are matching records from two tables combined?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 22.846300000310293,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.639592170715332
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.502383291721344
+            },
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.49580395221710205
+            },
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.3574680685997009
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I sort values from highest to lowest?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 20.394200000737328,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5462085008621216
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "What is the recipe for baking a chocolate cake?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 19.691699999384582,
+          "returned": []
+        }
+      ]
+    },
+    {
+      "split": "development",
+      "chunking": {
+        "max_tokens": 96,
+        "overlap_tokens": 16,
+        "max_gap_sec": 5.0,
+        "merge_min_chars": 24,
+        "merge_gap_sec": 1.0
+      },
+      "retrieval": {
+        "top_k": 5,
+        "threshold": 0.5,
+        "context_budget": 6000,
+        "dedup_overlap": 0.8,
+        "strong_topic_ratio": 0.7
+      },
+      "indexSeconds": 0.15764459999991232,
+      "metrics": {
+        "queryCount": 12,
+        "answerableCount": 10,
+        "recallAtK": 0.8,
+        "mrr": 0.8,
+        "abstentionAccuracy": 1,
+        "meanTimestampStartErrorSecOnHits": 0.0,
+        "meanQueryMs": 22.685266666788568
+      },
+      "queries": [
+        {
+          "videoId": "fixturevi01",
+          "query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 20.571600000039325,
+          "returned": []
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Vì sao không gán lại một phần tử trong tuple?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 23.24140000018815,
+          "returned": [
+            {
+              "startSec": 35.0,
+              "endSec": 60.0,
+              "score": 0.6174970269203186
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Lưu dữ liệu theo khóa và giá trị như thế nào?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 24.583799999163602,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.6238078474998474
+            },
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5718541145324707
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Cách dừng vòng lặp đang chạy?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.360100001402316,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.6337161064147949
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 22.671400000035646,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5917370915412903
+            }
+          ]
+        },
+        {
+          "videoId": "fixturevi01",
+          "query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 23.05260000139242,
+          "returned": []
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I choose which columns to read from a table?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 26.819000000614324,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.745021402835846
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "Which clause removes rows that do not satisfy a condition?",
+          "answerable": true,
+          "recallAtK": 0.0,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 28.287799999816343,
+          "returned": [
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.5810787677764893
+            },
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.5748901963233948
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How can I count rows for each group?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 18.25230000031297,
+          "returned": [
+            {
+              "startSec": 70.0,
+              "endSec": 95.0,
+              "score": 0.7300877571105957
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How are matching records from two tables combined?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 19.721999999092077,
+          "returned": [
+            {
+              "startSec": 105.0,
+              "endSec": 130.0,
+              "score": 0.639592170715332
+            },
+            {
+              "startSec": 0.0,
+              "endSec": 25.0,
+              "score": 0.502383291721344
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "How do I sort values from highest to lowest?",
+          "answerable": true,
+          "recallAtK": 1.0,
+          "reciprocalRank": 1.0,
+          "timestampStartErrorSec": 0.0,
+          "queryMs": 21.78299999832234,
+          "returned": [
+            {
+              "startSec": 145.0,
+              "endSec": 175.0,
+              "score": 0.5462085008621216
+            }
+          ]
+        },
+        {
+          "videoId": "fixtureen01",
+          "query": "What is the recipe for baking a chocolate cake?",
+          "answerable": false,
+          "recallAtK": null,
+          "reciprocalRank": 0,
+          "timestampStartErrorSec": null,
+          "queryMs": 21.878200001083314,
+          "returned": []
+        }
+      ]
+    }
+  ],
+  "selectedRun": 2,
+  "evaluation": {
+    "split": "evaluation",
+    "chunking": {
+      "max_tokens": 64,
+      "overlap_tokens": 8,
+      "max_gap_sec": 5.0,
+      "merge_min_chars": 24,
+      "merge_gap_sec": 1.0
+    },
+    "retrieval": {
+      "top_k": 5,
+      "threshold": 0.35,
+      "context_budget": 6000,
+      "dedup_overlap": 0.8,
+      "strong_topic_ratio": 0.7
+    },
+    "indexSeconds": 0.19302050000078452,
+    "metrics": {
+      "queryCount": 12,
+      "answerableCount": 10,
+      "recallAtK": 1.0,
+      "mrr": 0.95,
+      "abstentionAccuracy": 1,
+      "meanTimestampStartErrorSecOnHits": 0.0,
+      "meanQueryMs": 22.570916666609264
+    },
+    "queries": [
+      {
+        "videoId": "fixturevi02",
+        "query": "Dữ liệu huấn luyện có nhãn thuộc kiểu học nào?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 25.596199999199598,
+        "returned": [
+          {
+            "startSec": 0.0,
+            "endSec": 30.0,
+            "score": 0.7441550493240356
+          },
+          {
+            "startSec": 120.0,
+            "endSec": 150.0,
+            "score": 0.6974714398384094
+          },
+          {
+            "startSec": 240.0,
+            "endSec": 275.0,
+            "score": 0.6453360319137573
+          },
+          {
+            "startSec": 360.0,
+            "endSec": 390.0,
+            "score": 0.47780632972717285
+          }
+        ]
+      },
+      {
+        "videoId": "fixturevi02",
+        "query": "Tập dữ liệu nào phải giữ riêng đến khi chọn xong mô hình?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 0.5,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 24.498900000253343,
+        "returned": [
+          {
+            "startSec": 0.0,
+            "endSec": 30.0,
+            "score": 0.5226860046386719
+          },
+          {
+            "startSec": 120.0,
+            "endSec": 150.0,
+            "score": 0.4927811622619629
+          },
+          {
+            "startSec": 240.0,
+            "endSec": 275.0,
+            "score": 0.4698448181152344
+          },
+          {
+            "startSec": 360.0,
+            "endSec": 390.0,
+            "score": 0.4303170442581177
+          },
+          {
+            "startSec": 480.0,
+            "endSec": 510.0,
+            "score": 0.37649083137512207
+          }
+        ]
+      },
+      {
+        "videoId": "fixturevi02",
+        "query": "Tại sao chỉ fit scaler trên tập train?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 21.76320000035048,
+        "returned": [
+          {
+            "startSec": 240.0,
+            "endSec": 275.0,
+            "score": 0.48742127418518066
+          },
+          {
+            "startSec": 120.0,
+            "endSec": 150.0,
+            "score": 0.3553289771080017
+          },
+          {
+            "startSec": 360.0,
+            "endSec": 390.0,
+            "score": 0.35135936737060547
+          }
+        ]
+      },
+      {
+        "videoId": "fixturevi02",
+        "query": "Mô hình học tốt trên train nhưng kém trên dữ liệu mới là hiện tượng gì?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 25.31289999933506,
+        "returned": [
+          {
+            "startSec": 360.0,
+            "endSec": 390.0,
+            "score": 0.5607948303222656
+          },
+          {
+            "startSec": 0.0,
+            "endSec": 30.0,
+            "score": 0.49520260095596313
+          },
+          {
+            "startSec": 240.0,
+            "endSec": 275.0,
+            "score": 0.465828537940979
+          }
+        ]
+      },
+      {
+        "videoId": "fixturevi02",
+        "query": "Recall cho biết điều gì về các trường hợp dương tính thực tế?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 24.215800000092713,
+        "returned": [
+          {
+            "startSec": 480.0,
+            "endSec": 510.0,
+            "score": 0.40351802110671997
+          }
+        ]
+      },
+      {
+        "videoId": "fixturevi02",
+        "query": "Cần bao nhiêu bột mì để nướng bánh?",
+        "answerable": false,
+        "recallAtK": null,
+        "reciprocalRank": 0,
+        "timestampStartErrorSec": null,
+        "queryMs": 20.537099999273778,
+        "returned": []
+      },
+      {
+        "videoId": "fixtureen02",
+        "query": "What is the difference between a class and an instance?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 23.249800000485266,
+        "returned": [
+          {
+            "startSec": 0.0,
+            "endSec": 30.0,
+            "score": 0.7416233420372009
+          },
+          {
+            "startSec": 240.0,
+            "endSec": 275.0,
+            "score": 0.5551294684410095
+          },
+          {
+            "startSec": 120.0,
+            "endSec": 150.0,
+            "score": 0.517814040184021
+          }
+        ]
+      },
+      {
+        "videoId": "fixtureen02",
+        "query": "What does self refer to when initializing an object?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 20.284100000935723,
+        "returned": [
+          {
+            "startSec": 120.0,
+            "endSec": 150.0,
+            "score": 0.704115629196167
+          },
+          {
+            "startSec": 0.0,
+            "endSec": 30.0,
+            "score": 0.5401318073272705
+          },
+          {
+            "startSec": 480.0,
+            "endSec": 510.0,
+            "score": 0.44881361722946167
+          },
+          {
+            "startSec": 360.0,
+            "endSec": 390.0,
+            "score": 0.3944513201713562
+          }
+        ]
+      },
+      {
+        "videoId": "fixtureen02",
+        "query": "How does a subclass replace behavior inherited from a parent?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 25.147599999399972,
+        "returned": [
+          {
+            "startSec": 240.0,
+            "endSec": 275.0,
+            "score": 0.7461282014846802
+          },
+          {
+            "startSec": 0.0,
+            "endSec": 30.0,
+            "score": 0.4314008951187134
+          }
+        ]
+      },
+      {
+        "videoId": "fixtureen02",
+        "query": "What design has a car delegate work to its engine?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 20.938899999237037,
+        "returned": [
+          {
+            "startSec": 360.0,
+            "endSec": 390.0,
+            "score": 0.5912500023841858
+          }
+        ]
+      },
+      {
+        "videoId": "fixtureen02",
+        "query": "How can an attribute reject an invalid new value?",
+        "answerable": true,
+        "recallAtK": 1.0,
+        "reciprocalRank": 1.0,
+        "timestampStartErrorSec": 0.0,
+        "queryMs": 19.58100000047125,
+        "returned": [
+          {
+            "startSec": 480.0,
+            "endSec": 510.0,
+            "score": 0.6226621866226196
+          }
+        ]
+      },
+      {
+        "videoId": "fixtureen02",
+        "query": "How far is the Moon from the Earth?",
+        "answerable": false,
+        "recallAtK": null,
+        "reciprocalRank": 0,
+        "timestampStartErrorSec": null,
+        "queryMs": 19.725500000276952,
+        "returned": []
+      }
+    ]
+  },
+  "limitations": [
+    "Synthetic text, not a real YouTube video evaluation.",
+    "50 ms sampled RSS is approximate and includes runtime/cache overhead.",
+    "Timestamp hit means at least half of an expected interval is covered.",
+    "No OAuth/Gemini generation or human grounding evaluation in this benchmark."
+  ]
+}

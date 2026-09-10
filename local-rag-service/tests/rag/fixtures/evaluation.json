@@ -1,0 +1,82 @@
+{
+  "datasetVersion": "synthetic-bilingual-v1",
+  "provenance": "Original synthetic educational text authored for this repository. Not transcribed from actual YouTube videos. Test fixture identifiers are not YouTube sources. May be used and modified with this project.",
+  "videos": [
+    {
+      "split": "development",
+      "video": {"videoId": "fixturevi01", "title": "Python cơ bản - mẫu tự viết", "durationSec": 180.0, "language": "vi"},
+      "transcriptSegments": [
+        {"text": "List là một dãy có thứ tự trong Python. Bạn có thể thêm, xóa hoặc thay đổi phần tử của list sau khi tạo nó.", "startSec": 0.0, "endSec": 25.0, "position": 0},
+        {"text": "Tuple là một dãy có thứ tự nhưng không thể gán lại các phần tử sau khi tạo. Khi cần dữ liệu cố định, bạn có thể dùng tuple.", "startSec": 35.0, "endSec": 60.0, "position": 1},
+        {"text": "Dictionary lưu các cặp khóa và giá trị. Bạn tra cứu giá trị bằng khóa thay vì chỉ số vị trí trong một dãy.", "startSec": 70.0, "endSec": 95.0, "position": 2},
+        {"text": "Vòng lặp for giúp duyệt từng phần tử trong một tập hợp. Lệnh break kết thúc vòng lặp đang chạy.", "startSec": 105.0, "endSec": 130.0, "position": 3},
+        {"text": "Hàm được khai báo bằng từ khóa def. Tham số nhận dữ liệu đầu vào, còn return gửi kết quả về nơi gọi hàm.", "startSec": 145.0, "endSec": 175.0, "position": 4}
+      ],
+      "queries": [
+        {"query": "Kiểu dữ liệu nào cho phép thêm hoặc xóa phần tử?", "expected": [[0, 25]]},
+        {"query": "Vì sao không gán lại một phần tử trong tuple?", "expected": [[35, 60]]},
+        {"query": "Lưu dữ liệu theo khóa và giá trị như thế nào?", "expected": [[70, 95]]},
+        {"query": "Cách dừng vòng lặp đang chạy?", "expected": [[105, 130]]},
+        {"query": "Từ khóa nào gửi kết quả từ hàm về nơi gọi?", "expected": [[145, 175]]},
+        {"query": "Các hành tinh quay quanh Mặt Trời trong bao lâu?", "expected": []}
+      ]
+    },
+    {
+      "split": "development",
+      "video": {"videoId": "fixtureen01", "title": "SQL basics - original fixture", "durationSec": 180.0, "language": "en"},
+      "transcriptSegments": [
+        {"text": "SELECT retrieves columns from a table. The FROM clause identifies the table containing the rows you want to read.", "startSec": 0.0, "endSec": 25.0, "position": 0},
+        {"text": "WHERE filters individual rows before grouping. For example, a condition on price can exclude products that are too expensive.", "startSec": 35.0, "endSec": 60.0, "position": 1},
+        {"text": "GROUP BY puts rows with matching values into groups. COUNT counts rows in each group, while SUM adds numeric values.", "startSec": 70.0, "endSec": 95.0, "position": 2},
+        {"text": "An INNER JOIN combines rows from two tables when the join condition matches. Unmatched rows are excluded from the result.", "startSec": 105.0, "endSec": 130.0, "position": 3},
+        {"text": "ORDER BY sorts query results. ASC sorts in ascending order and DESC sorts in descending order.", "startSec": 145.0, "endSec": 175.0, "position": 4}
+      ],
+      "queries": [
+        {"query": "How do I choose which columns to read from a table?", "expected": [[0, 25]]},
+        {"query": "Which clause removes rows that do not satisfy a condition?", "expected": [[35, 60]]},
+        {"query": "How can I count rows for each group?", "expected": [[70, 95]]},
+        {"query": "How are matching records from two tables combined?", "expected": [[105, 130]]},
+        {"query": "How do I sort values from highest to lowest?", "expected": [[145, 175]]},
+        {"query": "What is the recipe for baking a chocolate cake?", "expected": []}
+      ]
+    },
+    {
+      "split": "evaluation",
+      "video": {"videoId": "fixturevi02", "title": "Học máy - mẫu tự viết có khoảng nghỉ", "durationSec": 600.0, "language": "vi"},
+      "transcriptSegments": [
+        {"text": "Trong học có giám sát, mỗi ví dụ huấn luyện có dữ liệu đầu vào và nhãn mục tiêu. Mô hình học mối liên hệ để dự đoán nhãn cho dữ liệu mới.", "startSec": 0.0, "endSec": 30.0, "position": 0},
+        {"text": "Tập huấn luyện dùng để học tham số. Tập kiểm định giúp chọn cấu hình. Tập kiểm tra được giữ riêng để đánh giá mô hình sau khi lựa chọn hoàn tất.", "startSec": 120.0, "endSec": 150.0, "position": 1},
+        {"text": "Chuẩn hóa đặc trưng giúp các cột có thang đo phù hợp. Chỉ fit bộ chuẩn hóa trên tập huấn luyện, rồi dùng cùng phép biến đổi cho dữ liệu kiểm định và kiểm tra để tránh rò rỉ dữ liệu.", "startSec": 240.0, "endSec": 275.0, "position": 2},
+        {"text": "Overfitting xảy ra khi mô hình ghi nhớ quá sát tập huấn luyện nhưng dự đoán kém trên dữ liệu mới. Có thể giảm độ phức tạp hoặc bổ sung dữ liệu phù hợp.", "startSec": 360.0, "endSec": 390.0, "position": 3},
+        {"text": "Precision đo tỷ lệ dự đoán dương tính thực sự đúng. Recall đo tỷ lệ trường hợp dương tính thực tế mà mô hình tìm được.", "startSec": 480.0, "endSec": 510.0, "position": 4}
+      ],
+      "queries": [
+        {"query": "Dữ liệu huấn luyện có nhãn thuộc kiểu học nào?", "expected": [[0, 30]]},
+        {"query": "Tập dữ liệu nào phải giữ riêng đến khi chọn xong mô hình?", "expected": [[120, 150]]},
+        {"query": "Tại sao chỉ fit scaler trên tập train?", "expected": [[240, 275]]},
+        {"query": "Mô hình học tốt trên train nhưng kém trên dữ liệu mới là hiện tượng gì?", "expected": [[360, 390]]},
+        {"query": "Recall cho biết điều gì về các trường hợp dương tính thực tế?", "expected": [[480, 510]]},
+        {"query": "Cần bao nhiêu bột mì để nướng bánh?", "expected": []}
+      ]
+    },
+    {
+      "split": "evaluation",
+      "video": {"videoId": "fixtureen02", "title": "Object oriented Python - original fixture with pauses", "durationSec": 600.0, "language": "en"},
+      "transcriptSegments": [
+        {"text": "A class defines the data and behavior of objects. An instance is a concrete object created from that class, with its own attribute values.", "startSec": 0.0, "endSec": 30.0, "position": 0},
+        {"text": "The init method initializes an instance after it is created. The self parameter refers to the instance whose attributes the method reads or changes.", "startSec": 120.0, "endSec": 150.0, "position": 1},
+        {"text": "Inheritance lets a subclass reuse and specialize a base class. Overriding replaces a method's behavior in the subclass while keeping the method interface.", "startSec": 240.0, "endSec": 275.0, "position": 2},
+        {"text": "Composition means an object contains another object and delegates work to it. A car containing an engine is an example of composition.", "startSec": 360.0, "endSec": 390.0, "position": 3},
+        {"text": "A property allows controlled access to an attribute. A setter can validate a new value before changing the object's internal state.", "startSec": 480.0, "endSec": 510.0, "position": 4}
+      ],
+      "queries": [
+        {"query": "What is the difference between a class and an instance?", "expected": [[0, 30]]},
+        {"query": "What does self refer to when initializing an object?", "expected": [[120, 150]]},
+        {"query": "How does a subclass replace behavior inherited from a parent?", "expected": [[240, 275]]},
+        {"query": "What design has a car delegate work to its engine?", "expected": [[360, 390]]},
+        {"query": "How can an attribute reject an invalid new value?", "expected": [[480, 510]]},
+        {"query": "How far is the Moon from the Earth?", "expected": []}
+      ]
+    }
+  ]
+}

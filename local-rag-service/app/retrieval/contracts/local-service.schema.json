@@ -1,0 +1,755 @@
+{
+  "$defs": {
+    "AssessmentRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "quizId": {
+          "anyOf": [
+            {
+              "maxLength": 10000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quizid"
+        },
+        "questions": {
+          "items": {
+            "$ref": "#/$defs/Question"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Questions",
+          "type": "array"
+        },
+        "userAnswers": {
+          "items": {
+            "$ref": "#/$defs/UserAnswer"
+          },
+          "maxItems": 100,
+          "title": "Useranswers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "questions",
+        "userAnswers"
+      ],
+      "title": "AssessmentRequest",
+      "type": "object"
+    },
+    "AssessmentResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "correctCount": {
+          "minimum": 0,
+          "title": "Correctcount",
+          "type": "integer"
+        },
+        "totalCount": {
+          "minimum": 0,
+          "title": "Totalcount",
+          "type": "integer"
+        },
+        "questionResults": {
+          "items": {
+            "$ref": "#/$defs/QuestionResult"
+          },
+          "title": "Questionresults",
+          "type": "array"
+        },
+        "strongTopics": {
+          "items": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Strongtopics",
+          "type": "array"
+        },
+        "weakTopics": {
+          "items": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Weaktopics",
+          "type": "array"
+        },
+        "reviewTimestamps": {
+          "items": {
+            "$ref": "#/$defs/ReviewTimestamp"
+          },
+          "title": "Reviewtimestamps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "correctCount",
+        "totalCount",
+        "questionResults",
+        "strongTopics",
+        "weakTopics",
+        "reviewTimestamps"
+      ],
+      "title": "AssessmentResponse",
+      "type": "object"
+    },
+    "DeleteResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "videoId": {
+          "pattern": "^[A-Za-z0-9_-]{11}$",
+          "title": "Videoid",
+          "type": "string"
+        },
+        "deleted": {
+          "title": "Deleted",
+          "type": "boolean"
+        },
+        "deletedChunkCount": {
+          "minimum": 0,
+          "title": "Deletedchunkcount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "videoId",
+        "deleted",
+        "deletedChunkCount"
+      ],
+      "title": "DeleteResponse",
+      "type": "object"
+    },
+    "ErrorDetail": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "retryable": {
+          "title": "Retryable",
+          "type": "boolean"
+        },
+        "details": {
+          "default": null,
+          "title": "Details",
+          "type": "null"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "retryable"
+      ],
+      "title": "ErrorDetail",
+      "type": "object"
+    },
+    "ErrorResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "$ref": "#/$defs/ErrorDetail"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "title": "ErrorResponse",
+      "type": "object"
+    },
+    "HealthResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "ready",
+            "not_ready"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "serviceVersion": {
+          "title": "Serviceversion",
+          "type": "string"
+        },
+        "pipelineVersion": {
+          "title": "Pipelineversion",
+          "type": "string"
+        },
+        "vectorStoreReady": {
+          "title": "Vectorstoreready",
+          "type": "boolean"
+        },
+        "embeddingModelReady": {
+          "title": "Embeddingmodelready",
+          "type": "boolean"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorDetail"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "status",
+        "serviceVersion",
+        "pipelineVersion",
+        "vectorStoreReady",
+        "embeddingModelReady"
+      ],
+      "title": "HealthResponse",
+      "type": "object"
+    },
+    "IndexRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "video": {
+          "$ref": "#/$defs/Video"
+        },
+        "transcriptSegments": {
+          "items": {
+            "$ref": "#/$defs/Segment"
+          },
+          "maxItems": 20000,
+          "minItems": 1,
+          "title": "Transcriptsegments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "video",
+        "transcriptSegments"
+      ],
+      "title": "IndexRequest",
+      "type": "object"
+    },
+    "IndexResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "videoId": {
+          "pattern": "^[A-Za-z0-9_-]{11}$",
+          "title": "Videoid",
+          "type": "string"
+        },
+        "indexStatus": {
+          "enum": [
+            "ready",
+            "indexing"
+          ],
+          "title": "Indexstatus",
+          "type": "string"
+        },
+        "cached": {
+          "title": "Cached",
+          "type": "boolean"
+        },
+        "chunkCount": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Chunkcount"
+        },
+        "pipelineVersion": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Pipelineversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "videoId",
+        "indexStatus",
+        "cached",
+        "pipelineVersion"
+      ],
+      "title": "IndexResponse",
+      "type": "object"
+    },
+    "IndexStatusResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "videoId": {
+          "pattern": "^[A-Za-z0-9_-]{11}$",
+          "title": "Videoid",
+          "type": "string"
+        },
+        "indexStatus": {
+          "enum": [
+            "not_indexed",
+            "indexing",
+            "ready",
+            "failed"
+          ],
+          "title": "Indexstatus",
+          "type": "string"
+        },
+        "chunkCount": {
+          "minimum": 0,
+          "title": "Chunkcount",
+          "type": "integer"
+        },
+        "pipelineVersion": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Pipelineversion",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorDetail"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "videoId",
+        "indexStatus",
+        "chunkCount",
+        "pipelineVersion"
+      ],
+      "title": "IndexStatusResponse",
+      "type": "object"
+    },
+    "Question": {
+      "additionalProperties": false,
+      "properties": {
+        "questionId": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Questionid",
+          "type": "string"
+        },
+        "question": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 2,
+          "title": "Options",
+          "type": "array"
+        },
+        "correctAnswer": {
+          "minimum": 0,
+          "title": "Correctanswer",
+          "type": "integer"
+        },
+        "explanation": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "topic": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Topic",
+          "type": "string"
+        },
+        "sourceTimestamp": {
+          "$ref": "#/$defs/SourceTimestamp"
+        }
+      },
+      "required": [
+        "questionId",
+        "question",
+        "options",
+        "correctAnswer",
+        "explanation",
+        "topic",
+        "sourceTimestamp"
+      ],
+      "title": "Question",
+      "type": "object"
+    },
+    "QuestionResult": {
+      "additionalProperties": false,
+      "properties": {
+        "questionId": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Questionid",
+          "type": "string"
+        },
+        "correct": {
+          "title": "Correct",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "minimum": 0,
+          "title": "Correctanswer",
+          "type": "integer"
+        },
+        "selectedAnswer": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Selectedanswer"
+        }
+      },
+      "required": [
+        "questionId",
+        "correct",
+        "correctAnswer",
+        "selectedAnswer"
+      ],
+      "title": "QuestionResult",
+      "type": "object"
+    },
+    "RetrieveRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Query",
+          "type": "string"
+        },
+        "purpose": {
+          "enum": [
+            "quiz",
+            "flashcard",
+            "review"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        },
+        "maxResults": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxresults"
+        }
+      },
+      "required": [
+        "query",
+        "purpose"
+      ],
+      "title": "RetrieveRequest",
+      "type": "object"
+    },
+    "RetrieveResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "videoId": {
+          "pattern": "^[A-Za-z0-9_-]{11}$",
+          "title": "Videoid",
+          "type": "string"
+        },
+        "purpose": {
+          "enum": [
+            "quiz",
+            "flashcard",
+            "review"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        },
+        "chunks": {
+          "items": {
+            "$ref": "#/$defs/RetrievedChunk"
+          },
+          "title": "Chunks",
+          "type": "array"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "const": "NO_RELEVANT_CONTEXT",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "videoId",
+        "purpose",
+        "chunks"
+      ],
+      "title": "RetrieveResponse",
+      "type": "object"
+    },
+    "RetrievedChunk": {
+      "additionalProperties": false,
+      "properties": {
+        "startSec": {
+          "minimum": 0,
+          "title": "Startsec",
+          "type": "number"
+        },
+        "endSec": {
+          "minimum": 0,
+          "title": "Endsec",
+          "type": "number"
+        },
+        "chunkId": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Chunkid",
+          "type": "string"
+        },
+        "videoId": {
+          "pattern": "^[A-Za-z0-9_-]{11}$",
+          "title": "Videoid",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "position": {
+          "minimum": 0,
+          "title": "Position",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "startSec",
+        "endSec",
+        "chunkId",
+        "videoId",
+        "text",
+        "score",
+        "position"
+      ],
+      "title": "RetrievedChunk",
+      "type": "object"
+    },
+    "ReviewTimestamp": {
+      "additionalProperties": false,
+      "properties": {
+        "startSec": {
+          "minimum": 0,
+          "title": "Startsec",
+          "type": "number"
+        },
+        "endSec": {
+          "minimum": 0,
+          "title": "Endsec",
+          "type": "number"
+        },
+        "chunkId": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Chunkid",
+          "type": "string"
+        },
+        "topic": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Topic",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "startSec",
+        "endSec",
+        "chunkId",
+        "topic",
+        "reason"
+      ],
+      "title": "ReviewTimestamp",
+      "type": "object"
+    },
+    "Segment": {
+      "additionalProperties": false,
+      "properties": {
+        "startSec": {
+          "minimum": 0,
+          "title": "Startsec",
+          "type": "number"
+        },
+        "endSec": {
+          "minimum": 0,
+          "title": "Endsec",
+          "type": "number"
+        },
+        "text": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "position": {
+          "minimum": 0,
+          "title": "Position",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "startSec",
+        "endSec",
+        "text",
+        "position"
+      ],
+      "title": "Segment",
+      "type": "object"
+    },
+    "SourceTimestamp": {
+      "additionalProperties": false,
+      "properties": {
+        "startSec": {
+          "minimum": 0,
+          "title": "Startsec",
+          "type": "number"
+        },
+        "endSec": {
+          "minimum": 0,
+          "title": "Endsec",
+          "type": "number"
+        },
+        "chunkId": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Chunkid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "startSec",
+        "endSec",
+        "chunkId"
+      ],
+      "title": "SourceTimestamp",
+      "type": "object"
+    },
+    "UserAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "questionId": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "title": "Questionid",
+          "type": "string"
+        },
+        "selectedAnswer": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectedanswer"
+        }
+      },
+      "required": [
+        "questionId"
+      ],
+      "title": "UserAnswer",
+      "type": "object"
+    },
+    "Video": {
+      "additionalProperties": false,
+      "properties": {
+        "videoId": {
+          "pattern": "^[A-Za-z0-9_-]{11}$",
+          "title": "Videoid",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "durationSec": {
+          "exclusiveMinimum": 0,
+          "title": "Durationsec",
+          "type": "number"
+        },
+        "language": {
+          "maxLength": 35,
+          "minLength": 1,
+          "title": "Language",
+          "type": "string"
+        }
+      },
+      "required": [
+        "videoId",
+        "title",
+        "durationSec",
+        "language"
+      ],
+      "title": "Video",
+      "type": "object"
+    }
+  },
+  "title": "TV2 / TV3 integration draft - pending team review",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
