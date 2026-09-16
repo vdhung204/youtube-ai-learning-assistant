@@ -708,6 +708,26 @@ button:disabled {
   background: #16b779;
 }
 
+.timestamp-sync-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.timestamp-sync-button:hover,
+.timestamp-sync-button:focus-visible {
+  color: var(--primary);
+  background: var(--blue-container);
+}
+
 .service-card {
   display: flex;
   align-items: flex-start;
@@ -984,6 +1004,14 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+
+.milestone-list.is-scrollable {
+  max-height: 109px;
+  padding-right: 3px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .milestone-list button {

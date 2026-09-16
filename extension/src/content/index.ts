@@ -616,6 +616,26 @@ function cacheTranscript(transcript: YouTubeTranscript): void {
   }
 }
 
+function refreshCachedChapters(transcript: YouTubeTranscript): YouTubeTranscript {
+  const playerResponse = findPlayerResponseInDocument(transcript.videoId);
+  const durationSec = playerResponse ? readPlayerDuration(playerResponse) : undefined;
+  const candidates = [
+    transcript.chapters ?? [],
+    ...(playerResponse ? [extractYouTubeChapters(playerResponse, durationSec)] : []),
+    readYouTubeChapters(document, durationSec),
+  ];
+  const chapters = candidates.reduce<NonNullable<YouTubeTranscript["chapters"]>>(
+    (best, candidate) => candidate.length > best.length ? candidate : best,
+    [],
+  );
+  if (chapters.length <= (transcript.chapters?.length ?? 0)) {
+    return transcript;
+  }
+  const refreshed = { ...transcript, chapters };
+  cacheTranscript(refreshed);
+  return refreshed;
+}
+
 function errorResponse(
   error: YouTubeTranscriptErrorCode,
   message: string,
@@ -651,7 +671,11 @@ async function handleTranscriptRequest(expectedVideoId: string): Promise<Content
 
   const cached = transcriptCache.get(expectedVideoId);
   if (cached) {
-    return { ok: true, transcript: cloneTranscript(cached), type: "YALA_TRANSCRIPT" };
+    return {
+      ok: true,
+      transcript: cloneTranscript(refreshCachedChapters(cached)),
+      type: "YALA_TRANSCRIPT",
+    };
   }
 
   activeTranscriptRequest?.controller.abort();

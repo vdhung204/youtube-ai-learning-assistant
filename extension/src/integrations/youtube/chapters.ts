@@ -117,12 +117,60 @@ function normalizeChapters(
   return result;
 }
 
+function chaptersFromDescription(
+  description: string,
+  durationSec?: number,
+): YouTubeChapter[] {
+  const chapters = description.split(/\r?\n/u).flatMap((line) => {
+    const match = line.match(
+      /^\s*((?:\d+:)?\d{1,2}:\d{2})(?:\s*[-–—|•]\s*|\s*:\s*|\s+)(\S.*?)\s*$/u,
+    );
+    if (!match) {
+      return [];
+    }
+    const startSec = parseChapterTimestamp(match[1]);
+    const title = cleanTitle(match[2]);
+    return startSec === null || !title ? [] : [{ startSec, title }];
+  });
+  const normalized = normalizeChapters(chapters, durationSec);
+
+  // YouTube only recognizes description chapters when the list starts at
+  // 00:00 and contains at least three entries. Applying the same rule avoids
+  // turning unrelated timestamps in a description into a chapter list.
+  return normalized.length >= 3 && normalized[0]?.startSec === 0 ? normalized : [];
+}
+
+function descriptionCandidates(
+  playerResponse: unknown,
+  durationSec?: number,
+): YouTubeChapter[][] {
+  if (!isRecord(playerResponse)) {
+    return [];
+  }
+  const descriptions = new Set<string>();
+  if (isRecord(playerResponse.videoDetails)) {
+    const description = playerResponse.videoDetails.shortDescription;
+    if (typeof description === "string") {
+      descriptions.add(description);
+    }
+  }
+  if (isRecord(playerResponse.attributedDescription)) {
+    const description = playerResponse.attributedDescription.content;
+    if (typeof description === "string") {
+      descriptions.add(description);
+    }
+  }
+  return [...descriptions]
+    .map((description) => chaptersFromDescription(description, durationSec))
+    .filter((chapters) => chapters.length > 0);
+}
+
 /** Extracts the most complete official chapter list from YouTube's player response. */
 export function extractYouTubeChapters(
   playerResponse: unknown,
   durationSec?: number,
 ): YouTubeChapter[] {
-  const candidates: YouTubeChapter[][] = [];
+  const candidates: YouTubeChapter[][] = descriptionCandidates(playerResponse, durationSec);
   const visited = new Set<object>();
 
   const visit = (value: unknown, depth: number): void => {

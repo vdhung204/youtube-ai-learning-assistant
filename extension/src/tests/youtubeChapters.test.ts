@@ -47,6 +47,41 @@ describe("YouTube chapters", () => {
     ]);
   });
 
+  it("extracts YouTube chapters declared in the video description", () => {
+    const response = {
+      videoDetails: {
+        shortDescription: `Resources and links
+
+Timestamps:
+0:00 - Recap on embeddings
+1:39 - Motivating examples
+4:29 - The attention pattern
+11:08 - Masking
+12:42 - Context size
+24:54 - Ending`,
+      },
+    };
+
+    expect(extractYouTubeChapters(response, 1_569)).toEqual([
+      { startSec: 0, title: "Recap on embeddings" },
+      { startSec: 99, title: "Motivating examples" },
+      { startSec: 269, title: "The attention pattern" },
+      { startSec: 668, title: "Masking" },
+      { startSec: 762, title: "Context size" },
+      { startSec: 1_494, title: "Ending" },
+    ]);
+  });
+
+  it("does not treat unrelated description timestamps as chapters", () => {
+    const response = {
+      videoDetails: {
+        shortDescription: "See the example at 1:39.\n2:10 - One isolated reference",
+      },
+    };
+
+    expect(extractYouTubeChapters(response, 300)).toEqual([]);
+  });
+
   it("reads every rendered chapter from YouTube's chapter panel", () => {
     document.body.innerHTML = `
       <ytd-macro-markers-list-item-renderer>

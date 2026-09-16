@@ -11,14 +11,20 @@ export function VideoMilestones({ milestones, onSeek }: VideoMilestonesProps) {
   if (milestones.length === 0) {
     return null;
   }
+  const scrollable = milestones.length > 3;
 
   return (
     <section aria-labelledby="video-milestones-title" className="video-milestones surface-card">
       <div className="milestone-heading">
         <h2 id="video-milestones-title"><span aria-hidden="true">⚡</span> Mốc kiến thức theo Timestamp</h2>
-        <span>{milestones.length} mốc • Nhấn để mở YouTube</span>
+        <span>{milestones.length} mốc • {scrollable ? "Cuộn để xem" : "Nhấn để mở YouTube"}</span>
       </div>
-      <div className="milestone-list">
+      <div
+        aria-label="Danh sách timestamp của video"
+        className={scrollable ? "milestone-list is-scrollable" : "milestone-list"}
+        role="region"
+        tabIndex={scrollable ? 0 : undefined}
+      >
         {milestones.map((milestone) => {
           const timestamp = formatDuration(milestone.startSec);
           return (

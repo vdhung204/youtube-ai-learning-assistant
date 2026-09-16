@@ -60,7 +60,11 @@ export function HomeView({
   return (
     <div className="view-stack home-view">
       {video ? (
-        <VideoCard detectionMessage={videoDetectionMessage} video={video} />
+        <VideoCard
+          detectionMessage={videoDetectionMessage}
+          onSyncTimestamps={onRetryRag}
+          video={video}
+        />
       ) : (
         <section className="runtime-state-card surface-card" role="status">
           <h2>Chưa có video YouTube</h2>
