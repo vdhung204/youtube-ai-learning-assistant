@@ -47,7 +47,7 @@ We do not sell personal information. We disclose information only to service pro
 
 Session data is intended to exist only for the active study session. Local cache data may remain on your computer until you clear it or uninstall the Extension and its local service. You can delete local cache data using the deletion or clear-data action provided with the local service, or by uninstalling the local service and removing its data directory.
 
-If you signed in with Google, you can revoke the Extension's access from your Google Account security settings. To request deletion of information controlled by us, contact **[privacy email address]**. Include enough detail for us to identify the request, but do not send passwords or access tokens.
+If you signed in with Google, you can revoke the Extension's access from your Google Account security settings. To request deletion of information controlled by us, contact vuongduchung2004@gmail.com. Include enough detail for us to identify the request, but do not send passwords or access tokens.
 
 ## 6. Permissions
 
@@ -67,7 +67,7 @@ The Extension is not directed to children under the minimum age required to use 
 
 ## 10. Changes to this policy
 
-We may update this Privacy Policy when the Extension or applicable requirements change. We will publish the updated version at **[public policy URL]** and change the effective date above.
+We may update this Privacy Policy when the Extension or applicable requirements change. We will publish the updated version at [vdhung204.github.io/youtube-ai-learning-assistant/PRIVACY_POLICY.html](https://vdhung204.github.io/youtube-ai-learning-assistant/PRIVACY_POLICY.html) and change the effective date above.
 
 ## 11. Contact
 
