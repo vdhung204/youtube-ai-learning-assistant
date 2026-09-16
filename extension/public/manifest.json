@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "minimum_chrome_version": "114",
+  "name": "YouTube AI Learning Assistant",
+  "version": "0.1.0",
+  "description": "Học chủ động từ video YouTube bằng quiz, flashcard và trợ lý AI theo ngữ cảnh.",
+  "icons": {
+    "16": "icons/logo.png",
+    "32": "icons/logo.png",
+    "48": "icons/logo.png",
+    "128": "icons/logo.png"
+  },
+  "permissions": ["sidePanel", "identity", "identity.email"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://oauth2.googleapis.com/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*"
+  ],
+  "background": {
+    "service_worker": "assets/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/logo.png",
+      "32": "icons/logo.png",
+      "48": "icons/logo.png"
+    },
+    "default_title": "Mở YouTube AI Learning Assistant"
+  },
+  "side_panel": {
+    "default_path": "index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["assets/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

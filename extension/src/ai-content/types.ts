@@ -24,6 +24,7 @@ export interface QuizItem extends GroundedItem {
 }
 export interface FlashcardItem extends GroundedItem { front: string; back: string }
 export interface FeedbackItem extends GroundedItem { comment: string }
+export interface ChatAnswerItem extends GroundedItem { answer: string }
 export type AIResult<T> = { status: "ok"; items: T[] } | { status: "insufficient_context"; items: [] };
 
 declare const validated: unique symbol;

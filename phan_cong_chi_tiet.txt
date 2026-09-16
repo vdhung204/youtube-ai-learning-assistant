@@ -1,0 +1,879 @@
+PHÂN CÔNG VÀ HƯỚNG DẪN CÔNG VIỆC CHI TIẾT
+DỰ ÁN YOUTUBE LEARNING COMPANION
+Ngày cập nhật: 28/08/2026
+
+======================================================================
+1. QUY ĐỊNH CHUNG CHO CẢ NHÓM
+======================================================================
+
+Mỗi nhiệm vụ chỉ được xem là hoàn thành khi đáp ứng đủ:
+
+- Mã nguồn hoạt động đúng với yêu cầu.
+- Có kiểm thử tương ứng.
+- Không chứa API key, access token, cookie hoặc thông tin bí mật.
+- Có hướng dẫn chạy hoặc mô tả thay đổi.
+- Được ít nhất một thành viên khác review.
+- Không làm hỏng các chức năng đã hoàn thành.
+- Có xử lý loading, empty state và error state nếu liên quan đến giao diện/API.
+
+Quy trình Git:
+
+- Mỗi chức năng phải có một issue/task riêng.
+- Tạo branch theo dạng:
+  + feat/extension-sidebar
+  + feat/transcript-processing
+  + fix/oauth-expired-token
+  + test/ask-video-e2e
+- Không push trực tiếp lên nhánh main.
+- Pull Request phải ghi rõ:
+  + Chức năng đã làm.
+  + Cách kiểm thử.
+  + Ảnh hoặc video minh họa nếu có giao diện.
+  + API hoặc schema đã thay đổi.
+  + Các hạn chế còn tồn tại.
+- Không commit file .env, token, credential hoặc dữ liệu người dùng.
+
+Quy tắc phối hợp:
+
+- Thay đổi API phải được Frontend và Backend thống nhất trước.
+- Thay đổi cấu trúc dữ liệu AI phải được Backend, AI/RAG và Frontend thống nhất.
+- QA tham gia từ đầu dự án, không chờ đến giai đoạn cuối.
+- Cuối mỗi tuần, từng thành viên phải demo phần việc đã hoàn thành.
+- Khi bàn giao chức năng phải kèm branch/PR, hướng dẫn chạy, dữ liệu mẫu,
+  test đã chạy và các lỗi còn tồn tại.
+
+======================================================================
+2. THÀNH VIÊN 1 - EXTENSION FRONTEND
+======================================================================
+
+2.1. Mục tiêu
+
+Xây dựng Chrome Extension hoạt động ổn định trên YouTube, cung cấp sidebar để
+người dùng đăng nhập, xem kết quả phân tích video, tìm kiếm, hỏi đáp, tạo ghi
+chú và điều khiển video theo timestamp.
+
+2.2. Phạm vi chịu trách nhiệm
+
+A. Khởi tạo Chrome Extension
+
+- Sử dụng React, TypeScript và Manifest V3.
+- Thiết lập manifest.json.
+- Thiết lập content script.
+- Thiết lập background service worker.
+- Thiết lập side panel hoặc sidebar được chèn vào trang YouTube.
+- Xây dựng cơ chế gửi message giữa content script, service worker và React UI.
+- Chỉ khai báo các permission thật sự cần thiết.
+- Không yêu cầu quyền đọc cookie Google.
+
+Cấu trúc đề xuất:
+
+apps/extension/
+|-- src/
+|   |-- background/
+|   |-- content/
+|   |-- components/
+|   |-- pages/
+|   |-- services/
+|   |-- hooks/
+|   |-- stores/
+|   |-- types/
+|   `-- utils/
+|-- manifest.json
+`-- package.json
+
+B. Tích hợp với YouTube
+
+Xây dựng một lớp riêng, ví dụ YouTubeAdapter, để:
+
+- Lấy Video ID từ URL hiện tại.
+- Nhận biết khi người dùng chuyển video.
+- Xử lý việc YouTube điều hướng theo kiểu SPA mà không reload toàn bộ trang.
+- Lấy tiêu đề video.
+- Lấy timestamp hiện tại.
+- Theo dõi sự kiện play, pause và thay đổi thời gian nếu cần.
+- Điều khiển video chuyển đến một timestamp.
+- Hạn chế phụ thuộc vào các CSS selector dễ thay đổi.
+
+Khi người dùng chuyển video:
+
+1. Hủy request hoặc subscription của video cũ.
+2. Xóa trạng thái summary, chapter và search của video cũ.
+3. Lấy Video ID mới.
+4. Kiểm tra trạng thái xử lý của video mới.
+5. Tải dữ liệu mới hoặc hiển thị nút phân tích.
+
+C. Google OAuth UI
+
+Thành viên 1 chịu trách nhiệm phía extension của luồng đăng nhập:
+
+- Khi mở extension, kiểm tra token với chế độ không tương tác.
+- Nếu chưa có quyền, hiển thị màn hình "Đăng nhập bằng Google".
+- Chỉ mở OAuth sau khi người dùng bấm nút.
+- Hiển thị đầy đủ các trạng thái:
+  + Đang kiểm tra đăng nhập.
+  + Chưa đăng nhập.
+  + Đang cấp quyền.
+  + Đang kiểm tra Gemini.
+  + Sẵn sàng.
+  + Token hết hạn.
+  + Hết quota.
+  + Không có quyền sử dụng Gemini.
+- Thực hiện đăng xuất và xóa token đã cache.
+- Không lưu OAuth access token vào localStorage.
+- Không gửi Gemini access token về backend nếu chưa có quyết định kiến trúc
+  được cả nhóm duyệt.
+
+Các module nên có:
+
+- services/authService.ts
+- services/geminiClient.ts
+- stores/authStore.ts
+- components/auth/LoginScreen.tsx
+- components/auth/AuthError.tsx
+
+D. Sidebar và giao diện
+
+Sidebar tối thiểu có các màn hình:
+
+- Overview/Summary.
+- Chapters.
+- Concepts.
+- Search.
+- Ask Video.
+- Notes và Bookmark.
+- Quiz.
+- Flashcard.
+- Learning History.
+- Settings/Logout.
+
+Yêu cầu giao diện:
+
+- Có thể đóng/mở sidebar.
+- Không che nút điều khiển chính của YouTube.
+- Có loading skeleton khi đang xử lý.
+- Có empty state cho video chưa phân tích.
+- Có thông báo rõ ràng khi video không có subtitle.
+- Có retry khi request thất bại.
+- Timestamp phải là nút có thể bấm.
+- Hỗ trợ thao tác bằng bàn phím.
+- Có label cho nút và input.
+- Không chỉ dùng màu sắc để biểu thị trạng thái.
+
+E. Kết nối Backend
+
+- Xây dựng apiClient dùng chung.
+- Dùng type/interface thống nhất với API contract.
+- Xử lý timeout, lỗi mạng, 401, 403, 404, 429 và 500.
+- Không tự ý thay đổi request/response schema khi chưa trao đổi với Backend.
+- Không gọi lặp lại liên tục endpoint phân tích video.
+- Poll trạng thái job theo khoảng thời gian hợp lý.
+- Dừng poll khi job hoàn thành, thất bại hoặc người dùng chuyển video.
+
+2.3. Đầu ra phải bàn giao
+
+- Chrome Extension có thể load bằng Developer Mode.
+- Sidebar hoạt động trên YouTube.
+- Module Google OAuth.
+- Module YouTube Adapter.
+- API client.
+- Các màn hình của MVP.
+- Unit test cho Video ID parser, timestamp formatter, auth state và API error.
+- Hướng dẫn build và load extension.
+- Ảnh hoặc video demo các luồng chính.
+
+2.4. Tiêu chí hoàn thành
+
+- Nhận đúng Video ID khi mở và chuyển video.
+- Click chapter/search result đưa video đến timestamp đúng.
+- Người đã cấp quyền trước đó có thể đi thẳng vào sidebar.
+- Người chưa đăng nhập nhận được hướng dẫn rõ ràng.
+- Sidebar không bị nhân bản khi chuyển nhiều video.
+- Không chứa API key hoặc token trong source code/build output.
+- Không làm hỏng giao diện và chức năng chính của YouTube.
+
+2.5. Phối hợp
+
+- Với Backend: thống nhất API contract và cấu trúc lỗi.
+- Với AI/RAG: thống nhất format summary, chapter, citation và câu trả lời.
+- Với QA: cung cấp bản build extension và hướng dẫn load để kiểm thử.
+
+======================================================================
+3. THÀNH VIÊN 2 - BACKEND
+======================================================================
+
+3.1. Mục tiêu
+
+Xây dựng FastAPI backend ổn định, quản lý dữ liệu, xử lý job phân tích video,
+cung cấp API cho extension và đảm bảo dữ liệu người dùng được lưu an toàn.
+
+3.2. Phạm vi chịu trách nhiệm
+
+A. Khởi tạo Backend
+
+Thiết lập:
+
+- FastAPI application.
+- Cấu hình môi trường.
+- Health check.
+- Logging.
+- CORS.
+- Exception handler.
+- Request validation.
+- OpenAPI documentation.
+- Database connection.
+- Database migration.
+
+Cấu trúc đề xuất:
+
+services/api/
+|-- app/
+|   |-- api/
+|   |-- core/
+|   |-- models/
+|   |-- schemas/
+|   |-- repositories/
+|   |-- services/
+|   |-- jobs/
+|   `-- main.py
+|-- migrations/
+|-- tests/
+`-- requirements.txt
+
+B. Thiết kế Database
+
+Chịu trách nhiệm thiết kế và migration các bảng:
+
+- users
+- videos
+- transcripts
+- transcript_chunks
+- chapters
+- concepts
+- processing_jobs
+- notes
+- bookmarks
+- quizzes
+- quiz_questions
+- flashcards
+- learning_history
+
+Yêu cầu:
+
+- Có primary key, foreign key và index hợp lý.
+- YouTube video_id phải có unique index.
+- Transcript chunk phải lưu thứ tự và timestamp.
+- Notes và bookmarks phải gắn với người dùng.
+- Job phải lưu trạng thái, lỗi, thời gian bắt đầu và kết thúc.
+- Không lưu Google OAuth access token.
+- Không lưu cookie hoặc password Google.
+- Có migration, không sửa database production thủ công.
+
+C. REST API
+
+Xây dựng các endpoint:
+
+- POST   /videos/analyze
+- GET    /videos/{videoId}/status
+- GET    /videos/{videoId}/summary
+- GET    /videos/{videoId}/chapters
+- GET    /videos/{videoId}/concepts
+- POST   /videos/{videoId}/search
+- POST   /videos/{videoId}/ask
+- GET    /videos/{videoId}/bookmarks
+- POST   /videos/{videoId}/bookmarks
+- DELETE /bookmarks/{id}
+- GET    /videos/{videoId}/notes
+- POST   /videos/{videoId}/notes
+- PUT    /notes/{id}
+- DELETE /notes/{id}
+- POST   /videos/{videoId}/quiz
+- POST   /videos/{videoId}/flashcards
+- GET    /learning-history
+
+Mỗi endpoint phải có:
+
+- Request schema.
+- Response schema.
+- HTTP status code phù hợp.
+- Validation.
+- Error code để frontend xử lý.
+- Test cho trường hợp thành công và thất bại.
+
+Format lỗi thống nhất:
+
+{
+  "error": {
+    "code": "TRANSCRIPT_NOT_AVAILABLE",
+    "message": "Video không có transcript phù hợp.",
+    "retryable": false
+  }
+}
+
+D. Job Processing
+
+Luồng phân tích video:
+
+1. Extension gửi yêu cầu phân tích.
+2. Backend kiểm tra video đã được xử lý chưa.
+3. Nếu đã có kết quả, trả dữ liệu cache.
+4. Nếu chưa có, tạo processing job.
+5. Transcript/AI pipeline thực hiện xử lý.
+6. Backend cập nhật trạng thái job.
+7. Extension poll endpoint status.
+
+Các trạng thái job:
+
+- pending
+- processing_transcript
+- generating_embeddings
+- generating_content
+- completed
+- failed
+
+Yêu cầu:
+
+- Không tạo nhiều job cho cùng một video trong cùng thời điểm.
+- Job lỗi phải lưu mã lỗi và có thể retry.
+- Job đã hoàn thành phải sử dụng lại kết quả.
+- Có timeout cho job bị treo.
+- Không ghi transcript đầy đủ hoặc token vào log khi không cần thiết.
+
+E. Cache và Deployment
+
+- Cache kết quả video đã phân tích.
+- Cache phải có chính sách làm mới hoặc hết hạn rõ ràng.
+- Cung cấp Docker configuration nếu nhóm sử dụng Docker.
+- Có file .env.example, không có secret thật.
+- Thiết lập môi trường development và production.
+- Chỉ cho phép extension/backend origin hợp lệ truy cập.
+- Có health check cho database và vector store.
+- Có quy trình backup database tối thiểu.
+
+3.3. Đầu ra phải bàn giao
+
+- FastAPI backend chạy được.
+- OpenAPI/Swagger đầy đủ.
+- Database schema và migration.
+- Job processing.
+- Cache.
+- Docker hoặc hướng dẫn deployment.
+- Unit test và integration test.
+- ERD.
+- File .env.example.
+- Tài liệu API cho Frontend và AI/RAG.
+
+3.4. Tiêu chí hoàn thành
+
+- API trả đúng schema đã thống nhất.
+- Migration có thể chạy trên database mới.
+- Gửi lại cùng một video không tạo job trùng.
+- Job lỗi có thể retry.
+- API xử lý đúng dữ liệu không hợp lệ.
+- Không lưu Gemini token hoặc credential.
+- Log đủ để chẩn đoán nhưng không lộ dữ liệu nhạy cảm.
+- Backend có thể chạy bằng các lệnh được ghi trong README.
+
+3.5. Phối hợp
+
+- Với Frontend: khóa API contract trước khi xây UI hoàn chỉnh.
+- Với AI/RAG: cung cấp repository/service để đọc và ghi transcript, chunk,
+  vector và kết quả AI.
+- Với QA: cung cấp test environment, seed data và tài liệu endpoint.
+
+======================================================================
+4. THÀNH VIÊN 3 - AI/RAG
+======================================================================
+
+4.1. Mục tiêu
+
+Xây dựng pipeline biến transcript thành dữ liệu có thể tóm tắt, tìm kiếm và hỏi
+đáp; đảm bảo kết quả bám sát video và có timestamp kiểm chứng.
+
+4.2. Phạm vi chịu trách nhiệm
+
+A. Transcript Processing
+
+Thực hiện prototype ngay trong Sprint 1 để kiểm tra:
+
+- Video nào có thể lấy transcript.
+- Transcript tiếng Việt và tiếng Anh.
+- Transcript tự động và transcript do tác giả cung cấp.
+- Video không có subtitle.
+- Video dài.
+- Video riêng tư hoặc bị giới hạn.
+
+Pipeline:
+
+Raw Transcript
+    |
+    v
+Normalize
+    |
+    v
+Remove noise
+    |
+    v
+Merge short segments
+    |
+    v
+Chunk with overlap
+    |
+    v
+Attach timestamps and metadata
+
+Mỗi chunk phải có:
+
+{
+  "chunk_id": "string",
+  "video_id": "string",
+  "text": "string",
+  "start_time": 120.5,
+  "end_time": 168.2,
+  "position": 12
+}
+
+Yêu cầu:
+
+- Không làm mất timestamp gốc.
+- Không đổi thứ tự nội dung.
+- Không gộp các đoạn cách nhau quá xa.
+- Chunk size và overlap phải cấu hình được.
+- Có test cho transcript rỗng, ký tự lỗi và video dài.
+
+B. Summary, Chapter và Concept
+
+Thiết kế prompt để Gemini trả dữ liệu có cấu trúc.
+
+Chapter đề xuất:
+
+{
+  "title": "Time-based Blind SQL Injection",
+  "summary": "Mô tả ngắn nội dung phần này.",
+  "start_time": 1250,
+  "end_time": 1680
+}
+
+Concept đề xuất:
+
+{
+  "name": "JWT",
+  "explanation": "Giải thích dựa trên nội dung video.",
+  "timestamps": [320, 515]
+}
+
+Yêu cầu:
+
+- Không tạo chapter ngoài khoảng thời gian của video.
+- Chapter phải theo đúng thứ tự.
+- Hạn chế chapter quá nhỏ hoặc chồng chéo.
+- Summary phải dựa trên transcript.
+- Concept phải có timestamp nguồn.
+- Validate JSON đầu ra trước khi lưu database.
+
+C. Embedding và Semantic Search
+
+- Chọn embedding model sau khi prototype.
+- Tạo embedding theo batch.
+- Lưu mapping giữa vector và chunk_id.
+- Tìm kiếm bằng vector của câu hỏi.
+- Trả về các chunk có score cao nhất.
+- Có ngưỡng tối thiểu để loại kết quả không liên quan.
+- Kết hợp keyword search nếu semantic search không đủ tốt.
+- Đo thời gian và quota cho video ngắn, trung bình và dài.
+
+Kết quả search đề xuất:
+
+{
+  "results": [
+    {
+      "text": "Đoạn transcript liên quan",
+      "start_time": 420,
+      "end_time": 470,
+      "score": 0.84
+    }
+  ]
+}
+
+D. Ask Video bằng RAG
+
+Luồng xử lý:
+
+Question
+   |
+   v
+Validate question
+   |
+   v
+Question embedding
+   |
+   v
+Semantic search
+   |
+   v
+Relevant transcript chunks
+   |
+   v
+Build constrained prompt
+   |
+   v
+Gemini
+   |
+   v
+Answer + timestamps
+
+Yêu cầu prompt:
+
+- Chỉ sử dụng transcript được cung cấp.
+- Không suy đoán khi không có dữ kiện.
+- Nếu không đủ thông tin, trả về "Không tìm thấy nội dung này trong video".
+- Mọi ý chính phải có timestamp tham chiếu.
+- Không đưa timestamp không tồn tại.
+- Giới hạn số chunk và số token.
+- Không để nội dung transcript điều khiển system instruction.
+
+Response đề xuất:
+
+{
+  "answer": "Nội dung câu trả lời",
+  "citations": [
+    {
+      "start_time": 420,
+      "end_time": 470,
+      "excerpt": "Đoạn transcript dùng để trả lời"
+    }
+  ],
+  "grounded": true
+}
+
+E. Quiz và Flashcard
+
+Quiz:
+
+- Câu hỏi phải dựa trên nội dung video.
+- Có đáp án đúng và các đáp án nhiễu hợp lý.
+- Có giải thích.
+- Có timestamp tham khảo.
+- Không có nhiều hơn một đáp án đúng nếu là single choice.
+
+Flashcard:
+
+- Một mặt là câu hỏi hoặc khái niệm.
+- Mặt còn lại là câu trả lời ngắn.
+- Không tạo nhiều flashcard trùng nội dung.
+- Có timestamp nguồn.
+
+F. Đánh giá chất lượng
+
+Tạo bộ đánh giá từ 10-15 video:
+
+- Mỗi video có câu hỏi dễ, trung bình và khó.
+- Có câu hỏi không xuất hiện trong video.
+- Có câu hỏi cần xác định timestamp.
+- So sánh câu trả lời với transcript.
+- Ghi lại:
+  + Mức độ liên quan.
+  + Độ chính xác timestamp.
+  + Tỷ lệ trả lời không có căn cứ.
+  + Thời gian xử lý.
+  + Số lượng token/quota sử dụng.
+
+4.3. Đầu ra phải bàn giao
+
+- Transcript processor.
+- Chunking module.
+- Prompt templates.
+- Embedding pipeline.
+- Semantic search.
+- RAG pipeline.
+- Chapter/concept generator.
+- Quiz/flashcard generator.
+- JSON schema cho đầu ra AI.
+- Bộ dữ liệu đánh giá.
+- Báo cáo kết quả và giới hạn.
+- Unit test cho các module chính.
+
+4.4. Tiêu chí hoàn thành
+
+- Transcript không mất timestamp.
+- Search trả về đoạn liên quan cho bộ câu hỏi kiểm thử.
+- Ask Video không trả lời câu hỏi nằm ngoài transcript.
+- Câu trả lời có timestamp hợp lệ.
+- Kết quả Gemini được validate trước khi lưu.
+- Pipeline có giới hạn context và retry hợp lý.
+- Không hardcode prompt rải rác trong nhiều file.
+- Có thể thay đổi chunk size, top-k và threshold bằng cấu hình.
+
+4.5. Phối hợp
+
+- Với Backend: thống nhất schema chunk, vector, chapter và AI result.
+- Với Frontend: thống nhất format citation và timestamp.
+- Với QA: cung cấp bộ câu hỏi chuẩn và expected result để kiểm thử.
+
+======================================================================
+5. THÀNH VIÊN 4 - QA/INTEGRATION
+======================================================================
+
+5.1. Mục tiêu
+
+Đảm bảo các thành phần hoạt động đúng khi tích hợp, phát hiện lỗi sớm và chuẩn
+bị đầy đủ tài liệu, báo cáo, slide và video demo.
+
+QA phải tham gia từ Sprint 1, không chờ đến cuối dự án.
+
+5.2. Phạm vi chịu trách nhiệm
+
+A. Test Plan
+
+Xây dựng test plan gồm:
+
+- Phạm vi kiểm thử.
+- Môi trường kiểm thử.
+- Danh sách thiết bị/trình duyệt.
+- Test data.
+- Test case.
+- Expected result.
+- Mức độ ưu tiên.
+- Người chịu trách nhiệm sửa lỗi.
+- Điều kiện release.
+
+Phân loại lỗi:
+
+- Critical: không cài được extension, đăng nhập hỏng hoàn toàn hoặc lộ token.
+- High: không phân tích được video hoặc Ask Video sai dữ liệu nghiêm trọng.
+- Medium: một chức năng phụ không hoạt động.
+- Low: lỗi giao diện nhỏ hoặc nội dung hiển thị chưa đẹp.
+
+B. Kiểm thử Extension
+
+- Cài mới extension.
+- Update extension.
+- Mở/đóng sidebar.
+- Chuyển liên tục giữa các video.
+- Reload trang.
+- Mở nhiều tab YouTube.
+- Click chapter và timestamp.
+- Video ngắn, dài, livestream và video không subtitle.
+- Các độ phân giải màn hình khác nhau.
+- Điều hướng bằng bàn phím.
+- Kiểm tra sidebar không bị tạo nhiều lần.
+
+C. Kiểm thử OAuth và bảo mật
+
+Các trường hợp bắt buộc:
+
+- Chrome chưa đăng nhập Google.
+- Chrome đã đăng nhập nhưng chưa cấp quyền.
+- Người dùng đồng ý cấp quyền.
+- Người dùng từ chối cấp quyền.
+- Tài khoản đã cấp quyền từ lần trước.
+- Đăng nhập nhiều tài khoản Google.
+- Token hết hạn.
+- Token bị thu hồi.
+- Người dùng đăng xuất.
+- Tài khoản không có quyền Gemini.
+- Hết quota.
+- Mạng bị ngắt trong quá trình OAuth.
+
+Kiểm tra bảo mật:
+
+- Tìm API key/token trong source và build output.
+- Kiểm tra localStorage, chrome.storage và log.
+- Kiểm tra request không gửi token đến domain không cần thiết.
+- Kiểm tra extension không yêu cầu quyền cookies.
+- Kiểm tra manifest không xin host permission quá rộng.
+- Kiểm tra backend không log credential.
+- Kiểm tra dữ liệu người dùng này không xuất hiện với người dùng khác.
+
+D. Integration và End-to-End Test
+
+Luồng chính:
+
+Đăng nhập
+-> Mở video
+-> Phân tích transcript
+-> Xem summary
+-> Chọn chapter
+-> Tìm kiếm
+-> Ask Video
+-> Nhảy đến timestamp
+-> Bookmark
+
+Luồng học tập:
+
+Mở video đã phân tích
+-> Tạo quiz
+-> Trả lời quiz
+-> Xem giải thích
+-> Tạo flashcard
+-> Kiểm tra learning history
+
+Luồng lỗi:
+
+Video không có subtitle
+-> Hệ thống báo lỗi phù hợp
+-> Không tiếp tục gọi Gemini
+-> Người dùng vẫn có thể chuyển sang video khác
+
+E. Quản lý lỗi
+
+Mỗi bug report phải có:
+
+- Tiêu đề rõ ràng.
+- Môi trường.
+- Phiên bản extension/backend.
+- Các bước tái hiện.
+- Kết quả thực tế.
+- Kết quả mong đợi.
+- Screenshot/video/log đã loại bỏ token.
+- Mức độ ưu tiên.
+- Thành viên phụ trách.
+
+Sau khi thành viên khác sửa lỗi, QA phải retest và regression test các chức
+năng liên quan.
+
+F. Tài liệu và Demo
+
+Chịu trách nhiệm tổng hợp:
+
+- README.
+- Hướng dẫn cài extension.
+- Hướng dẫn cấu hình môi trường.
+- Hướng dẫn đăng nhập Google.
+- Sơ đồ kiến trúc.
+- ERD.
+- Danh sách API.
+- Test plan.
+- Test report.
+- Known limitations.
+- Slide thuyết trình.
+- Kịch bản demo.
+- Video demo.
+
+Kịch bản demo phải có phương án dự phòng:
+
+- Chuẩn bị video đã phân tích sẵn.
+- Chuẩn bị tài khoản test đã cấp quyền.
+- Chuẩn bị dữ liệu mẫu nếu Gemini hoặc mạng gặp lỗi.
+- Không hiển thị token, .env hoặc trang credential trong video.
+
+5.3. Đầu ra phải bàn giao
+
+- Test plan.
+- Test case spreadsheet hoặc tài liệu tương đương.
+- Bộ test tự động.
+- Báo cáo bug.
+- Regression checklist.
+- Security/privacy checklist.
+- Test report cuối kỳ.
+- README và tài liệu sử dụng.
+- Slide và video demo.
+
+5.4. Tiêu chí hoàn thành
+
+- Tất cả luồng MVP đã có test case.
+- Không còn lỗi Critical hoặc High trước khi release.
+- Các lỗi Medium còn lại phải được ghi trong Known Limitations.
+- OAuth được kiểm thử trên nhiều trạng thái tài khoản.
+- Không tìm thấy API key hoặc token trong build và log.
+- Demo có thể thực hiện theo một kịch bản rõ ràng.
+- Một thành viên mới có thể đọc README và chạy dự án.
+
+======================================================================
+6. MA TRẬN PHỐI HỢP
+======================================================================
+
+Hạng mục                              Người chính     Người hỗ trợ
+-----------------------------------------------------------------------
+Sidebar và giao diện                  Thành viên 1    Thành viên 4
+Google OAuth phía extension           Thành viên 1    Thành viên 4
+Backend identity/session contract     Thành viên 2    Thành viên 1, 4
+REST API                              Thành viên 2    Thành viên 1
+MySQL và migration                    Thành viên 2    Thành viên 4
+Transcript processing                 Thành viên 3    Thành viên 2
+Embedding và vector search            Thành viên 3    Thành viên 2
+Prompt và RAG                         Thành viên 3    Thành viên 1, 4
+Integration test                      Thành viên 4    Cả nhóm
+Tài liệu API                          Thành viên 2    Thành viên 4
+Báo cáo AI/RAG                        Thành viên 3    Thành viên 4
+Slide và video demo                   Thành viên 4    Cả nhóm
+
+======================================================================
+7. CÔNG VIỆC PHẢI HOÀN THÀNH TRONG TUẦN ĐẦU
+======================================================================
+
+Thành viên 1:
+- Tạo extension skeleton.
+- Tạo sidebar thử nghiệm.
+- Lấy Video ID và timestamp.
+- Thử Google OAuth.
+
+Thành viên 2:
+- Tạo FastAPI skeleton.
+- Tạo health endpoint.
+- Thiết kế database schema ban đầu.
+- Thống nhất OpenAPI convention.
+
+Thành viên 3:
+- Kiểm chứng cách lấy transcript.
+- Xây chunking prototype.
+- Chuẩn bị bộ video đánh giá.
+- Thử pipeline embedding và Gemini ở mức tối thiểu.
+
+Thành viên 4:
+- Lập test plan.
+- Tạo test matrix OAuth.
+- Chuẩn hóa bug report template.
+- Kiểm tra các prototype đầu tiên.
+
+Cuối tuần, từng thành viên phải demo phần của mình. Nhóm chỉ chuyển sang phát
+triển chức năng AI đầy đủ khi đã chứng minh được ba việc:
+
+1. Lấy được transcript và giữ đúng timestamp.
+2. Điều khiển được video theo timestamp.
+3. Gọi được Gemini bằng Google OAuth theo kiến trúc đã thống nhất.
+
+======================================================================
+8. MẪU BÀN GIAO NHIỆM VỤ
+======================================================================
+
+Tên nhiệm vụ:
+Người thực hiện:
+Issue/Task:
+Branch/Pull Request:
+
+Nội dung đã hoàn thành:
+-
+-
+
+Cách chạy:
+1.
+2.
+
+Cách kiểm thử:
+1.
+2.
+
+Kết quả kiểm thử:
+-
+
+API/schema bị ảnh hưởng:
+-
+
+Hạn chế hoặc lỗi còn tồn tại:
+-
+
+Người đã review:
+-
+
+======================================================================
+KẾT LUẬN
+======================================================================
+
+Mỗi thành viên có một phạm vi chính nhưng phải phối hợp theo contract chung.
+Frontend không tự thay đổi API; Backend không tự quyết định format AI; AI/RAG
+không thay đổi schema lưu trữ khi chưa trao đổi; QA không chỉ kiểm thử ở cuối.
+
+Mục tiêu ưu tiên của cả nhóm là hoàn thành một luồng MVP có thể demo ổn định:
+
+Đăng nhập Google -> Mở video -> Xử lý transcript -> Summary/Chapter -> Search
+-> Ask Video kèm timestamp -> Bookmark.
