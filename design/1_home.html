@@ -1,0 +1,582 @@
+<!DOCTYPE html><html class="light" lang="vi"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>YouTube AI Learning Assistant - Chrome Side Panel (380px)</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Material Symbols Outlined & Roboto / Google Sans style typography -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Google+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Google Sans"', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            m3: {
+              primary: '#0B57D0',
+              onPrimary: '#FFFFFF',
+              primaryContainer: '#D3E3FD',
+              onPrimaryContainer: '#041E49',
+              surface: '#F8F9FA',
+              surfaceDim: '#DFE2E6',
+              surfaceContainerLowest: '#FFFFFF',
+              surfaceContainerLow: '#F0F4F9',
+              surfaceContainer: '#E9EEF6',
+              surfaceContainerHigh: '#E1E8F2',
+              outline: '#74777F',
+              outlineVariant: '#C4C7C5',
+              darkSurface: '#191C20',
+              darkContainerLow: '#22252A',
+              darkContainer: '#282C32',
+              darkContainerHigh: '#32363D',
+              darkPrimary: '#A8C7FA',
+              darkOnPrimary: '#0842A0',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-outlined.fill-1 {
+      font-variation-settings: 'FILL' 1;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(140, 140, 140, 0.35);
+      border-radius: 9999px;
+    }
+    .transform-style-preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+  </style>
+</head>
+<body class="bg-neutral-200/70 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex justify-center items-start min-h-screen p-0 sm:py-4 transition-colors duration-150 select-none antialiased" data-mode="connect">
+<!-- AUTHENTIC CHROME SIDE PANEL FRAME: Exactly 380px fixed width -->
+<div class="w-[380px] h-[780px] max-h-[100vh] bg-m3-surface dark:bg-m3-darkSurface border border-neutral-300/80 dark:border-neutral-800 rounded-2xl shadow-xl flex flex-col overflow-hidden relative">
+<!-- Chrome Side Panel OS Window Header -->
+
+<!-- M3 App Header (Branding + RAG status + Google Account Avatar/Login CTA) -->
+<header class="bg-white dark:bg-m3-darkContainerLow border-b border-neutral-200 dark:border-neutral-800/80 px-3 py-2 flex items-center justify-between shrink-0 shadow-xs z-20">
+<div class="flex items-center gap-2">
+
+<div class="leading-tight">
+<div class="flex items-center gap-1.5">
+<span class="text-[13px] font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">YouTube AI Learning Assistant</span>
+<span class="text-[9px] px-1 py-0.2 rounded font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center gap-0.5"></span>
+</div>
+<p class="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono"><br></p>
+</div>
+</div>
+<!-- Google OAuth Account Button / Trigger -->
+<div class="flex items-center gap-1"><button class="flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition" id="headerAuthBtn" onclick="toggleAccountMenu()" title="Tài khoản Google &amp; Token API">
+<img alt="Avatar" class="w-5 h-5 rounded-full ring-1 ring-emerald-500" id="userAvatarImg" src="https://lh3.googleusercontent.com/a/default-user=s96-c">
+<span class="text-[11px] font-medium text-neutral-700 dark:text-neutral-200 max-w-[70px] truncate" id="userShortName">minh.dev</span>
+<span class="material-symbols-outlined text-[14px] text-neutral-400">expand_more</span>
+</button><button class="p-1 rounded-full border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition flex items-center justify-center" onclick="toggleDarkMode()" title="Đổi giao diện Sáng/Tối"><span class="material-symbols-outlined text-[16px]" id="themeIcon">dark_mode</span></button></div>
+</header>
+<!-- Google OAuth / RAG Account Dropdown Tray (Expandable Sheet) -->
+<div class="bg-m3-surfaceContainerLow dark:bg-m3-darkContainer border-b border-neutral-300 dark:border-neutral-700/80 px-3 py-2.5 space-y-2 z-20 shadow-md text-xs hidden" id="accountDrawer">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-white dark:bg-neutral-700 flex items-center justify-center shadow-xs">
+<svg class="w-4 h-4" viewBox="0 0 24 24">
+<path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.665-5.17 3.665-9.09z" fill="#4285F4"></path>
+<path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.09C3.25 21.36 7.35 24 12 24z" fill="#34A853"></path>
+<path d="M5.28 14.32c-.25-.72-.38-1.49-.38-2.32s.13-1.6.38-2.32V6.59H1.26C.46 8.18 0 9.99 0 12s.46 3.82 1.26 5.41l4.02-3.09z" fill="#FBBC05"></path>
+<path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.64 1.26 6.59l4.02 3.09c.95-2.83 3.6-4.93 6.72-4.93z" fill="#EA4335"></path>
+</svg>
+</div>
+<div>
+<p class="font-bold text-neutral-900 dark:text-neutral-100" id="drawerAccountName">Minh Nguyen</p>
+<p class="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono" id="drawerAccountEmail">minh.nguyen@gmail.com</p>
+</div>
+</div>
+<button class="px-2 py-1 rounded-lg bg-neutral-200 dark:bg-neutral-750 text-[10px] font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-300 dark:hover:bg-neutral-700 transition" id="authSwitchBtn" onclick="toggleLoginState()">
+          Đăng xuất
+        </button>
+</div>
+<div class="grid grid-cols-2 gap-1.5 text-[10px] pt-1 border-t border-neutral-200 dark:border-neutral-700/60">
+<div class="bg-white dark:bg-m3-darkContainerLow p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700/60">
+<span class="text-neutral-400 block">Gemini 1.5 Flash:</span>
+<span class="font-medium text-emerald-600 dark:text-emerald-400">OAuth Sẵn sàng (92%)</span>
+</div>
+<div class="bg-white dark:bg-m3-darkContainerLow p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700/60">
+<span class="text-neutral-400 block">Backend RAG:</span>
+<span class="font-medium text-blue-600 dark:text-blue-400">FastAPI :8000 OK</span>
+</div>
+</div>
+</div>
+<!-- M3 Quick Phase Switcher (Ultra compact segmented control to inspect full flow) -->
+<div class="px-3 pt-2 pb-1 bg-white/60 dark:bg-neutral-900/40 border-b border-neutral-200 dark:border-neutral-800 shrink-0 flex items-center justify-between gap-1 text-[11px]">
+<span class="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">Chế độ</span>
+<div class="flex items-center gap-1 bg-neutral-200/80 dark:bg-neutral-800 p-0.5 rounded-lg">
+<button class="phase-tab px-2 py-0.5 rounded-md font-medium text-[10px] bg-white dark:bg-neutral-700 text-m3-primary dark:text-m3-darkPrimary shadow-xs" id="tab-home" onclick="showView('home')">Trang chính</button>
+
+<button class="phase-tab px-2 py-0.5 rounded-md font-medium text-[10px] text-neutral-600 dark:text-neutral-400" id="tab-quiz" onclick="showView('quiz')">Quiz</button>
+<button class="phase-tab px-2 py-0.5 rounded-md font-medium text-[10px] text-neutral-600 dark:text-neutral-400" id="tab-flashcards" onclick="showView('flashcards')">Flashcard</button>
+<button class="phase-tab px-2 py-0.5 rounded-md font-medium text-[10px] text-neutral-600 dark:text-neutral-400" id="tab-report" onclick="showView('report')">Đánh giá</button>
+</div>
+</div>
+<!-- MAIN SCROLLABLE CONTAINER -->
+<div class="flex-1 overflow-y-auto px-3 py-2.5 space-y-2.5" id="panelScroll">
+<!-- COMPACT VIDEO INFO CARD (Slim, 16:9 thumbnail, does not dominate) -->
+<section class="bg-white dark:bg-m3-darkContainerLow rounded-xl p-2 border border-neutral-200 dark:border-neutral-800/90 shadow-xs flex items-center gap-2.5">
+<div class="relative w-20 h-[50px] rounded-lg overflow-hidden bg-neutral-900 shrink-0 border border-neutral-200 dark:border-neutral-700 shadow-inner">
+<img alt="Thumbnail" class="w-full h-full object-cover opacity-85" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmX11PSdj49wWyOIO9CcWuj6vgdNR7KcRTUIOdQZ6_6ZdQ8KWBk-7eKuvU6H8OWMsKj_EzPUj8FxB3SiePnkWqrHhkXxo8ZqLoL84aiQ1z6hTNsq9RL7l49BfYAek0gNZ7QSlZZc5zyex60weU7YIqPUv9WhGLVdyjvztB9GID2p_KZNMnCySSTpJUNq_zfU0jIiWsv08X7OcOeGFWXz2ZVAUuoDpSM6E8M1rYnNp_DXIZF1HmNRprfg">
+<span class="absolute bottom-0.5 right-0.5 bg-black/80 text-[9px] text-white px-1 rounded font-mono">18:42</span>
+<div class="absolute inset-0 flex items-center justify-center bg-black/20">
+<span class="material-symbols-outlined text-white text-[16px]">play_circle</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<span class="text-[9px] font-semibold text-blue-600 dark:text-blue-400 truncate">3Blue1Brown</span>
+<span class="text-[9px] font-mono text-neutral-400 shrink-0">07:42 / 18:42</span>
+</div>
+<h2 class="text-[11px] font-bold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
+            Neural Networks: Backprop &amp; Gradients
+          </h2>
+<div class="mt-1 flex items-center justify-between">
+<span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+<span class="w-1 h-1 rounded-full bg-emerald-500"><br></span></span>
+<button class="text-[9px] font-semibold text-neutral-500 hover:text-m3-primary dark:hover:text-m3-darkPrimary flex items-center gap-0.5" onclick="simulateVideoChange()" title="Đổi video khác &amp; reset RAG session">
+<span class="material-symbols-outlined text-[11px]"><br></span></button>
+</div>
+</div>
+</section>
+<!-- VIEW 1: HOME VIEW (HERO ACTIONS + KEY MILESTONES) -->
+<div class="space-y-2.5 view-panel" id="view-home">
+<!-- Primary Learning Actions (Dual Hero CTAs side-by-side) -->
+<div class="grid grid-cols-2 gap-2">
+<!-- Action 1: Tạo Quiz Nhanh -->
+<div class="bg-gradient-to-br from-blue-50 to-indigo-50/50 dark:from-blue-950/40 dark:to-neutral-900 border border-blue-200/90 dark:border-blue-900/60 rounded-xl p-2.5 flex flex-col justify-between shadow-xs hover:shadow transition">
+<div class="flex items-start justify-between">
+
+<!-- Question count selector -->
+<div class="flex items-center bg-white dark:bg-neutral-800 rounded-md p-0.5 border border-blue-200 dark:border-neutral-700 text-[10px] font-mono">
+<button class="px-1 py-0.2 rounded bg-blue-600 text-white font-bold" id="qCount-5">5Q</button>
+<button class="px-1 py-0.2 rounded text-neutral-500 hover:text-neutral-900 dark:hover:text-white" id="qCount-10">10Q</button>
+</div>
+</div>
+<div class="mt-2">
+<h3 class="text-xs font-bold text-neutral-900 dark:text-neutral-100">Tạo Quiz nhanh</h3>
+<p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-snug">Trắc nghiệm bám sát video với timestamp.</p>
+</div>
+<button class="mt-2 w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 shadow-xs transition" onclick="startQuizSession()">
+<span class="">Bắt đầu Quiz</span>
+<span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+</button>
+</div>
+<!-- Action 2: Ôn Flashcards -->
+<div class="bg-gradient-to-br from-purple-50 to-pink-50/40 dark:from-purple-950/40 dark:to-neutral-900 border border-purple-200/90 dark:border-purple-900/60 rounded-xl p-2.5 flex flex-col justify-between shadow-xs hover:shadow transition">
+<div class="flex items-start justify-between">
+
+<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 font-mono">8 Thẻ</span>
+</div>
+<div class="mt-2">
+<h3 class="text-xs font-bold text-neutral-900 dark:text-neutral-100">Ôn Flashcards</h3>
+<p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-snug">Lật thẻ ghi nhớ khái niệm quan trọng.</p>
+</div>
+<button class="mt-2 w-full py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 shadow-xs transition" onclick="showView('flashcards')">
+<span class="">Mở Flashcards</span>
+<span class="material-symbols-outlined text-[13px]">style</span>
+</button>
+</div>
+</div>
+<!-- Video Key Milestones (Timestamp Jumpers) -->
+<div class="bg-white dark:bg-m3-darkContainerLow rounded-xl p-2.5 border border-neutral-200 dark:border-neutral-800 shadow-xs space-y-1.5">
+<div class="flex items-center justify-between px-0.5">
+<div class="flex items-center gap-1 text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+<span class="material-symbols-outlined text-amber-500 text-[15px] fill-1">bolt</span>
+<span class="">Mốc kiến thức theo Timestamp</span>
+</div>
+<span class="text-[9px] text-neutral-400">Click để seek YouTube</span>
+</div>
+<div class="space-y-1 pt-0.5">
+<button class="w-full text-left p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-neutral-150 dark:border-neutral-700/60 flex items-center justify-between group transition" onclick="simulateSeek('02:15')">
+<div class="flex items-center gap-2 min-w-0">
+<span class="px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-[9px] font-mono font-bold">02:15</span>
+<span class="text-[11px] text-neutral-800 dark:text-neutral-200 truncate group-hover:text-blue-600">Hàm mất mát &amp; Gradient Descent</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-neutral-400 group-hover:text-blue-600">play_arrow</span>
+</button>
+<button class="w-full text-left p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-neutral-150 dark:border-neutral-700/60 flex items-center justify-between group transition" onclick="simulateSeek('07:40')">
+<div class="flex items-center gap-2 min-w-0">
+<span class="px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-[9px] font-mono font-bold">07:40</span>
+<span class="text-[11px] text-neutral-800 dark:text-neutral-200 truncate group-hover:text-blue-600">Đạo hàm chuỗi (Chain Rule) qua hidden layers</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-neutral-400 group-hover:text-blue-600">play_arrow</span>
+</button>
+<button class="w-full text-left p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-neutral-150 dark:border-neutral-700/60 flex items-center justify-between group transition" onclick="simulateSeek('14:10')">
+<div class="flex items-center gap-2 min-w-0">
+<span class="px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-[9px] font-mono font-bold">14:10</span>
+<span class="text-[11px] text-neutral-800 dark:text-neutral-200 truncate group-hover:text-blue-600">Cập nhật trọng số &amp; bẫy Learning Rate</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-neutral-400 group-hover:text-blue-600">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Quick Ask AI Q&A Bar -->
+<div class="bg-m3-surfaceContainerLow dark:bg-m3-darkContainer rounded-xl p-2 border border-neutral-200 dark:border-neutral-800">
+<div class="flex items-center gap-1 text-[10px] font-semibold text-neutral-600 dark:text-neutral-300 mb-1 px-1">
+<span class="material-symbols-outlined text-[14px] text-m3-primary dark:text-m3-darkPrimary">psychology</span>
+<span class="">Hỏi nhanh AI về video này</span>
+</div>
+<div class="flex items-center gap-1 bg-white dark:bg-m3-darkContainerLow rounded-lg p-1 border border-neutral-200 dark:border-neutral-700">
+<input class="w-full bg-transparent px-1.5 text-[11px] text-neutral-800 dark:text-neutral-200 focus:outline-none border-0" placeholder="VD: Hiện tượng vanishing gradient là gì?" type="text">
+<button class="w-6 h-6 rounded bg-m3-primary dark:bg-m3-darkPrimary text-white dark:text-neutral-950 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[14px]">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- VIEW 2: INDEXING & RAG PIPELINE (According to 4-stage spec) -->
+
+<!-- VIEW 3: QUIZ SESSION & CHẤM ĐIỂM (M3 Interactive Quiz) -->
+<div class="space-y-2.5 view-panel hidden" id="view-quiz">
+<div class="bg-white dark:bg-m3-darkContainerLow rounded-xl p-3 border border-neutral-200 dark:border-neutral-800 shadow-xs space-y-2.5">
+<!-- Quiz Header -->
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-blue-600"></span>
+<span class="">Câu hỏi 2 / 5</span>
+</span>
+<button class="text-[10px] font-mono font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5" onclick="simulateSeek('07:42')">
+<span class="material-symbols-outlined text-[13px]">schedule</span> 07:42 trong video
+            </button>
+</div>
+<!-- M3 Linear Progress Bar -->
+<div class="w-full bg-neutral-100 dark:bg-neutral-800 h-1 rounded-full overflow-hidden">
+<div class="bg-blue-600 h-full w-[40%] rounded-full"></div>
+</div>
+<!-- Question Body -->
+<p class="text-xs font-semibold text-neutral-900 dark:text-neutral-100 leading-snug">
+            Trong thuật toán Backpropagation, quy tắc toán học nào được áp dụng đệ quy để tính gradient ngược qua các hidden layers?
+          </p>
+<!-- Compact Options List -->
+<div class="space-y-1.5 text-xs pt-1">
+<label class="flex items-center gap-2 p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition">
+<input class="text-blue-600 focus:ring-0" name="quizOption" type="radio">
+<span class="text-neutral-700 dark:text-neutral-300 text-[11px]">A. Quy tắc tích phân từng phần (Integration by parts)</span>
+</label>
+<label class="flex items-center gap-2 p-2 rounded-lg border-2 border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 cursor-pointer transition">
+<input checked="" class="text-blue-600 focus:ring-0" name="quizOption" type="radio">
+<span class="text-blue-950 dark:text-blue-200 font-medium text-[11px]">B. Quy tắc đạo hàm chuỗi đa biến (Multivariate Chain Rule)</span>
+</label>
+<label class="flex items-center gap-2 p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition">
+<input class="text-blue-600 focus:ring-0" name="quizOption" type="radio">
+<span class="text-neutral-700 dark:text-neutral-300 text-[11px]">C. Định lý Bayes về xác suất có điều kiện</span>
+</label>
+<label class="flex items-center gap-2 p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition">
+<input class="text-blue-600 focus:ring-0" name="quizOption" type="radio">
+<span class="text-neutral-700 dark:text-neutral-300 text-[11px]">D. Phương pháp xấp xỉ ngẫu nhiên Monte Carlo</span>
+</label>
+</div>
+<!-- Bottom Quiz Footer -->
+<div class="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+<button class="text-[10px] font-medium text-neutral-500 hover:text-blue-600 flex items-center gap-1" onclick="simulateSeek('07:42')">
+<span class="material-symbols-outlined text-[14px]">play_circle</span> Xem lại clip (07:42)
+            </button>
+<button class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition" onclick="submitQuizAndShowReport()">
+<span class="">Nộp bài &amp; Chấm điểm</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- VIEW 4: FLASHCARDS (Compact 3D Flip Card) -->
+<div class="space-y-2.5 view-panel hidden" id="view-flashcards">
+<div class="flex items-center justify-between px-0.5">
+<span class="text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1">
+<span class="material-symbols-outlined text-purple-600 text-sm">style</span>
+<span class="">Khái niệm trọng tâm (Card 3/8)</span>
+</span>
+<span class="text-[10px] text-purple-600 dark:text-purple-400 font-mono font-bold">Vanishing Gradient</span>
+</div>
+<!-- 3D Interactive Card Flip -->
+<div class="relative w-full h-[220px] cursor-pointer group" onclick="toggleCardFlip()">
+<div class="w-full h-full relative duration-300 transform-style-preserve-3d transition-transform rotate-y-180" id="flashcardElement">
+<!-- Mặt Trước: Thuật ngữ / Câu hỏi -->
+<div class="absolute inset-0 w-full h-full bg-white dark:bg-m3-darkContainerLow rounded-xl p-3.5 border border-neutral-200 dark:border-neutral-800 shadow-xs flex flex-col justify-between backface-hidden">
+<div class="flex items-center justify-between">
+<span class="text-[9px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-1.5 py-0.5 rounded">
+                  Mặt trước • Khái niệm
+                </span>
+<span class="material-symbols-outlined text-neutral-400 text-sm">flip</span>
+</div>
+<div class="text-center py-2">
+<p class="text-[10px] text-neutral-400 font-medium mb-1">Giải nghĩa thuật toán:</p>
+<h3 class="text-xs font-bold text-neutral-900 dark:text-neutral-50 px-1 leading-relaxed">
+                  "Hiện tượng triệt tiêu Gradient (Vanishing Gradient) trong mạng nơ-ron sâu dùng hàm Sigmoid?"
+                </h3>
+</div>
+<div class="flex items-center justify-between pt-1.5 border-t border-neutral-100 dark:border-neutral-800 text-[10px]">
+<span class="text-neutral-500 font-mono flex items-center gap-1">
+<span class="material-symbols-outlined text-purple-600 text-[14px]">timer</span> 11:15 trong video
+                </span>
+<span class="text-neutral-400 italic">Nhấp để lật mặt sau →</span>
+</div>
+</div>
+<!-- Mặt Sau: Lời giải & Jump link -->
+<div class="absolute inset-0 w-full h-full bg-purple-50 dark:bg-purple-950/80 rounded-xl p-3.5 border-2 border-purple-300 dark:border-purple-700 shadow-xs flex flex-col justify-between backface-hidden rotate-y-180">
+<div class="flex items-center justify-between">
+<span class="text-[9px] font-bold uppercase tracking-wider text-purple-800 dark:text-purple-200 bg-purple-200/80 dark:bg-purple-900 px-1.5 py-0.5 rounded">
+                  Mặt sau • Lời giải
+                </span>
+<span class="material-symbols-outlined text-purple-600 text-sm">check_circle</span>
+</div>
+<div class="text-left overflow-y-auto py-1">
+<p class="text-[11px] text-neutral-800 dark:text-purple-100 leading-relaxed">
+                  Khi nhân liên tiếp các đạo hàm của Sigmoid (&lt; 0.25) qua nhiều tầng ẩn bằng Chain Rule, giá trị gradient co về gần 0 khiến các lớp đầu mạng không thể cập nhật trọng số.
+                </p>
+</div>
+<div class="flex items-center justify-between pt-1.5 border-t border-purple-200 dark:border-purple-800 text-[10px]">
+<button class="font-bold text-purple-700 dark:text-purple-300 hover:underline flex items-center gap-0.5" onclick="event.stopPropagation(); simulateSeek('11:15');">
+<span class="material-symbols-outlined text-[14px]">play_arrow</span> Nhảy tới 11:15
+                </button>
+<span class="text-purple-500">Chạm để lật lại</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Rating & Prev/Next Controls -->
+<div class="flex items-center justify-between bg-white dark:bg-m3-darkContainerLow rounded-xl p-1.5 border border-neutral-200 dark:border-neutral-800 text-xs">
+<button class="px-2.5 py-1 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 text-[10px] font-medium hover:bg-neutral-100">
+            Trước
+          </button>
+<div class="flex items-center gap-1.5">
+<span class="text-[10px] text-neutral-400">Tự đánh giá:</span>
+<button class="px-2 py-0.5 rounded bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 text-[10px] font-bold">Chưa nhớ</button>
+<button class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Đã thuộc</button>
+</div>
+<button class="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-medium">
+            Tiếp theo
+          </button>
+</div>
+</div>
+<!-- VIEW 5: LEARNING ASSESSMENT REPORT (Local API Grading, Strong/Weak topics & Timestamp Review) -->
+<div class="space-y-2.5 view-panel hidden" id="view-report">
+<!-- Score Card -->
+<div class="bg-white dark:bg-m3-darkContainerLow rounded-xl p-3 border border-neutral-200 dark:border-neutral-800 shadow-xs flex items-center justify-between">
+<div>
+<span class="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wide">Local API Assessment</span>
+<h3 class="text-xs font-bold text-neutral-900 dark:text-neutral-100">Kết quả: Nắm vững tốt!</h3>
+<p class="text-[10px] text-neutral-500 dark:text-neutral-400">Đúng 4 / 5 câu (80%) trong buổi học này.</p>
+</div>
+<div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-base font-mono border border-emerald-300 dark:border-emerald-800">
+            80%
+          </div>
+</div>
+<!-- Strong & Weak Topics -->
+<div class="grid grid-cols-2 gap-2 text-[10px]">
+<!-- Strong -->
+<div class="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-2 space-y-1">
+<div class="flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-300">
+<span class="material-symbols-outlined text-[13px] fill-1">thumb_up</span>
+<span class="">Chủ đề mạnh</span>
+</div>
+<ul class="space-y-0.5 text-emerald-900 dark:text-emerald-200">
+<li class="">• Đạo hàm Chain Rule</li>
+<li class="">• Công thức hàm Loss</li>
+</ul>
+</div>
+<!-- Weak -->
+<div class="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-2 space-y-1">
+<div class="flex items-center gap-1 font-bold text-amber-800 dark:text-amber-300">
+<span class="material-symbols-outlined text-[13px] fill-1">priority_high</span>
+<span class="">Cần ôn lại</span>
+</div>
+<ul class="space-y-0.5 text-amber-900 dark:text-amber-200">
+<li class="">• Vanishing Gradient</li>
+<li class="">• Learning Rate Decay</li>
+</ul>
+</div>
+</div>
+<!-- Clickable Seek Review Timestamps (Item 5/7 requirement) -->
+<div class="bg-white dark:bg-m3-darkContainerLow rounded-xl p-2.5 border border-neutral-200 dark:border-neutral-800 shadow-xs space-y-1.5">
+<div class="flex items-center justify-between">
+<h4 class="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1">
+<span class="material-symbols-outlined text-blue-600 text-sm">replay</span>
+<span class="">Video Seek để củng cố kiến thức</span>
+</h4>
+<span class="text-[9px] text-neutral-400">Nhảy trực tiếp</span>
+</div>
+<div class="space-y-1">
+<button class="w-full text-left p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/80 hover:bg-amber-100 flex items-center justify-between transition" onclick="simulateSeek('11:15')">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="px-1.5 py-0.2 bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 font-mono text-[9px] font-bold rounded">11:15</span>
+<span class="text-[10px] font-medium text-neutral-800 dark:text-neutral-200 truncate">Ôn lại: Giới hạn hàm Sigmoid &amp; Triệt tiêu đạo hàm</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-amber-600">play_arrow</span>
+</button>
+<button class="w-full text-left p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 hover:bg-blue-50 flex items-center justify-between transition" onclick="simulateSeek('15:30')">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="px-1.5 py-0.2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 font-mono text-[9px] font-bold rounded">15:30</span>
+<span class="text-[10px] font-medium text-neutral-800 dark:text-neutral-200 truncate">Ôn lại: Tối ưu Momentum &amp; Learning Rate</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-blue-600">play_arrow</span>
+</button>
+</div>
+</div>
+<div class="pt-0.5 flex gap-2">
+<button class="flex-1 py-1.5 border border-neutral-200 dark:border-neutral-700 rounded-lg text-[10px] font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100" onclick="startQuizSession()">
+            Làm lại Quiz
+          </button>
+<button class="flex-1 py-1.5 bg-m3-primary dark:bg-m3-darkPrimary text-white dark:text-neutral-900 rounded-lg text-[10px] font-semibold" onclick="showView('flashcards')">
+            Luyện Flashcard
+          </button>
+</div>
+</div>
+</div>
+<!-- PERSISTENT FOOTER: YouTube Tab Sync Bar + Toast Notify -->
+
+<!-- Interactive Simulated Toast notification for Seek / Reset -->
+<div class="absolute bottom-11 left-3 right-3 bg-neutral-900/90 text-white px-3 py-1.5 rounded-lg text-[10px] font-medium flex items-center justify-between shadow-lg transition-opacity duration-200 z-30 opacity-0 pointer-events-none" id="simToast">
+<span id="toastMsg" class="">Đã gửi lệnh chrome.tabs: Seek YouTube -&gt; 07:40</span>
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+</div>
+<!-- Client-side script for M3 interactive Chrome Side Panel flow -->
+<script>
+    // View Switcher logic
+    function showView(viewName) {
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
+      const target = document.getElementById('view-' + viewName);
+      if (target) target.classList.remove('hidden');
+
+      // Update segmented control styling
+      document.querySelectorAll('.phase-tab').forEach(tab => {
+        tab.className = 'phase-tab px-2 py-0.5 rounded-md font-medium text-[10px] text-neutral-600 dark:text-neutral-400';
+      });
+      const activeTab = document.getElementById('tab-' + viewName);
+      if (activeTab) {
+        activeTab.className = 'phase-tab px-2 py-0.5 rounded-md font-medium text-[10px] bg-white dark:bg-neutral-700 text-m3-primary dark:text-m3-darkPrimary shadow-xs';
+      }
+
+      document.getElementById('panelScroll').scrollTop = 0;
+    }
+
+    function startQuizSession() {
+      showView('quiz');
+      showToast('Khởi tạo Quiz 5 câu từ ChromaDB Vector Store');
+    }
+
+    function submitQuizAndShowReport() {
+      showView('report');
+      showToast('Local API đã chấm điểm: 80% (4/5)');
+    }
+
+    // Toggle Google OAuth account drawer
+    let isAccountOpen = false;
+    function toggleAccountMenu() {
+      const drawer = document.getElementById('accountDrawer');
+      isAccountOpen = !isAccountOpen;
+      if (isAccountOpen) {
+        drawer.classList.remove('hidden');
+      } else {
+        drawer.classList.add('hidden');
+      }
+    }
+
+    // Toggle Logged in vs Logged out state for Google OAuth testing
+    let isLoggedIn = true;
+    function toggleLoginState() {
+      isLoggedIn = !isLoggedIn;
+      const userShortName = document.getElementById('userShortName');
+      const drawerAccountName = document.getElementById('drawerAccountName');
+      const drawerAccountEmail = document.getElementById('drawerAccountEmail');
+      const authSwitchBtn = document.getElementById('authSwitchBtn');
+      const headerAuthBtn = document.getElementById('headerAuthBtn');
+
+      if (isLoggedIn) {
+        userShortName.textContent = 'minh.dev';
+        drawerAccountName.textContent = 'Minh Nguyen';
+        drawerAccountEmail.textContent = 'minh.nguyen@gmail.com';
+        authSwitchBtn.textContent = 'Đăng xuất';
+        showToast('Đã cấp quyền Google OAuth (Gemini Token active)');
+      } else {
+        userShortName.textContent = 'Chưa login';
+        drawerAccountName.textContent = 'Khách (Chưa đăng nhập)';
+        drawerAccountEmail.textContent = 'Cần OAuth để dùng Gemini';
+        authSwitchBtn.textContent = 'Đăng nhập Google';
+        showToast('Chế độ Offline: Vui lòng đăng nhập Google OAuth');
+      }
+    }
+
+    // Flashcard 3D flip
+    let isFlipped = false;
+    function toggleCardFlip() {
+      const card = document.getElementById('flashcardElement');
+      isFlipped = !isFlipped;
+      if (isFlipped) {
+        card.classList.add('rotate-y-180');
+      } else {
+        card.classList.remove('rotate-y-180');
+      }
+    }
+
+    // Simulate video change & session reset
+    function simulateVideoChange() {
+      showToast('Đổi video: Đang dọn session & nạp phụ đề mới...');
+      showView('indexing');
+    }
+
+    // Simulate YouTube player timestamp jump
+    function simulateSeek(timestamp) {
+      document.getElementById('currentSeekTimestamp').textContent = 'Seek: ' + timestamp;
+      showToast('Đã gửi lệnh chrome.tabs: Seek YouTube -> ' + timestamp);
+    }
+
+    // Toast Notification helper
+    function showToast(text) {
+      const toast = document.getElementById('simToast');
+      const msg = document.getElementById('toastMsg');
+      msg.textContent = text;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2400);
+    }
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      const themeIcon = document.getElementById('themeIcon');
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        html.classList.add('light');
+        if (themeIcon) themeIcon.textContent = 'dark_mode';
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+        if (themeIcon) themeIcon.textContent = 'light_mode';
+      }
+    }
+  </script>
+
+
+
+
+
+
+</body></html>

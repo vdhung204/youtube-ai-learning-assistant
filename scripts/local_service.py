@@ -123,7 +123,10 @@ def start(settings):
         state = read_state()
         if state.get("instance") == instance and state.get("listening"):
             print(f"Service listening: http://127.0.0.1:{settings.port}/api/v1/health")
-            print("Health is 503 until the TV3 RAG facade is configured and ready.")
+            if settings.rag_factory:
+                print(f"RAG factory configured: {settings.rag_factory}")
+            else:
+                print("Health is 503 because YALA_RAG_FACTORY is not configured.")
             return
         time.sleep(0.1)
     # Stop only the instance this invocation created; never kill a PID.

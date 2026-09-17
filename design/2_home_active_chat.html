@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YouTube AI Learning Assistant - Home Active Chat</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            },
+            surface: '#ffffff',
+            slateBg: '#f1f5f9',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scroll">
+    /* Custom thin scrollbar for side panel */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 font-sans text-slate-800 antialiased">
+<!-- BEGIN: ExtensionPanelContainer -->
+<!-- Target side panel width 380px conforming to Chrome extension container -->
+<main class="w-[380px] bg-white rounded-3xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden text-[13px] leading-normal" data-purpose="extension-side-panel">
+<!-- BEGIN: HeaderSection -->
+<header class="pt-3.5 pb-2.5 px-4 border-b border-slate-100 bg-white" data-purpose="panel-header">
+<!-- Top Utility Row -->
+<div class="flex items-center justify-between gap-2">
+<!-- Logo & Badge -->
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2z"></path>
+<path d="M19 16l1.2 2.8L23 20l-2.8 1.2L19 24l-1.2-2.8L15 20l2.8-1.2L19 16z" opacity="0.6"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-bold text-slate-900 text-xs tracking-tight">YouTube AI Learning</span>
+<span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
+                RAG
+              </span>
+</div>
+<p class="text-[10px] text-slate-400 font-normal leading-none mt-0.5">Chrome Side Panel v1.2</p>
+</div>
+</div>
+<!-- User profile & Theme toggle -->
+<div class="flex items-center gap-1.5">
+<button aria-label="Tài khoản cá nhân" class="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded-full border border-slate-200 text-slate-700 transition" type="button">
+<div class="w-4 h-4 rounded-full bg-sky-500 text-white flex items-center justify-center text-[9px] font-bold">m</div>
+<span class="text-[11px] font-medium max-w-[65px] truncate">minh.dev</span>
+<svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition" title="Đổi giao diện" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav aria-label="Tabs điều hướng" class="mt-3 flex items-center justify-between text-xs font-medium border-t border-slate-100 pt-2 text-slate-500">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mr-1">Chế độ</span>
+<div class="flex items-center bg-slate-100 p-0.5 rounded-lg text-[11px] font-medium w-full justify-between max-w-[305px]">
+<button class="px-2.5 py-1 bg-white text-blue-600 font-semibold rounded-md shadow-sm" type="button">Trang chính</button>
+<button class="px-2.5 py-1 text-slate-600 hover:text-slate-900 transition" type="button">Quiz</button>
+<button class="px-2.5 py-1 text-slate-600 hover:text-slate-900 transition" type="button">Flashcard</button>
+<button class="px-2 py-1 text-slate-600 hover:text-slate-900 transition" type="button">Đánh giá</button>
+</div>
+</nav>
+</header>
+<!-- END: HeaderSection -->
+<!-- BEGIN: MainContent -->
+<div class="p-3.5 space-y-3 overflow-y-auto max-h-[640px]" data-purpose="panel-body">
+<!-- 1. Video Context Info Card -->
+<section class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center gap-2.5 shadow-sm hover:border-slate-300 transition" data-purpose="current-video-card">
+<!-- Thumbnail -->
+<div class="relative w-[78px] h-[50px] rounded-lg overflow-hidden bg-slate-900 flex-shrink-0">
+<img alt="Thumbnail video 3Blue1Brown" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbCbn9X9Og1ZzaUTfBsEya5Un1GOpxbZSRDmnlATlcd0-ghcnDfwfglL8Ot7Q7KLeO6LRU0Euvh5xV73-l5XHvZLIr6uH8bu_cjQvetQxOlS4iFq0e5DYrzbnnu4cplGuQna3XUyS3oT8jC-3TpVJbneJ992eWyRKBsT1dNt5jEHH4QBgS3FoKQcOF9y4RHj2ItEV7F0ib144KtwJ93iAs3qhdNpcWtwyo4WmlGqbneJVIeMZKVnLnTQ"/>
+<span class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1 py-0.2 rounded font-mono font-medium">18:42</span>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-5 h-5 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center">
+<svg class="w-2.5 h-2.5 text-white ml-0.5" fill="currentColor" viewbox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+</div>
+</div>
+</div>
+<!-- Video Metadata -->
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between text-[11px] text-slate-500 mb-0.5">
+<span class="text-blue-600 font-semibold truncate">3Blue1Brown</span>
+<span class="text-[10px] font-mono text-slate-400">07:42 / 18:42</span>
+</div>
+<h1 class="text-xs font-semibold text-slate-900 truncate leading-tight">Neural Networks: Backprop &amp; Gradients</h1>
+<div class="flex items-center justify-between mt-1">
+<span class="inline-flex items-center text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span>
+              Đã sẵn sàng phân tích
+            </span>
+<button class="text-slate-400 hover:text-slate-600 p-0.5 transition" title="Đồng bộ lại timestamp" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</section>
+<!-- 2. Two Compact Quick Action Cards -->
+<section class="grid grid-cols-2 gap-2" data-purpose="quick-action-cards">
+<!-- Quiz Quick Action Card -->
+<div class="bg-blue-50/40 border border-blue-100 rounded-xl p-2.5 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-[10px] font-bold text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded">5Q / 10Q</span>
+<svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<h2 class="text-xs font-semibold text-slate-900 leading-snug">Tạo Quiz nhanh</h2>
+<p class="text-[11px] text-slate-500 mt-0.5 leading-tight line-clamp-1">Trắc nghiệm bám sát video...</p>
+</div>
+<button class="mt-2 w-full py-1 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-medium flex items-center justify-center gap-1 transition shadow-sm" type="button">
+            Bắt đầu Quiz <span aria-hidden="true">→</span>
+</button>
+</div>
+<!-- Flashcards Quick Action Card -->
+<div class="bg-purple-50/40 border border-purple-100 rounded-xl p-2.5 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-[10px] font-bold text-purple-700 bg-purple-100/70 px-1.5 py-0.5 rounded">8 Thẻ</span>
+<svg class="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<h2 class="text-xs font-semibold text-slate-900 leading-snug">Ôn Flashcards</h2>
+<p class="text-[11px] text-slate-500 mt-0.5 leading-tight line-clamp-1">Lật thẻ ghi nhớ khái niệm...</p>
+</div>
+<button class="mt-2 w-full py-1 px-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[11px] font-medium flex items-center justify-center gap-1 transition shadow-sm" type="button">
+            Mở Flashcards <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</section>
+<!-- 3. Active Chat Box (Expanded Ask AI Area) -->
+<section class="border border-blue-200 bg-slate-50/70 rounded-2xl p-3 shadow-sm space-y-3" data-purpose="active-chat-box">
+<!-- Active Chat Header -->
+<div class="flex items-center justify-between border-b border-slate-200/80 pb-2">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2z"></path>
+</svg>
+</span>
+<span class="text-xs font-semibold text-slate-800">Hỏi đáp về video này</span>
+</div>
+<button aria-label="Đóng hội thoại" class="w-5 h-5 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/70 transition" title="Đóng hội thoại" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<!-- Conversation Stream -->
+<div class="space-y-3 text-xs" data-purpose="chat-messages">
+<!-- User message bubble -->
+<div class="flex justify-end">
+<div class="max-w-[85%] bg-blue-600 text-white rounded-2xl rounded-tr-none px-3 py-2 leading-relaxed shadow-sm font-normal">
+              Hiện tượng vanishing gradient là gì và đoạn nào giải thích rõ nhất?
+            </div>
+</div>
+<!-- AI response bubble -->
+<div class="flex flex-col gap-1 items-start">
+<div class="max-w-[95%] bg-white border border-slate-200/80 rounded-2xl rounded-tl-none p-3 shadow-sm text-slate-700 leading-relaxed">
+<p>
+                Vanishing gradient xảy ra khi gradient của hàm mất mát bị triệt tiêu dần qua các tầng sâu do đạo hàm kích hoạt (như Sigmoid) quá nhỏ, làm các layer đầu khó cập nhật trọng số.
+              </p>
+<!-- Citations / Timestamp References -->
+<div class="mt-2.5 pt-2 border-t border-slate-100">
+<div class="flex items-center gap-1 text-[11px] font-semibold text-slate-600 mb-1.5">
+<svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Nguồn trong video:</span>
+</div>
+<div class="space-y-1">
+<!-- Citation 1 -->
+<button class="w-full text-left flex items-start gap-1.5 px-2 py-1 rounded-lg bg-slate-50 hover:bg-blue-50/80 border border-slate-200/60 hover:border-blue-200 text-[11px] text-slate-700 hover:text-blue-700 transition group" type="button">
+<span class="font-mono font-semibold text-blue-600 group-hover:underline flex-shrink-0">⏱ 04:12</span>
+<span class="truncate text-slate-600 group-hover:text-blue-900">- Vấn đề suy giảm đạo hàm qua các lớp sigmoid</span>
+</button>
+<!-- Citation 2 -->
+<button class="w-full text-left flex items-start gap-1.5 px-2 py-1 rounded-lg bg-slate-50 hover:bg-blue-50/80 border border-slate-200/60 hover:border-blue-200 text-[11px] text-slate-700 hover:text-blue-700 transition group" type="button">
+<span class="font-mono font-semibold text-blue-600 group-hover:underline flex-shrink-0">⏱ 08:35</span>
+<span class="truncate text-slate-600 group-hover:text-blue-900">- Minh họa trực quan đồ thị trọng số</span>
+</button>
+<!-- Citation 3 -->
+<button class="w-full text-left flex items-start gap-1.5 px-2 py-1 rounded-lg bg-slate-50 hover:bg-blue-50/80 border border-slate-200/60 hover:border-blue-200 text-[11px] text-slate-700 hover:text-blue-700 transition group" type="button">
+<span class="font-mono font-semibold text-blue-600 group-hover:underline flex-shrink-0">⏱ 13:50</span>
+<span class="truncate text-slate-600 group-hover:text-blue-900">- Cách giải quyết bằng hàm ReLU</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Chat Input Row -->
+<form class="flex items-center gap-1.5 pt-1" data-purpose="chat-input-form" onsubmit="event.preventDefault();">
+<div class="relative flex-1">
+<input class="w-full text-xs pl-3 pr-8 py-2 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400" placeholder="Hỏi tiếp về video..." type="text"/>
+</div>
+<button aria-label="Gửi câu hỏi" class="h-[34px] w-[34px] flex-shrink-0 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl flex items-center justify-center transition shadow-sm" type="submit">
+<svg class="w-4 h-4 transform rotate-90 ml-0.5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+</svg>
+</button>
+</form>
+</section>
+</div>
+<!-- END: MainContent -->
+</main>
+<!-- END: ExtensionPanelContainer -->
+</body></html>

@@ -1,14 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AIContentError, buildQuizPrompt, buildFlashcardPrompt, buildAssessmentPrompt,
+import { AIContentError, buildQuizPrompt, buildFlashcardPrompt, buildAssessmentPrompt, buildChatPrompt,
   validateQuiz, validateFlashcards, validateLearningAssessment, validateAssessmentFeedback,
-  mapQuiz, mapFlashcards, mapAssessment } from "../index.ts";
+  validateChat, mapQuiz, mapFlashcards, mapAssessment } from "../index.ts";
 import type { SourceContext } from "../types.ts";
 
 const context: SourceContext = { videoId: "synthetic01", durationSec: 180, chunks: [
   { videoId: "synthetic01", chunkId: "chunk1", text: "Tuple không thể gán lại phần tử.",
     startSec: 120, endSec: 135, position: 0, score: 0.9 } ] };
-const item = { question: "Tuple có thể gán lại phần tử không?", options: ["Không", "Có"], correctAnswer: 0,
+const item = { question: "Tuple có thể gán lại phần tử không?",
+  options: ["Không", "Có", "Chỉ khi rỗng", "Chỉ với số"], correctAnswer: 0,
   explanation: "Tuple không thể gán lại phần tử.", topic: " Tuple ", sourceChunkId: "chunk1",
   evidence: "Tuple không thể gán lại phần tử." };
 const rawQuiz = () => ({ status: "ok", questions: [structuredClone(item)] });
@@ -29,8 +30,8 @@ test("invalid JSON is classified without echoing raw provider data", () => {
     (error: unknown) => error instanceof AIContentError && error.code === "AI_JSON_INVALID" && !error.message.includes("PRIVATE"));
 });
 test("missing/extra fields, invalid answer and duplicate options are refused", () => {
-  const variants = [ { ...item, correctAnswer: 2 }, { ...item, correctAnswer: true },
-    { ...item, options: ["Có", " có "] }, { ...item, question: "" },
+  const variants = [ { ...item, correctAnswer: 4 }, { ...item, correctAnswer: true },
+    { ...item, options: ["Có", " có ", "Không", "Khác"] }, { ...item, question: "" },
     { ...item, sourceTimestamp: { startSec: 1, endSec: 2 } } ];
   for (const q of variants) assert.throws(() => validateQuiz({ status: "ok", questions: [q] }, context));
   const q = rawQuiz(); delete (q.questions[0] as Partial<typeof item>).explanation;
@@ -63,6 +64,23 @@ test("flashcard validator and mapper preserve source", () => {
   assert.equal(cards[0].sourceTimestamp.startSec, 120);
   raw.flashcards[0].back = "";
   assert.throws(() => validateFlashcards(raw, context));
+});
+test("chat prompt carries the question as data and validates grounded answers", () => {
+  const prompt = buildChatPrompt(context, " Tuple có thay đổi được không? ");
+  const promptData = JSON.parse(prompt.userContent) as { question: string };
+  assert.equal(promptData.question, "Tuple có thay đổi được không?");
+  assert.ok(!prompt.systemInstruction.includes(promptData.question));
+
+  const raw = { status: "ok", answers: [{
+    answer: "Không, phần tử của tuple không thể được gán lại.",
+    topic: "Tuple",
+    sourceChunkId: "chunk1",
+    evidence: item.evidence,
+  }] };
+  const validated = validateChat(raw, context);
+  assert.equal(validated.items[0].answer, raw.answers[0].answer);
+  raw.answers[0].evidence = "Tuple có thể thay đổi.";
+  assert.throws(() => validateChat(raw, context), /AI_SOURCE_INVALID/u);
 });
 test("assessment validates numeric consistency and source", () => {
   const validated = validateLearningAssessment(assessment(), context);
@@ -100,6 +118,12 @@ test("prompts keep transcript in data and include output schemas", () => {
   assert.ok(!prompt.systemInstruction.includes(malicious.chunks[0].text));
   assert.ok(prompt.userContent.includes(malicious.chunks[0].text));
   assert.ok(prompt.responseSchema);
+  const responseProperties = prompt.responseSchema.properties as Record<string, Record<string, unknown>>;
+  assert.equal(responseProperties.questions.maxItems, 5);
+  const questionSchema = responseProperties.questions.items as { properties: Record<string, Record<string, unknown>> };
+  assert.equal(questionSchema.properties.options.minItems, 4);
+  assert.equal(questionSchema.properties.options.maxItems, 4);
+  assert.equal(questionSchema.properties.correctAnswer.maximum, 3);
   assert.equal(buildFlashcardPrompt(context).promptVersion, prompt.promptVersion);
   assert.ok(buildAssessmentPrompt(context, validateLearningAssessment(assessment(), context)).userContent.includes("trustedAssessment"));
 });

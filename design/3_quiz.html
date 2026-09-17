@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YouTube AI Learning Assistant - Quiz</title>
+<!-- Tailwind CSS v3 with forms & container-queries plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars">
+    /* Subtle scrollbar for Chrome Side Panel feel */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-[#f1f5f9] min-h-screen flex items-center justify-center p-4 font-sans text-slate-800 antialiased">
+<!-- BEGIN: ChromeSidePanelContainer -->
+<main class="w-[380px] bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden flex flex-col my-auto" data-purpose="side-panel-window">
+<!-- BEGIN: TopBar -->
+<header class="px-4 py-3 border-b border-slate-100 flex items-center justify-between" data-purpose="app-header">
+<!-- App Brand & Status -->
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+<!-- Sparkles Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+<path d="M5 3v4"></path>
+<path d="M19 17v4"></path>
+<path d="M3 5h4"></path>
+<path d="M17 19h4"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center gap-1.5 leading-tight">
+<span class="text-xs font-bold text-slate-900 tracking-tight">YouTube AI Learning</span>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200/50">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              RAG
+            </span>
+</div>
+<p class="text-[10px] text-slate-400 font-medium">Chrome Side Panel v1.2</p>
+</div>
+</div>
+<!-- User & Theme Actions -->
+<div class="flex items-center gap-1.5">
+<!-- User Profile Pill -->
+<button class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 hover:bg-slate-100 rounded-full border border-slate-200/80 transition-colors" data-purpose="user-dropdown" type="button">
+<div class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+</svg>
+</div>
+<span class="text-[11px] font-medium text-slate-700">minh.dev</span>
+<svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Dark Mode Toggle Button -->
+<button aria-label="Toggle Theme" class="w-7 h-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors" title="Toggle Theme" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+</svg>
+</button>
+</div>
+</header>
+<!-- END: TopBar -->
+<!-- BEGIN: NavigationTabs -->
+<nav class="px-3 py-2 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between gap-1 text-[11px] font-medium" data-purpose="tab-navigation">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1">Chế độ</span>
+<div class="flex items-center gap-1 bg-slate-200/50 p-0.5 rounded-lg">
+<button class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-colors" type="button">
+          Trang chính
+        </button>
+<button class="px-3 py-1 rounded-md bg-white text-blue-600 font-semibold shadow-xs transition-all" type="button">
+          Quiz
+        </button>
+<button class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-colors" type="button">
+          Flashcard
+        </button>
+<button class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-colors" type="button">
+          Đánh giá
+        </button>
+</div>
+</nav>
+<!-- END: NavigationTabs -->
+<!-- BEGIN: ScrollablePanelBody -->
+<div class="p-3.5 space-y-3.5 overflow-y-auto max-h-[640px]">
+<!-- BEGIN: QuizProgressHeader -->
+<section class="bg-white rounded-xl p-3 border border-slate-200/70 shadow-2xs space-y-2.5" data-purpose="quiz-progress-section">
+<div class="flex items-center justify-between">
+<span class="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+            Câu 3 / 10
+          </span>
+<span class="text-[10px] font-medium text-slate-500 truncate max-w-[200px]" title="3Blue1Brown • Backprop &amp; Gradients">
+            3Blue1Brown • Backprop &amp; Gradients
+          </span>
+</div>
+<!-- Progress bar tracking 30% -->
+<div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-blue-600 h-full rounded-full transition-all duration-300" style="width: 30%"></div>
+</div>
+</section>
+<!-- END: QuizProgressHeader -->
+<!-- BEGIN: QuizQuestionCard -->
+<article class="bg-white rounded-xl p-3.5 border border-slate-200/90 shadow-xs space-y-3.5" data-purpose="question-card">
+<!-- Question Statement -->
+<div class="space-y-1">
+<span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Câu hỏi trắc nghiệm</span>
+<h2 class="text-[13px] font-semibold text-slate-900 leading-relaxed">
+            Trong giải thuật Lan truyền ngược (Backpropagation), quy tắc nào là cốt lõi để tính đạo hàm riêng của hàm mất mát đối với các trọng số ở tầng ẩn?
+          </h2>
+</div>
+<!-- Options List -->
+<div class="space-y-2" data-purpose="quiz-options">
+<!-- Option A -->
+<label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition-colors group">
+<input class="mt-0.5 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0" name="quiz_option" type="radio" value="A"/>
+<span class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug">
+<strong class="font-semibold text-slate-800">A.</strong> Quy tắc cộng xác suất Bayes
+            </span>
+</label>
+<!-- Option B (Selected/Recommended active sample) -->
+<label class="flex items-start gap-2.5 p-2.5 rounded-lg border-2 border-blue-500 bg-blue-50/40 cursor-pointer transition-all shadow-xs">
+<input checked="" class="mt-0.5 w-4 h-4 text-blue-600 border-blue-500 focus:ring-blue-500 focus:ring-offset-0" name="quiz_option" type="radio" value="B"/>
+<span class="text-xs font-medium text-slate-900 leading-snug">
+<strong class="font-bold text-blue-700">B.</strong> Quy tắc chuỗi (Chain Rule) trong giải tích
+            </span>
+</label>
+<!-- Option C -->
+<label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition-colors group">
+<input class="mt-0.5 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0" name="quiz_option" type="radio" value="C"/>
+<span class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug">
+<strong class="font-semibold text-slate-800">C.</strong> Ma trận hiệp phương sai PCA
+            </span>
+</label>
+<!-- Option D -->
+<label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition-colors group">
+<input class="mt-0.5 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500 focus:ring-offset-0" name="quiz_option" type="radio" value="D"/>
+<span class="text-xs text-slate-700 group-hover:text-slate-900 leading-snug">
+<strong class="font-semibold text-slate-800">D.</strong> Thuật toán phân cụm K-Means
+            </span>
+</label>
+</div>
+<!-- Action Row -->
+<div class="flex items-center gap-2 pt-1">
+<button class="w-1/3 py-2 px-3 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors" type="button">
+            Bỏ qua
+          </button>
+<button class="w-2/3 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors" type="button">
+<span>Xác nhận câu trả lời</span>
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M5 12h14m-7-7 7 7-7 7"></path>
+</svg>
+</button>
+</div>
+</article>
+<!-- END: QuizQuestionCard -->
+<!-- BEGIN: CompactAskAICard -->
+<section class="bg-gradient-to-b from-slate-50 to-blue-50/20 rounded-xl p-3 border border-slate-200/80 shadow-2xs space-y-2.5" data-purpose="ask-ai-widget">
+<!-- AI Card Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-blue-600">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"></path>
+</svg>
+</span>
+<h3 class="text-xs font-bold text-slate-900">Hỏi AI về câu này</h3>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200/60">
+            Chế độ gợi ý (Hint)
+          </span>
+</div>
+<!-- Helper Prompt Description -->
+<p class="text-[11px] text-slate-500 leading-relaxed">
+          AI giải thích dựa trên nội dung video và câu hỏi hiện tại mà không làm lộ đáp án.
+        </p>
+<!-- Search / Question Input Group -->
+<div class="relative flex items-center">
+<input class="w-full text-xs rounded-lg border-slate-200 bg-white pr-9 pl-3 py-2 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-xs" placeholder="VD: Gợi ý phương pháp suy luận câu này là gì?" type="text"/>
+<button aria-label="Gửi câu hỏi" class="absolute right-1 w-7 h-7 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center justify-center transition-colors shadow-xs" type="button">
+<svg class="w-3.5 h-3.5 rotate-90" fill="currentColor" viewbox="0 0 24 24">
+<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+</svg>
+</button>
+</div>
+</section>
+<!-- END: CompactAskAICard -->
+</div>
+<!-- END: ScrollablePanelBody -->
+</main>
+<!-- END: ChromeSidePanelContainer -->
+</body></html>
