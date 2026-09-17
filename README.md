@@ -70,53 +70,53 @@ OAuth token chỉ nằm trong luồng xác thực của extension. Token không 
 
 ```text
 .
-├── extension/                         # Thành viên 1; riêng src/ai-content do TV3 sở hữu
+├── extension/                       
 │   ├── public/
 │   │   └── icons/
 │   └── src/
-│       ├── background/                # Service worker, lifecycle extension
-│       ├── content/                   # Tích hợp trang YouTube
-│       ├── sidebar/                   # React UI và điều hướng màn hình
+│       ├── background/              
+│       ├── content/                
+│       ├── sidebar/                 
 │       ├── features/
-│       │   ├── authentication/        # OAuth UI và trạng thái đăng nhập
-│       │   ├── video/                 # Video ID, transcript, timestamp seek
-│       │   ├── quiz/                  # Giao diện làm bài
-│       │   ├── flashcard/             # Giao diện flashcard
-│       │   └── learning-assessment/   # Hiển thị kết quả và chỗ cần xem lại
+│       │   ├── authentication/      
+│       │   ├── video/              
+│       │   ├── quiz/               
+│       │   ├── flashcard/           
+│       │   └── learning-assessment/   
 │       ├── integrations/
-│       │   ├── local-service/         # HTTP client tới localhost
-│       │   ├── google-oauth/          # Chrome Identity integration
-│       │   └── gemini/                # Transport gọi Gemini, không chứa secret
-│       ├── ai-content/                 # TV3: prompt, mapping, validate AI output
-│       ├── session/                    # Dữ liệu chỉ tồn tại trong phiên
+│       │   ├── local-service/      
+│       │   ├── google-oauth/        
+│       │   └── gemini/             
+│       ├── ai-content/              
+│       ├── session/                  
 │       ├── types/
 │       └── tests/
 ├── local-rag-service/
 │   ├── app/
-│   │   ├── core/                      # TV2: config, lifecycle, health
-│   │   ├── transport/                 # TV2: endpoint/DTO adapter trên localhost
-│   │   ├── transcript/                # TV3: làm sạch và chuẩn hóa transcript
-│   │   ├── chunking/                  # TV3: chunk, overlap, timestamp
-│   │   ├── embedding/                 # TV3: model và batch embedding
-│   │   ├── vector_store/              # TV3: ChromaDB schema/adapter
-│   │   ├── retrieval/                 # TV3: search, filter, context builder
-│   │   └── assessment/                # TV3: topic/strength/weakness/timestamp
+│   │   ├── core/                    
+│   │   ├── transport/               
+│   │   ├── transcript/              
+│   │   ├── chunking/                
+│   │   ├── embedding/               
+│   │   ├── vector_store/            
+│   │   ├── retrieval/               
+│   │   └── assessment/             
 │   └── tests/
-│       ├── service/                   # TV2
-│       └── rag/                       # TV3
+│       ├── service/                 
+│       └── rag/                    
 ├── shared/
-│   └── contracts/                     # Schema giao tiếp; thay đổi cần review chéo
-├── scripts/                            # TV2: setup/start/stop/clear local data
+│   └── contracts/                   
+├── scripts/                          
 ├── tests/
-│   └── e2e/                           # TV4: integration và end-to-end
+│   └── e2e/                         
 ├── docs/
-│   ├── architecture/                  # Thiết kế đã được nhóm duyệt
-│   ├── project-management/            # Kế hoạch và phân công công việc
-│   └── testing/                       # TV4: test plan/report/evidence
-├── outputs/                            # Kết quả làm việc tạm; không commit
-├── work/                               # Công cụ và file trung gian tạo tài liệu
-├── CONTRIBUTING.md                    # Quy trình branch, commit và review
-├── OWNERS.md                          # Quyền sở hữu theo thư mục
+│   ├── architecture/                
+│   ├── project-management/          
+│   └── testing/                     
+├── outputs/                          
+├── work/                             
+├── CONTRIBUTING.md                  
+├── OWNERS.md                        
 └── .gitignore
 ```
 
@@ -124,12 +124,12 @@ Các thư mục được tạo trước để chia ranh giới làm việc. Thà
 
 ## 4. Phân công theo thư mục
 
-| Thành viên | Phạm vi chính | Không tự thay đổi |
-|---|---|---|
-| Thành viên 1 — Extension Frontend | `extension/`, trừ `extension/src/ai-content/` | Pipeline RAG, ChromaDB schema, prompt và assessment logic |
-| Thành viên 2 — Local Service & Integration | `local-rag-service/app/core/`, `transport/`, `local-rag-service/tests/service/`, `scripts/` | Chunking, embedding, retrieval và ChromaDB schema |
-| Thành viên 3 — AI/RAG Lead | `extension/src/ai-content/`, các module AI/RAG trong local service, `local-rag-service/tests/rag/` | UI/lifecycle extension và khung vận hành service ngoài giao diện đã thống nhất |
-| Thành viên 4 — QA/Integration | `tests/e2e/`, `docs/testing/` | Source của thành viên khác; lỗi được sửa qua issue/PR của owner |
+| Thành viên                                  | Phạm vi chính                                                                                         | Không tự thay đổi                                                                   |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Thành viên 1 — Extension Frontend          | `extension/`, trừ `extension/src/ai-content/`                                                      | Pipeline RAG, ChromaDB schema, prompt và assessment logic                              |
+| Thành viên 2 — Local Service & Integration | `local-rag-service/app/core/`, `transport/`, `local-rag-service/tests/service/`, `scripts/`     | Chunking, embedding, retrieval và ChromaDB schema                                      |
+| Thành viên 3 — AI/RAG Lead                 | `extension/src/ai-content/`, các module AI/RAG trong local service, `local-rag-service/tests/rag/` | UI/lifecycle extension và khung vận hành service ngoài giao diện đã thống nhất |
+| Thành viên 4 — QA/Integration              | `tests/e2e/`, `docs/testing/`                                                                       | Source của thành viên khác; lỗi được sửa qua issue/PR của owner               |
 
 Chi tiết quyền sở hữu và điểm cần review chéo nằm trong [OWNERS.md](OWNERS.md).
 
