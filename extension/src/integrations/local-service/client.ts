@@ -1,7 +1,6 @@
 import type {
   AssessmentRequest,
   AssessmentResponse,
-  DeleteResponse,
   ErrorDetail,
   ErrorResponse,
   HealthResponse,
@@ -195,15 +194,6 @@ function isAssessmentResponse(value: unknown): value is AssessmentResponse {
   );
 }
 
-function isDeleteResponse(value: unknown): value is DeleteResponse {
-  return (
-    isRecord(value) &&
-    typeof value.videoId === "string" &&
-    typeof value.deleted === "boolean" &&
-    isNonNegativeInteger(value.deletedChunkCount)
-  );
-}
-
 function assertVideoId(videoId: string): void {
   if (!isValidVideoId(videoId)) {
     throw new LocalServiceError("protocol", "Video ID không hợp lệ.");
@@ -370,19 +360,4 @@ export function assessQuiz(
 ): Promise<AssessmentResponse> {
   assertVideoId(videoId);
   return postJson(`/videos/${videoId}/assessments/quiz`, payload, isAssessmentResponse, [200], options);
-}
-
-export async function deleteVideoCache(
-  videoId: string,
-  options?: LocalServiceRequestOptions,
-): Promise<DeleteResponse> {
-  assertVideoId(videoId);
-  const result = await requestJson(
-    `/videos/${videoId}/cache`,
-    { method: "DELETE" },
-    isDeleteResponse,
-    [200],
-    options,
-  );
-  return assertSameVideo(result, videoId);
 }

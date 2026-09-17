@@ -35,9 +35,3 @@ export interface VideoMilestone {
   label: string;
   startSec: number;
 }
-
-export interface MockConversation {
-  question: string;
-  answer: string[];
-  sources: VideoSource[];
-}

@@ -89,13 +89,18 @@ function isContentRequest(value: unknown): value is ContentRequest {
   if (!isRecord(value)) {
     return false;
   }
-  if (value.type === "YALA_CONTENT_PING" || value.type === "YALA_GET_VIDEO_CONTEXT") {
+  if (value.type === "YALA_GET_VIDEO_CONTEXT") {
     return true;
   }
   if (value.type === "YALA_GET_TRANSCRIPT") {
     return typeof value.videoId === "string" && VIDEO_ID_PATTERN.test(value.videoId);
   }
-  return value.type === "YALA_SEEK_TO" && isFiniteNumber(value.seconds);
+  return (
+    value.type === "YALA_SEEK_TO" &&
+    isFiniteNumber(value.seconds) &&
+    typeof value.videoId === "string" &&
+    VIDEO_ID_PATTERN.test(value.videoId)
+  );
 }
 
 function textFrom(selectors: string[]): string {
@@ -752,9 +757,7 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
   }
 
   let response: ContentResponse;
-  if (message.type === "YALA_CONTENT_PING") {
-    response = { ok: true, type: "YALA_CONTENT_READY", url: window.location.href };
-  } else if (message.type === "YALA_GET_VIDEO_CONTEXT") {
+  if (message.type === "YALA_GET_VIDEO_CONTEXT") {
     const video = readVideoContext();
     response = video
       ? { ok: true, type: "YALA_VIDEO_CONTEXT", video }
@@ -764,7 +767,16 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
         };
   } else {
     const player = document.querySelector<HTMLVideoElement>("video.html5-main-video, video");
-    if (!Number.isFinite(message.seconds) || message.seconds < 0) {
+    const activeVideoId = parseYouTubeVideoId(window.location.href);
+    if (activeVideoId !== message.videoId) {
+      response = {
+        ok: false,
+        error: "STALE_VIDEO",
+        message: "Video đã thay đổi trước khi chuyển timestamp.",
+        retryable: true,
+        videoId: activeVideoId ?? undefined,
+      };
+    } else if (!Number.isFinite(message.seconds) || message.seconds < 0) {
       response = { ok: false, error: "INVALID_TIMESTAMP" };
     } else if (!player) {
       response = { ok: false, error: "NO_VIDEO" };

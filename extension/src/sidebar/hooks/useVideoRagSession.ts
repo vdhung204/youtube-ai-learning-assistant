@@ -13,7 +13,7 @@ import type {
   Video,
 } from "../../types/api";
 import type { VideoMilestone } from "../../types/learning";
-import { buildVideoMilestones } from "../utils/videoMilestones";
+import { buildVideoMilestones } from "../videoPresentation";
 
 export type RagServiceStatus =
   | "idle"

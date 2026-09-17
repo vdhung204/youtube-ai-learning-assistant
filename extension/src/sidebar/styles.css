@@ -560,13 +560,8 @@ button:disabled {
   margin-top: 5px;
 }
 
-.learning-session,
-.view-panel {
+.learning-session {
   min-width: 0;
-}
-
-.view-panel[hidden] {
-  display: none;
 }
 
 .view-stack {
@@ -1388,22 +1383,6 @@ button:disabled {
   margin: 0 0 8px;
 }
 
-.mock-answer-label {
-  display: inline-flex;
-  margin-bottom: 8px;
-  padding: 3px 6px;
-  color: #956000;
-  border-radius: 6px;
-  background: #fff3d8;
-  font-size: 9px;
-  font-weight: 750;
-}
-
-[data-theme="dark"] .mock-answer-label {
-  color: #ffd083;
-  background: #3c301f;
-}
-
 .assistant-answer p:last-of-type {
   margin-bottom: 0;
 }
@@ -1530,16 +1509,6 @@ button:disabled {
   color: var(--primary);
   border: 1px solid #c6dcff;
   background: var(--blue-container);
-}
-
-.progress-context {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--on-surface-variant);
-  font-size: 10px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .progress {

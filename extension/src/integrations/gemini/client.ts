@@ -294,36 +294,6 @@ export async function resolveGeminiModel(
   return normalizeModelName(model);
 }
 
-export async function checkGeminiAccess(
-  token: string,
-  options: GeminiModelOptions = {},
-): Promise<void> {
-  const response = await fetchGemini(GEMINI_MODELS_URL, {
-    credentials: "omit",
-    headers: makeHeaders(token, options.projectId),
-    method: "GET",
-    signal: options.signal,
-  });
-  const body = await readJsonResponse(response);
-  if (
-    !isRecord(body) ||
-    !Array.isArray(body.models) ||
-    !body.models.some(
-      (model) =>
-        isRecord(model) &&
-        Array.isArray(model.supportedGenerationMethods) &&
-        model.supportedGenerationMethods.includes("generateContent"),
-    )
-  ) {
-    throw new GeminiAccessError(
-      "PERMISSION_DENIED",
-      "Không tìm thấy model Gemini hỗ trợ tạo nội dung cho tài khoản này.",
-      response.status,
-      { retryable: false },
-    );
-  }
-}
-
 function promptByteLength(prompt: GeminiPromptInput): number {
   return new TextEncoder().encode(
     `${prompt.systemInstruction}\n${prompt.userContent}\n${JSON.stringify(prompt.responseSchema)}`,

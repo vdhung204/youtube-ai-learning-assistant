@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  isContentRequest,
-  isContentResponse,
-  isYouTubeTranscript,
-} from "../types/messages";
+import { isContentResponse, isYouTubeTranscript } from "../types/messages";
 
 const transcript = {
   language: "en",
@@ -15,14 +11,6 @@ const transcript = {
 };
 
 describe("YouTube transcript message contract", () => {
-  it("accepts a transcript request only with a valid expected video id", () => {
-    expect(
-      isContentRequest({ type: "YALA_GET_TRANSCRIPT", videoId: "dQw4w9WgXcQ" }),
-    ).toBe(true);
-    expect(isContentRequest({ type: "YALA_GET_TRANSCRIPT", videoId: "short" })).toBe(false);
-    expect(isContentRequest({ type: "YALA_GET_TRANSCRIPT" })).toBe(false);
-  });
-
   it("validates a timestamped, ordered transcript response", () => {
     expect(isYouTubeTranscript(transcript)).toBe(true);
     expect(

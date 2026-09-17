@@ -39,7 +39,6 @@ export function useLocalServiceHealth(enabled = true) {
 
     const controller = new AbortController();
     let active = true;
-    const timeout = window.setTimeout(() => controller.abort(), 4_000);
     setState(initialState);
 
     void getHealth(controller.signal)
@@ -77,11 +76,8 @@ export function useLocalServiceHealth(enabled = true) {
         }
         setState({ status: "error", message: "Không thể xác định trạng thái Local Service." });
       })
-      .finally(() => window.clearTimeout(timeout));
-
     return () => {
       active = false;
-      window.clearTimeout(timeout);
       controller.abort();
     };
   }, [enabled, requestVersion]);

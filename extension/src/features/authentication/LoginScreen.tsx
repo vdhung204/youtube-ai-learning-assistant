@@ -1,6 +1,5 @@
 import type { GoogleAuthState } from "../../types/auth";
-import { Button } from "../../sidebar/components/Button";
-import { Icon } from "../../sidebar/components/Icon";
+import { Button, Icon } from "../../sidebar/components/ui";
 
 interface LoginScreenProps {
   onRetry: () => void;

@@ -33,6 +33,7 @@ describe("Chrome integration states", () => {
       expect(chromeMock.tabs.sendMessage).toHaveBeenCalledWith(7, {
         seconds: 42,
         type: "YALA_SEEK_TO",
+        videoId: "dQw4w9WgXcQ",
       });
     });
     expect(await screen.findByText("Đã chuyển video tới 42 giây.")).toBeTruthy();

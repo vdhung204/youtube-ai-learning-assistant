@@ -31,6 +31,17 @@ The build emits the Side Panel page, Manifest V3 service worker, and YouTube con
 
 After each build, reload the unpacked extension and refresh the active YouTube tab so Chrome injects the latest content script.
 
+## Frontend structure
+
+- `src/sidebar`: application shell, shared UI, presentation helpers, state hooks, and page views.
+- `src/features`: cohesive authentication, Quiz, Flashcard, and assessment screens.
+- `src/integrations`: typed adapters for Chrome/YouTube, Google OAuth, Gemini, and Local RAG.
+- `src/types`: contracts shared across runtime boundaries; runtime payloads are still validated.
+- `src/ai-content`: independently owned prompt, grounding validator, and trusted timestamp mapper package.
+
+Small one-use view components live with their owning view. Reusable controls live in
+`sidebar/components/ui.tsx`, while integration and security boundaries remain separate modules.
+
 ## Google OAuth and Gemini access
 
 The extension uses `chrome.identity`; it never persists an OAuth access token in `localStorage`,

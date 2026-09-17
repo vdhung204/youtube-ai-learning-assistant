@@ -7,10 +7,9 @@ import { assessQuiz } from "../../integrations/local-service/client";
 import type { AssessmentResponse, Question } from "../../types/api";
 import type { CurrentVideo } from "../../types/learning";
 import { AskAI } from "../../sidebar/components/AskAI";
-import { Button } from "../../sidebar/components/Button";
-import { ProgressBar } from "../../sidebar/components/ProgressBar";
-import { QuizQuestionCard } from "./QuizQuestionCard";
-import type { QuizAnswers } from "./scoreQuiz";
+import { Button, Icon, ProgressBar, RuntimeStateCard } from "../../sidebar/components/ui";
+
+type QuizAnswers = Record<string, number | undefined>;
 
 interface QuizViewProps {
   generateContent: GenerateContent;
@@ -71,15 +70,30 @@ export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video 
   useEffect(() => () => assessmentController.current?.abort(), []);
 
   if (loadState.status === "loading") {
-    return <RuntimeQuizState title="Đang tạo Quiz" message="Đang truy xuất transcript và yêu cầu Gemini tạo câu hỏi…" />;
+    return (
+      <div className="view-stack quiz-view">
+        <RuntimeStateCard
+          message="Đang truy xuất transcript và yêu cầu Gemini tạo câu hỏi…"
+          title="Đang tạo Quiz"
+        />
+      </div>
+    );
   }
   if (loadState.status === "error") {
     return (
-      <RuntimeQuizState
-        title="Không thể tạo Quiz"
+      <div className="view-stack quiz-view">
+        <RuntimeStateCard
         message={loadState.message}
-        onRetry={() => setGenerationRequest((request) => ({ regenerate: false, version: request.version + 1 }))}
-      />
+          title="Không thể tạo Quiz"
+        >
+          <Button
+            onClick={() => setGenerationRequest((request) => ({ regenerate: false, version: request.version + 1 }))}
+            tone="secondary"
+          >
+            Thử lại
+          </Button>
+        </RuntimeStateCard>
+      </div>
     );
   }
 
@@ -195,22 +209,69 @@ export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video 
   );
 }
 
-function RuntimeQuizState({
-  message,
-  onRetry,
-  title,
+const optionLetters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+
+function QuizQuestionCard({
+  busy = false,
+  compact,
+  current,
+  onNext,
+  onSelect,
+  onSkip,
+  question,
+  selectedAnswer,
+  total,
 }: {
-  message: string;
-  onRetry?: () => void;
-  title: string;
+  busy?: boolean;
+  compact: boolean;
+  current: number;
+  onNext: () => void;
+  onSelect: (optionIndex: number) => void;
+  onSkip: () => void;
+  question: Question;
+  selectedAnswer?: number;
+  total: number;
 }) {
   return (
-    <div className="view-stack quiz-view">
-      <section className="runtime-state-card surface-card" role="status">
-        <h2>{title}</h2>
-        <p>{message}</p>
-        {onRetry ? <Button onClick={onRetry} tone="secondary">Thử lại</Button> : null}
-      </section>
-    </div>
+    <article className={compact ? "question-card is-compact" : "question-card"}>
+      {compact ? (
+        <div className="compact-question-meta">
+          <div>
+            <span className="question-count">Câu {current} / {total}</span>
+            <span className="difficulty">Độ khó: Trung bình</span>
+          </div>
+          <span className="solving-badge">Đang giải</span>
+        </div>
+      ) : <span className="question-eyebrow">Câu hỏi trắc nghiệm</span>}
+      <h2 className="question-title">{question.question}</h2>
+      <fieldset className="quiz-options" disabled={busy}>
+        <legend className="sr-only">Chọn một đáp án</legend>
+        {question.options.map((option, index) => {
+          const selected = selectedAnswer === index;
+          return (
+            <label className={selected ? "quiz-option is-selected" : "quiz-option"} key={option}>
+              <input
+                checked={selected}
+                name={question.questionId}
+                onChange={() => onSelect(index)}
+                type="radio"
+                value={index}
+              />
+              <span className="option-marker">{optionLetters[index]}</span>
+              <span className="option-copy">{option}</span>
+            </label>
+          );
+        })}
+      </fieldset>
+      {!compact ? (
+        <div className="question-actions">
+          <Button disabled={busy} onClick={onSkip} tone="secondary">Bỏ qua</Button>
+          <Button disabled={busy || selectedAnswer === undefined} onClick={onNext}>
+            {busy ? "Đang chấm…" : current === total ? "Nộp bài" : "Câu tiếp theo"}
+            <Icon name="arrow-forward" size={16} />
+          </Button>
+        </div>
+      ) : null}
+    </article>
   );
 }

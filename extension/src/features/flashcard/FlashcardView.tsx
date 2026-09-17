@@ -5,10 +5,8 @@ import {
 } from "../../integrations/learning/pipeline";
 import type { CurrentVideo, Flashcard, FlashcardConfidence } from "../../types/learning";
 import { AskAI } from "../../sidebar/components/AskAI";
-import { Button } from "../../sidebar/components/Button";
-import { Icon } from "../../sidebar/components/Icon";
-import { ProgressBar } from "../../sidebar/components/ProgressBar";
-import { FlashcardCard } from "./FlashcardCard";
+import { Button, Icon, ProgressBar, RuntimeStateCard } from "../../sidebar/components/ui";
+import { formatDuration } from "../../sidebar/videoPresentation";
 
 interface FlashcardViewProps {
   generateContent: GenerateContent;
@@ -65,15 +63,30 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
   ]);
 
   if (loadState.status === "loading") {
-    return <RuntimeFlashcardState title="Đang tạo Flashcards" message="Đang truy xuất transcript và tạo bộ thẻ ghi nhớ…" />;
+    return (
+      <div className="view-stack flashcard-view">
+        <RuntimeStateCard
+          message="Đang truy xuất transcript và tạo bộ thẻ ghi nhớ…"
+          title="Đang tạo Flashcards"
+        />
+      </div>
+    );
   }
   if (loadState.status === "error") {
     return (
-      <RuntimeFlashcardState
-        title="Không thể tạo Flashcards"
+      <div className="view-stack flashcard-view">
+        <RuntimeStateCard
         message={loadState.message}
-        onRetry={() => setGenerationRequest((request) => ({ regenerate: false, version: request.version + 1 }))}
-      />
+          title="Không thể tạo Flashcards"
+        >
+          <Button
+            onClick={() => setGenerationRequest((request) => ({ regenerate: false, version: request.version + 1 }))}
+            tone="secondary"
+          >
+            Thử lại
+          </Button>
+        </RuntimeStateCard>
+      </div>
     );
   }
 
@@ -192,22 +205,38 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
   );
 }
 
-function RuntimeFlashcardState({
-  message,
-  onRetry,
-  title,
+function FlashcardCard({
+  card,
+  flipped,
+  onFlip,
+  onOpenSource,
 }: {
-  message: string;
-  onRetry?: () => void;
-  title: string;
+  card: Flashcard;
+  flipped: boolean;
+  onFlip: () => void;
+  onOpenSource: () => void;
 }) {
   return (
-    <div className="view-stack flashcard-view">
-      <section className="runtime-state-card surface-card" role="status">
-        <h2>{title}</h2>
-        <p>{message}</p>
-        {onRetry ? <Button onClick={onRetry} tone="secondary">Thử lại</Button> : null}
-      </section>
-    </div>
+    <article className={flipped ? "flashcard-card is-back" : "flashcard-card"}>
+      <div className="flashcard-topline">
+        <span className="card-side-label">{flipped ? "Mặt sau" : "Mặt trước"}</span>
+        <span aria-hidden="true" className="touch-hint">{flipped ? "✓" : "↻"}</span>
+      </div>
+      <div className="flashcard-copy">
+        <h2>{flipped ? card.back : card.front}</h2>
+        <p>{flipped ? card.topic : card.hint}</p>
+        <span>{flipped ? "Nhấn để quay lại khái niệm" : "Nhấn để lật thẻ xem giải thích"}</span>
+      </div>
+      <div className="flashcard-card-actions">
+        <Button className="timestamp-button" onClick={onOpenSource} tone="secondary">
+          <Icon name="play" size={14} />
+          Xem đoạn {formatDuration(card.sourceTimestamp.startSec)}
+        </Button>
+        <Button className="flip-button" onClick={onFlip} tone="purple">
+          {flipped ? "Xem mặt trước" : "Lật thẻ"}
+          <Icon name="refresh" size={16} />
+        </Button>
+      </div>
+    </article>
   );
 }

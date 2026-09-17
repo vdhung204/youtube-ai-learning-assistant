@@ -75,7 +75,7 @@ export function createLearningChromeMock(options: LearningChromeMockOptions = {}
       if (message.type === "YALA_SEEK_TO") {
         return { currentTimeSec: message.seconds ?? 0, ok: true, type: "YALA_SEEKED" };
       }
-      return { ok: true, type: "YALA_CONTENT_READY", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" };
+      throw new Error(`Unsupported content message: ${message.type}`);
     },
   );
   const chromeMock = createChromeMock({ sendMessage });

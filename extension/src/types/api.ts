@@ -147,9 +147,3 @@ export interface IndexStatusResponse {
   pipelineVersion: string;
   error?: ErrorDetail;
 }
-
-export interface DeleteResponse {
-  videoId: VideoId;
-  deleted: boolean;
-  deletedChunkCount: number;
-}

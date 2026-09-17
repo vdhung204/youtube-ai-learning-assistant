@@ -5,8 +5,8 @@ import {
   signOutGoogle,
 } from "../integrations/google-oauth/authService";
 import {
-  checkGeminiAccess,
   GeminiAccessError,
+  resolveGeminiModel,
 } from "../integrations/gemini/client";
 import { createChromeMock } from "./chromeMock";
 
@@ -91,12 +91,17 @@ describe("Google OAuth service", () => {
   });
 });
 
-describe("Gemini access probe", () => {
+describe("Gemini model resolution", () => {
   it("sends the OAuth token only to Google and validates generateContent access", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
-          models: [{ supportedGenerationMethods: ["generateContent"] }],
+          models: [
+            {
+              name: "models/gemini-2.0-flash",
+              supportedGenerationMethods: ["generateContent"],
+            },
+          ],
         }),
         { status: 200 },
       ),
@@ -104,8 +109,8 @@ describe("Gemini access probe", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      checkGeminiAccess("private-oauth-token", { projectId: "test-google-project" }),
-    ).resolves.toBeUndefined();
+      resolveGeminiModel("private-oauth-token", { projectId: "test-google-project" }),
+    ).resolves.toBe("models/gemini-2.0-flash");
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -130,7 +135,7 @@ describe("Gemini access probe", () => {
   ] as const)("maps HTTP %i to %s", async (status, code) => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status })));
 
-    await expect(checkGeminiAccess("test-token")).rejects.toMatchObject({
+    await expect(resolveGeminiModel("test-token")).rejects.toMatchObject({
       code,
       status,
     } satisfies Partial<GeminiAccessError>);

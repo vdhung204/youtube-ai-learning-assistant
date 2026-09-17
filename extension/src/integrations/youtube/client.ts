@@ -136,8 +136,8 @@ export async function getActiveVideoTranscript(): Promise<ActiveVideoTranscript>
   };
 }
 
-export async function seekActiveVideo(seconds: number): Promise<number> {
-  const response = await sendToActiveTab({ type: "YALA_SEEK_TO", seconds });
+export async function seekActiveVideo(seconds: number, videoId: string): Promise<number> {
+  const response = await sendToActiveTab({ type: "YALA_SEEK_TO", seconds, videoId });
   if (!response.ok || response.type !== "YALA_SEEKED") {
     throw new Error(
       response.ok

@@ -1,7 +1,6 @@
 import type { AssessmentResponse, Question } from "../../types/api";
-import { Button } from "../../sidebar/components/Button";
-import { Icon } from "../../sidebar/components/Icon";
-import { formatDuration } from "../../sidebar/utils/formatDuration";
+import { Button, Icon } from "../../sidebar/components/ui";
+import { formatDuration } from "../../sidebar/videoPresentation";
 
 interface AssessmentViewProps {
   assessment: AssessmentResponse | null;

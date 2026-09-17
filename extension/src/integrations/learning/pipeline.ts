@@ -20,6 +20,9 @@ export type GenerateContent = <T = unknown>(
   options?: Omit<GeminiGenerateOptions<T>, "model" | "projectId">,
 ) => Promise<T>;
 
+export const QUIZ_GENERATION_COUNT = 10;
+export const FLASHCARD_GENERATION_COUNT = 8;
+
 const QUIZ_OUTPUT_TOKENS = 8_192;
 const QUIZ_RETRY_OUTPUT_TOKENS = 16_384;
 
@@ -61,7 +64,7 @@ export async function generateQuiz(
     "quiz",
     signal,
   );
-  const prompt = buildQuizPrompt(context, 10, video.language || "vi");
+  const prompt = buildQuizPrompt(context, QUIZ_GENERATION_COUNT, video.language || "vi");
   let raw: unknown;
   try {
     raw = await generateContent(prompt, {
@@ -100,7 +103,10 @@ export async function generateFlashcards(
     "flashcard",
     signal,
   );
-  const raw = await generateContent(buildFlashcardPrompt(context, 8, video.language || "vi"), { signal });
+  const raw = await generateContent(
+    buildFlashcardPrompt(context, FLASHCARD_GENERATION_COUNT, video.language || "vi"),
+    { signal },
+  );
   const cards = mapFlashcards(validateFlashcards(raw, context), context);
   if (cards.length === 0) {
     throw new LearningPipelineError("INSUFFICIENT_CONTEXT");

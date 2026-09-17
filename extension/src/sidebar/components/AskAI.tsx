@@ -1,10 +1,8 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { AssistantAnswer } from "../../integrations/learning/pipeline";
 import type { AskAIContext } from "../../types/learning";
-import { Button } from "./Button";
-import { ChatMessage } from "./ChatMessage";
-import { Icon } from "./Icon";
-import { VideoSources } from "./VideoSources";
+import { Button, ChatMessage, Icon } from "./ui";
+import { VideoSources } from "./Video";
 
 interface AskAIProps {
   collapsedTitle: string;

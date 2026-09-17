@@ -6,7 +6,7 @@ import { QuizView } from "../features/quiz/QuizView";
 import type { AssessmentResponse, Question } from "../types/api";
 import type { AppView } from "../types/learning";
 import { AppShell } from "./components/AppShell";
-import { Button } from "./components/Button";
+import { Button, RuntimeStateCard } from "./components/ui";
 import { useLocalServiceHealth } from "./hooks/useLocalServiceHealth";
 import { useGoogleAuth } from "./hooks/useGoogleAuth";
 import { useLearningContentCache } from "./hooks/useLearningContentCache";
@@ -14,12 +14,16 @@ import { useVideoRagSession } from "./hooks/useVideoRagSession";
 import { useYouTubeContext } from "./hooks/useYouTubeContext";
 import { HomeView } from "./views/HomeView";
 
+interface AssessmentSession {
+  assessment: AssessmentResponse;
+  questions: Question[];
+  videoId: string;
+}
+
 export function App() {
   const [activeView, setActiveView] = useState<AppView>("home");
   const [isDark, setIsDark] = useState(false);
-  const [assessment, setAssessment] = useState<AssessmentResponse | null>(null);
-  const [assessmentQuestions, setAssessmentQuestions] = useState<Question[]>([]);
-  const [assessmentVideoId, setAssessmentVideoId] = useState<string | null>(null);
+  const [assessmentSession, setAssessmentSession] = useState<AssessmentSession | null>(null);
   const [quizAttempt, setQuizAttempt] = useState(0);
   const auth = useGoogleAuth();
   const learningContent = useLearningContentCache(auth.generateContent);
@@ -36,9 +40,7 @@ export function App() {
 
   useEffect(() => {
     setActiveView("home");
-    setAssessment(null);
-    setAssessmentQuestions([]);
-    setAssessmentVideoId(null);
+    setAssessmentSession(null);
     setQuizAttempt((attempt) => attempt + 1);
   }, [video?.videoId]);
 
@@ -46,16 +48,12 @@ export function App() {
     if (!video) {
       return;
     }
-    setAssessment(result);
-    setAssessmentQuestions(questions);
-    setAssessmentVideoId(video.videoId);
+    setAssessmentSession({ assessment: result, questions, videoId: video.videoId });
     setActiveView("assessment");
   };
 
   const restartQuiz = () => {
-    setAssessment(null);
-    setAssessmentQuestions([]);
-    setAssessmentVideoId(null);
+    setAssessmentSession(null);
     setQuizAttempt((attempt) => attempt + 1);
     setActiveView("quiz");
   };
@@ -80,14 +78,16 @@ export function App() {
     }
 
     if (activeView === "assessment") {
-      const belongsToActiveVideo = Boolean(video && assessmentVideoId === video.videoId);
+      const belongsToActiveVideo = Boolean(
+        video && assessmentSession?.videoId === video.videoId,
+      );
       return (
         <AssessmentView
-          assessment={belongsToActiveVideo ? assessment : null}
+          assessment={belongsToActiveVideo ? assessmentSession?.assessment ?? null : null}
           onReviewQuiz={restartQuiz}
           onSeek={(seconds) => void youtube.seekTo(seconds)}
           onStartQuiz={restartQuiz}
-          questions={belongsToActiveVideo ? assessmentQuestions : []}
+          questions={belongsToActiveVideo ? assessmentSession?.questions ?? [] : []}
         />
       );
     }
@@ -95,16 +95,17 @@ export function App() {
     if (!video || !ragSession.isReady) {
       return (
         <div className="view-stack">
-          <section className="runtime-state-card surface-card" role="status">
-            <h2>Nội dung video chưa sẵn sàng</h2>
-            <p>{video ? ragSession.state.message : youtube.state.message}</p>
+          <RuntimeStateCard
+            message={video ? ragSession.state.message : youtube.state.message}
+            title="Nội dung video chưa sẵn sàng"
+          >
             <Button onClick={() => setActiveView("home")} tone="secondary">
               Về trang chính
             </Button>
             {video && ragRetryable && serviceHealth.state.status === "ready" ? (
               <Button onClick={ragSession.retry}>Thử lại</Button>
             ) : null}
-          </section>
+          </RuntimeStateCard>
         </div>
       );
     }

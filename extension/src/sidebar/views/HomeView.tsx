@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { answerVideoQuestion, type GenerateContent } from "../../integrations/learning/pipeline";
+import {
+  answerVideoQuestion,
+  FLASHCARD_GENERATION_COUNT,
+  QUIZ_GENERATION_COUNT,
+  type GenerateContent,
+} from "../../integrations/learning/pipeline";
 import type { AppView, CurrentVideo } from "../../types/learning";
 import { AskAI } from "../components/AskAI";
-import { Button } from "../components/Button";
-import { Icon } from "../components/Icon";
-import { ServiceStatusCard } from "../components/ServiceStatusCard";
-import { VideoCard } from "../components/VideoCard";
-import { VideoMilestones } from "../components/VideoMilestones";
+import { Button, Icon, RuntimeStateCard } from "../components/ui";
+import { VideoCard, VideoMilestones } from "../components/Video";
 import type { LocalServiceHealthState } from "../hooks/useLocalServiceHealth";
 import type { VideoRagSessionState } from "../hooks/useVideoRagSession";
 
@@ -66,10 +68,7 @@ export function HomeView({
           video={video}
         />
       ) : (
-        <section className="runtime-state-card surface-card" role="status">
-          <h2>Chưa có video YouTube</h2>
-          <p>{videoDetectionMessage}</p>
-        </section>
+        <RuntimeStateCard message={videoDetectionMessage} title="Chưa có video YouTube" />
       )}
 
       {serviceHealth.status !== "ready" ? (
@@ -81,24 +80,22 @@ export function HomeView({
       ) : null}
 
       {video && !ragReady ? (
-        <section
-          className={`runtime-state-card surface-card runtime-state-card--${ragState.status}`}
+        <RuntimeStateCard
+          className={`runtime-state-card--${ragState.status}`}
+          message={ragState.message}
           role={["error", "no_transcript", "service_offline", "stale"].includes(ragState.status) ? "alert" : "status"}
+          title={ragTitle}
         >
-          <div>
-            <h2>{ragTitle}</h2>
-            <p>{ragState.message}</p>
-          </div>
           {!ragReady && ragRetryable && serviceHealth.status === "ready" ? (
             <Button onClick={onRetryRag} tone="secondary">Thử lại</Button>
           ) : null}
-        </section>
+        </RuntimeStateCard>
       ) : null}
 
       <section aria-label="Bắt đầu học nhanh" className="quick-action-grid">
         <article className="quick-card quick-card--quiz">
           <div className="quick-card-topline">
-            <span className="count-badge">10 câu</span>
+            <span className="count-badge">Tối đa {QUIZ_GENERATION_COUNT} câu</span>
           </div>
           <h2>Tạo Quiz nhanh</h2>
           <p>Trắc nghiệm bám sát video với timestamp.</p>
@@ -110,7 +107,7 @@ export function HomeView({
 
         <article className="quick-card quick-card--flashcard">
           <div className="quick-card-topline">
-            <span className="count-badge">8 thẻ</span>
+            <span className="count-badge">Tối đa {FLASHCARD_GENERATION_COUNT} thẻ</span>
           </div>
           <h2>Ôn Flashcards</h2>
           <p>Lật thẻ ghi nhớ khái niệm quan trọng.</p>
@@ -143,5 +140,57 @@ export function HomeView({
         statusLabel={ragReady ? "RAG + Gemini" : "Chưa sẵn sàng"}
       />
     </div>
+  );
+}
+
+const serviceStatusLabels: Record<LocalServiceHealthState["status"], string> = {
+  checking: "Đang kiểm tra",
+  error: "Lỗi kết nối",
+  idle: "Chờ đăng nhập",
+  not_ready: "RAG chưa sẵn sàng",
+  offline: "Service ngoại tuyến",
+  ready: "RAG sẵn sàng",
+  unavailable: "Chưa chạy trong extension",
+};
+
+interface ServiceStatusCardProps {
+  extensionOrigin: string | null;
+  onRefresh: () => void;
+  state: LocalServiceHealthState;
+}
+
+function ServiceStatusCard({ extensionOrigin, onRefresh, state }: ServiceStatusCardProps) {
+  const showSetupHint = state.status === "offline" || state.status === "error";
+
+  return (
+    <section className={`service-card service-card--${state.status}`}>
+      <div className="service-card-copy">
+        <div className="service-card-title">
+          <span className="status-dot" />
+          <h2>Local RAG Service</h2>
+          <span>{serviceStatusLabels[state.status]}</span>
+        </div>
+        <p>{state.message}</p>
+        {showSetupHint && extensionOrigin ? (
+          <p className="origin-hint">
+            Origin cần allowlist: <code>{extensionOrigin}</code>
+          </p>
+        ) : null}
+        {state.data ? (
+          <p className="service-version">
+            Service {state.data.serviceVersion} • Pipeline {state.data.pipelineVersion}
+          </p>
+        ) : null}
+      </div>
+      <Button
+        className="service-refresh"
+        disabled={state.status === "checking"}
+        onClick={onRefresh}
+        tone="secondary"
+      >
+        <Icon name="refresh" size={14} />
+        Kiểm tra lại
+      </Button>
+    </section>
   );
 }

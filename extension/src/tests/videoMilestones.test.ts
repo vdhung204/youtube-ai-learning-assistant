@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildVideoMilestones } from "../sidebar/utils/videoMilestones";
+import { buildVideoMilestones } from "../sidebar/videoPresentation";
 
 describe("buildVideoMilestones", () => {
   it("returns no fabricated milestones when YouTube has no named chapters", () => {

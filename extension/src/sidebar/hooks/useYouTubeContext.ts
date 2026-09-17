@@ -140,8 +140,12 @@ export function useYouTubeContext(enabled = true) {
 
   const seekTo = useCallback(async (seconds: number) => {
     const targetVideoId = activeVideoIdRef.current;
+    if (!targetVideoId) {
+      setNotice({ message: "Không còn video đang hoạt động.", tone: "error" });
+      return;
+    }
     try {
-      const currentTimeSec = await seekActiveVideo(seconds);
+      const currentTimeSec = await seekActiveVideo(seconds, targetVideoId);
       if (targetVideoId !== activeVideoIdRef.current) {
         return;
       }

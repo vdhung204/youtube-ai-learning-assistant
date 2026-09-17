@@ -34,10 +34,9 @@ export type YouTubeTranscriptErrorCode =
   | "NETWORK_ERROR";
 
 export type ContentRequest =
-  | { type: "YALA_CONTENT_PING" }
   | { type: "YALA_GET_VIDEO_CONTEXT" }
   | { type: "YALA_GET_TRANSCRIPT"; videoId: string }
-  | { type: "YALA_SEEK_TO"; seconds: number };
+  | { type: "YALA_SEEK_TO"; seconds: number; videoId: string };
 
 export type ContentErrorCode = YouTubeTranscriptErrorCode | "INVALID_TIMESTAMP";
 
@@ -50,7 +49,6 @@ export interface ContentErrorResponse {
 }
 
 export type ContentResponse =
-  | { ok: true; type: "YALA_CONTENT_READY"; url: string }
   | { ok: true; type: "YALA_VIDEO_CONTEXT"; video: YouTubeVideoContext }
   | { ok: true; type: "YALA_TRANSCRIPT"; transcript: YouTubeTranscript }
   | { ok: true; type: "YALA_SEEKED"; currentTimeSec: number }
@@ -89,20 +87,6 @@ function isFiniteNumber(value: unknown): value is number {
 
 function isValidVideoId(value: unknown): value is string {
   return typeof value === "string" && VIDEO_ID_PATTERN.test(value);
-}
-
-export function isContentRequest(value: unknown): value is ContentRequest {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  if (value.type === "YALA_CONTENT_PING" || value.type === "YALA_GET_VIDEO_CONTEXT") {
-    return true;
-  }
-  if (value.type === "YALA_GET_TRANSCRIPT") {
-    return isValidVideoId(value.videoId);
-  }
-  return value.type === "YALA_SEEK_TO" && isFiniteNumber(value.seconds);
 }
 
 export function isVideoChangedMessage(value: unknown): value is VideoChangedMessage {
@@ -224,9 +208,6 @@ export function isContentResponse(value: unknown): value is ContentResponse {
     return false;
   }
 
-  if (value.type === "YALA_CONTENT_READY") {
-    return typeof value.url === "string";
-  }
   if (value.type === "YALA_VIDEO_CONTEXT") {
     return isVideoContext(value.video);
   }

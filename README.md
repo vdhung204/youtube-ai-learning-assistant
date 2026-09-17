@@ -76,21 +76,21 @@ OAuth token chỉ nằm trong luồng xác thực của extension. Token không 
 │   └── src/
 │       ├── background/                # Service worker, lifecycle extension
 │       ├── content/                   # Tích hợp trang YouTube
-│       ├── sidebar/                   # React UI và điều hướng màn hình
+│       ├── sidebar/                   # React shell, hooks, view và UI dùng chung
 │       ├── features/
 │       │   ├── authentication/        # OAuth UI và trạng thái đăng nhập
-│       │   ├── video/                 # Video ID, transcript, timestamp seek
 │       │   ├── quiz/                  # Giao diện làm bài
 │       │   ├── flashcard/             # Giao diện flashcard
 │       │   └── learning-assessment/   # Hiển thị kết quả và chỗ cần xem lại
 │       ├── integrations/
 │       │   ├── local-service/         # HTTP client tới localhost
 │       │   ├── google-oauth/          # Chrome Identity integration
-│       │   └── gemini/                # Transport gọi Gemini, không chứa secret
+│       │   ├── gemini/                # Transport gọi Gemini, không chứa secret
+│       │   ├── youtube/                # Bridge tới content script/tab YouTube
+│       │   └── learning/               # Điều phối retrieval, prompt và mapping
 │       ├── ai-content/                 # TV3: prompt, mapping, validate AI output
-│       ├── session/                    # Dữ liệu chỉ tồn tại trong phiên
-│       ├── types/
-│       └── tests/
+│       ├── types/                      # Contract API, message và UI
+│       └── tests/                      # Unit/integration test của extension
 ├── local-rag-service/
 │   ├── app/
 │   │   ├── core/                      # TV2: config, lifecycle, health
@@ -120,7 +120,7 @@ OAuth token chỉ nằm trong luồng xác thực của extension. Token không 
 └── .gitignore
 ```
 
-Các thư mục được tạo trước để chia ranh giới làm việc. Thành viên chỉ thêm package/config khi bắt đầu triển khai phần mình phụ trách; không đổi công nghệ hoặc hợp đồng dùng chung một cách đơn phương.
+Các thư mục thể hiện ranh giới runtime và quyền sở hữu hiện tại. Không đổi công nghệ hoặc hợp đồng dùng chung một cách đơn phương.
 
 ## 4. Phân công theo thư mục
 
@@ -161,7 +161,7 @@ Mọi thay đổi schema phải cập nhật contract trước, sau đó mới c
 
 ## 7. Chạy dự án
 
-Repository hiện mới là skeleton phân chia công việc. Khi code được khởi tạo, lệnh cài đặt và chạy thật sẽ được bổ sung tại:
+Lệnh cài đặt, build và chạy thật được duy trì tại:
 
 - [extension/README.md](extension/README.md): build và load unpacked extension.
 - [local-rag-service/README.md](local-rag-service/README.md): setup và chạy service cục bộ.
