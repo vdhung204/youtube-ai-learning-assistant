@@ -60,7 +60,7 @@ These Terms are governed by the laws of VietNam, without regard to conflict-of-l
 
 ## 12. Changes to these Terms
 
-We may update these Terms by publishing a new version at [vdhung204.github.io/youtube-ai-learning-assistant/TERMS_OF_SERVICE.html](https://vdhung204.github.io/youtube-ai-learning-assistant/TERMS_OF_SERVICE.html) and changing the effective date. Continued use after the updated effective date means you accept the updated Terms.
+We may update these Terms by publishing a new version at [learn.cndn.hungvd.com/TERMS_OF_SERVICE.html](https://learn.cndn.hungvd.com/TERMS_OF_SERVICE.html) and changing the effective date. Continued use after the updated effective date means you accept the updated Terms.
 
 ## 13. Contact
 

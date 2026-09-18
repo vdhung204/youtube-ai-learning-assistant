@@ -67,7 +67,7 @@ The Extension is not directed to children under the minimum age required to use 
 
 ## 10. Changes to this policy
 
-We may update this Privacy Policy when the Extension or applicable requirements change. We will publish the updated version at [vdhung204.github.io/youtube-ai-learning-assistant/PRIVACY_POLICY.html](https://vdhung204.github.io/youtube-ai-learning-assistant/PRIVACY_POLICY.html) and change the effective date above.
+We may update this Privacy Policy when the Extension or applicable requirements change. We will publish the updated version at [learn.cndn.hungvd.com/PRIVACY_POLICY.html](https://learn.cndn.hungvd.com/PRIVACY_POLICY.html) and change the effective date above.
 
 ## 11. Contact
 
