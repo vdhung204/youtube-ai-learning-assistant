@@ -43,6 +43,13 @@ function contentResponse(): Response {
   );
 }
 
+function userInfoResponse(): Response {
+  return new Response(
+    JSON.stringify({ email: "learner@example.com", id: "google-account-id" }),
+    { status: 200 },
+  );
+}
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -52,9 +59,14 @@ describe("useGoogleAuth Gemini capability", () => {
   it("keeps the token private and exposes a validated generateContent function", async () => {
     const chromeMock = createChromeMock();
     vi.stubGlobal("chrome", chromeMock);
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) =>
-      String(input).includes(":generateContent") ? contentResponse() : modelsResponse(),
-    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
+      const url = String(input);
+      return url.includes(":generateContent")
+        ? contentResponse()
+        : url.includes("/oauth2/v2/userinfo")
+          ? userInfoResponse()
+          : modelsResponse();
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     const { result } = renderHook(() => useGoogleAuth());
@@ -94,11 +106,14 @@ describe("useGoogleAuth Gemini capability", () => {
     vi.stubGlobal("chrome", chromeMock);
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (input: RequestInfo | URL) =>
-        String(input).includes(":generateContent")
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        return url.includes(":generateContent")
           ? new Response("{}", { status: 401 })
-          : modelsResponse(),
-      ),
+          : url.includes("/oauth2/v2/userinfo")
+            ? userInfoResponse()
+            : modelsResponse();
+      }),
     );
 
     const { result } = renderHook(() => useGoogleAuth());
@@ -120,6 +135,38 @@ describe("useGoogleAuth Gemini capability", () => {
     });
   });
 
+  it("keeps cached learning content accessible after a generation quota error", async () => {
+    vi.stubGlobal("chrome", createChromeMock());
+    let generationCalls = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes(":generateContent")) {
+          generationCalls += 1;
+          return new Response("{}", { status: 429 });
+        }
+        return url.includes("/oauth2/v2/userinfo") ? userInfoResponse() : modelsResponse();
+      }),
+    );
+
+    const { result } = renderHook(() => useGoogleAuth());
+    await waitFor(() => expect(result.current.state.status).toBe("ready"));
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await result.current.generateContent(prompt, { maxRetries: 3 });
+      } catch (error) {
+        caught = error;
+      }
+    });
+
+    expect(caught).toMatchObject({ code: "QUOTA_EXCEEDED" });
+    expect(generationCalls).toBe(1);
+    expect(result.current.state.status).toBe("ready");
+  });
+
   it("cancels in-flight Gemini generation on sign-out", async () => {
     const chromeMock = createChromeMock();
     vi.stubGlobal("chrome", chromeMock);
@@ -130,8 +177,11 @@ describe("useGoogleAuth Gemini capability", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
-        if (!String(input).includes(":generateContent")) {
-          return Promise.resolve(modelsResponse());
+        const url = String(input);
+        if (!url.includes(":generateContent")) {
+          return Promise.resolve(
+            url.includes("/oauth2/v2/userinfo") ? userInfoResponse() : modelsResponse(),
+          );
         }
         generationStarted?.();
         return new Promise<Response>((_resolve, reject) => {
@@ -156,5 +206,54 @@ describe("useGoogleAuth Gemini capability", () => {
 
     await generationResult;
     expect(result.current.state.status).toBe("signed_out");
+  });
+
+  it("cancels a stale generation before starting the newest request", async () => {
+    const chromeMock = createChromeMock();
+    vi.stubGlobal("chrome", chromeMock);
+    let generationCalls = 0;
+    let firstGenerationStarted: (() => void) | undefined;
+    const firstStarted = new Promise<void>((resolve) => {
+      firstGenerationStarted = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (!url.includes(":generateContent")) {
+          return Promise.resolve(
+            url.includes("/oauth2/v2/userinfo") ? userInfoResponse() : modelsResponse(),
+          );
+        }
+        generationCalls += 1;
+        if (generationCalls > 1) {
+          return Promise.resolve(contentResponse());
+        }
+        firstGenerationStarted?.();
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("aborted", "AbortError")),
+            { once: true },
+          );
+        });
+      }),
+    );
+
+    const { result } = renderHook(() => useGoogleAuth());
+    await waitFor(() => expect(result.current.state.status).toBe("ready"));
+
+    const staleGeneration = result.current.generateContent(prompt);
+    const staleResult = expect(staleGeneration).rejects.toMatchObject({ code: "ABORTED" });
+    await firstStarted;
+
+    let latestAnswer: unknown;
+    await act(async () => {
+      latestAnswer = await result.current.generateContent(prompt);
+    });
+
+    await staleResult;
+    expect(latestAnswer).toEqual({ answer: "grounded" });
+    expect(generationCalls).toBe(2);
   });
 });

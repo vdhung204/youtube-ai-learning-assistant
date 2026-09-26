@@ -5,6 +5,8 @@ export const TEST_GOOGLE_CLIENT_ID =
   "123456789-test.apps.googleusercontent.com";
 export const TEST_GOOGLE_SCOPE =
   "https://www.googleapis.com/auth/generative-language.retriever";
+export const TEST_GOOGLE_EMAIL_SCOPE =
+  "https://www.googleapis.com/auth/userinfo.email";
 
 interface ChromeMockOptions {
   email?: string;
@@ -106,7 +108,7 @@ export function createChromeMock(options: ChromeMockOptions = {}) {
       getAuthToken:
         options.getAuthToken ??
         vi.fn().mockResolvedValue({
-          grantedScopes: [TEST_GOOGLE_SCOPE],
+          grantedScopes: [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE],
           token: "test-google-access-token",
         }),
       getProfileUserInfo: vi.fn().mockResolvedValue({
@@ -122,7 +124,7 @@ export function createChromeMock(options: ChromeMockOptions = {}) {
         name: "YouTube AI Learning Assistant",
         oauth2: {
           client_id: TEST_GOOGLE_CLIENT_ID,
-          scopes: [TEST_GOOGLE_SCOPE],
+          scopes: [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE],
         },
         version: "0.1.0",
       }),
@@ -142,6 +144,11 @@ export function createChromeMock(options: ChromeMockOptions = {}) {
 export function createAuthenticatedFetchMock(localResponse?: Response) {
   return vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
     const url = String(input);
+    if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
+      return new Response(JSON.stringify({ email: "learner@example.com", id: "google-account-id" }), {
+        status: 200,
+      });
+    }
     if (url.startsWith("https://generativelanguage.googleapis.com/")) {
       const configuredModel = import.meta.env.VITE_YALA_GEMINI_MODEL?.trim();
       return new Response(
@@ -272,6 +279,20 @@ function generatedPayload(kind: "answers" | "flashcards" | "questions") {
         sourceChunkId: "chunk-2",
         topic: "Retrieval",
       },
+      ...Array.from({ length: 4 }, (_, index) => ({
+        correctAnswer: 0,
+        evidence: "combines retrieval with a language model",
+        explanation: "Transcript cho thấy RAG kết hợp truy xuất với mô hình ngôn ngữ. Vì vậy đáp án đầu tiên giữ đủ hai thành phần, còn các phương án khác bỏ sót hoặc thay sai quy trình.",
+        options: [
+          "Truy xuất và mô hình ngôn ngữ",
+          "Chỉ mô hình ngôn ngữ",
+          "Chỉ truy xuất dữ liệu",
+          "Trình biên dịch và cơ sở dữ liệu",
+        ],
+        question: `Câu hỏi bổ sung ${index + 3}: Thành phần nào mô tả đúng RAG?`,
+        sourceChunkId: "chunk-1",
+        topic: "RAG",
+      })),
     ],
     status: "ok",
   };
@@ -284,6 +305,9 @@ function generatedPayload(kind: "answers" | "flashcards" | "questions") {
 export function createReadyLearningFetchMock(options: LearningFetchMockOptions = {}) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
+    if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
+      return jsonResponse({ email: "learner@example.com", id: "google-account-id" });
+    }
     if (url === "https://generativelanguage.googleapis.com/v1beta/models?pageSize=50") {
       const configuredModel = import.meta.env.VITE_YALA_GEMINI_MODEL?.trim();
       return jsonResponse({

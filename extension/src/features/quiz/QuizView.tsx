@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   answerVideoQuestion,
   type GenerateContent,
@@ -6,6 +6,8 @@ import {
 import { assessQuiz } from "../../integrations/local-service/client";
 import type { AssessmentResponse, Question } from "../../types/api";
 import type { CurrentVideo } from "../../types/learning";
+import type { LearningContentLoader } from "../../integrations/learning/types";
+import { useGeneratedContent } from "../../sidebar/hooks/useGeneratedContent";
 import { AskAI } from "../../sidebar/components/AskAI";
 import { Button, Icon, ProgressBar, RuntimeStateCard } from "../../sidebar/components/ui";
 
@@ -13,20 +15,13 @@ type QuizAnswers = Record<string, number | undefined>;
 
 interface QuizViewProps {
   generateContent: GenerateContent;
-  loadQuiz: (video: CurrentVideo, options?: { regenerate?: boolean }) => Promise<Question[]>;
+  loadQuiz: LearningContentLoader<Question>;
   onComplete: (assessment: AssessmentResponse, questions: Question[]) => void;
   onSeek: (seconds: number) => void;
   video: CurrentVideo;
 }
 
-type QuizLoadState =
-  | { status: "loading" }
-  | { status: "ready"; questions: Question[] }
-  | { status: "error"; message: string };
-
 export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video }: QuizViewProps) {
-  const [loadState, setLoadState] = useState<QuizLoadState>({ status: "loading" });
-  const [generationRequest, setGenerationRequest] = useState({ regenerate: false, version: 0 });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswers>({});
   const [chatExpanded, setChatExpanded] = useState(false);
@@ -34,38 +29,16 @@ export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video 
   const [assessmentError, setAssessmentError] = useState("");
   const assessmentController = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    setLoadState({ status: "loading" });
+  const resetProgress = useCallback(() => {
     setCurrentIndex(0);
     setAnswers({});
-    void loadQuiz(video, { regenerate: generationRequest.regenerate })
-      .then((questions) => {
-        if (active) {
-          setLoadState({ status: "ready", questions });
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setLoadState({
-            status: "error",
-            message: error instanceof Error ? error.message : "Không thể tạo quiz từ video.",
-          });
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [
-    generationRequest.regenerate,
-    generationRequest.version,
+  }, []);
+  const { loadState, retry, regenerate } = useGeneratedContent(
+    video,
     loadQuiz,
-    video.channel,
-    video.durationSec,
-    video.language,
-    video.title,
-    video.videoId,
-  ]);
+    resetProgress,
+    "Không thể tạo quiz từ video.",
+  );
 
   useEffect(() => () => assessmentController.current?.abort(), []);
 
@@ -83,11 +56,11 @@ export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video 
     return (
       <div className="view-stack quiz-view">
         <RuntimeStateCard
-        message={loadState.message}
+          message={loadState.message}
           title="Không thể tạo Quiz"
         >
           <Button
-            onClick={() => setGenerationRequest((request) => ({ regenerate: false, version: request.version + 1 }))}
+            onClick={retry}
             tone="secondary"
           >
             Thử lại
@@ -97,7 +70,7 @@ export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video 
     );
   }
 
-  const questions = loadState.questions;
+  const questions = loadState.items;
   const question = questions[currentIndex];
   const currentNumber = currentIndex + 1;
   const selectedAnswer = answers[question.questionId];
@@ -147,7 +120,7 @@ export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video 
             <span>Bộ quiz đã lưu cho video này</span>
             <Button
               aria-label="Thêm Quiz mới"
-              onClick={() => setGenerationRequest((request) => ({ regenerate: true, version: request.version + 1 }))}
+              onClick={regenerate}
               tone="secondary"
             >
               + Thêm

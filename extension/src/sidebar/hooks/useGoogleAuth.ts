@@ -9,7 +9,7 @@ import {
 import {
   generateContent as requestGeminiContent,
   GeminiAccessError,
-  resolveGeminiModel,
+  resolveGeminiModels,
   type GeminiGenerateOptions,
   type GeminiPromptInput,
 } from "../../integrations/gemini/client";
@@ -26,7 +26,7 @@ const initialState: GoogleAuthState = {
 export function useGoogleAuth() {
   const [state, setState] = useState<GoogleAuthState>(initialState);
   const tokenRef = useRef<string | undefined>(undefined);
-  const modelRef = useRef<string | undefined>(undefined);
+  const modelsRef = useRef<string[]>([]);
   const operationRef = useRef(0);
   const authAbortRef = useRef<AbortController | undefined>(undefined);
   const generationControllersRef = useRef(new Set<AbortController>());
@@ -45,7 +45,7 @@ export function useGoogleAuth() {
     authAbortRef.current = authController;
     const operation = ++operationRef.current;
     tokenRef.current = undefined;
-    modelRef.current = undefined;
+    modelsRef.current = [];
     setState({
       message: interactive
         ? "Đang mở Google OAuth để bạn cấp quyền…"
@@ -65,7 +65,7 @@ export function useGoogleAuth() {
         status: "checking_gemini",
       });
 
-      const model = await resolveGeminiModel(session.token, {
+      const models = await resolveGeminiModels(session.token, {
         preferredModel: GEMINI_MODEL,
         projectId: GOOGLE_CLOUD_PROJECT_ID,
         signal: authController.signal,
@@ -73,7 +73,7 @@ export function useGoogleAuth() {
       if (operation !== operationRef.current) {
         return;
       }
-      modelRef.current = model;
+      modelsRef.current = models.slice(0, 3);
       setState({
         account: session.account,
         message: "Google OAuth và Gemini đã sẵn sàng.",
@@ -99,7 +99,7 @@ export function useGoogleAuth() {
         if (error.code === "TOKEN_EXPIRED" && tokenRef.current) {
           const expiredToken = tokenRef.current;
           tokenRef.current = undefined;
-          modelRef.current = undefined;
+          modelsRef.current = [];
           await invalidateGoogleToken(expiredToken);
           if (operation !== operationRef.current) {
             return;
@@ -130,11 +130,11 @@ export function useGoogleAuth() {
   const generateContent = useCallback(
     async <T = unknown>(
       prompt: GeminiPromptInput,
-      options: Omit<GeminiGenerateOptions<T>, "model" | "projectId"> = {},
+      options: Omit<GeminiGenerateOptions<T>, "fallbackModels" | "model" | "projectId"> = {},
     ): Promise<T> => {
       const token = tokenRef.current;
-      const model = modelRef.current;
-      if (!token || !model) {
+      const models = modelsRef.current;
+      if (!token || models.length === 0) {
         throw new GeminiAccessError(
           "TOKEN_EXPIRED",
           "Phiên Google chưa sẵn sàng. Hãy đăng nhập lại.",
@@ -144,6 +144,9 @@ export function useGoogleAuth() {
       }
 
       const authOperation = operationRef.current;
+      // The side panel has one active learning action. Cancel a stale generation
+      // before starting the newest one so tab/view changes cannot create a burst.
+      cancelGenerationRequests();
       const controller = new AbortController();
       const abort = () => controller.abort();
       if (options.signal?.aborted) {
@@ -156,7 +159,8 @@ export function useGoogleAuth() {
       try {
         return await requestGeminiContent(token, prompt, {
           ...options,
-          model,
+          fallbackModels: models.slice(1),
+          model: models[0],
           projectId: GOOGLE_CLOUD_PROJECT_ID,
           signal: controller.signal,
         });
@@ -168,7 +172,7 @@ export function useGoogleAuth() {
         ) {
           if (error.code === "TOKEN_EXPIRED") {
             tokenRef.current = undefined;
-            modelRef.current = undefined;
+            modelsRef.current = [];
             cancelGenerationRequests();
             await invalidateGoogleToken(token);
             if (authOperation === operationRef.current && !tokenRef.current) {
@@ -179,12 +183,6 @@ export function useGoogleAuth() {
               ...current,
               message: error.message,
               status: "gemini_forbidden",
-            }));
-          } else if (error.code === "QUOTA_EXCEEDED") {
-            setState((current) => ({
-              ...current,
-              message: error.message,
-              status: "quota_exceeded",
             }));
           }
         }
@@ -204,7 +202,7 @@ export function useGoogleAuth() {
     ++operationRef.current;
     const token = tokenRef.current;
     tokenRef.current = undefined;
-    modelRef.current = undefined;
+    modelsRef.current = [];
     try {
       await signOutGoogle(token);
       setState({ message: "Bạn đã đăng xuất khỏi tiện ích.", status: "signed_out" });
@@ -239,7 +237,7 @@ export function useGoogleAuth() {
       authAbortRef.current = undefined;
       cancelGenerationRequests();
       tokenRef.current = undefined;
-      modelRef.current = undefined;
+      modelsRef.current = [];
       setState({ message: "Tài khoản Google đã đăng xuất.", status: "signed_out" });
     };
     chrome.identity.onSignInChanged.addListener(listener);

@@ -19,13 +19,17 @@ if (manifest.oauth2) {
   if (!/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/i.test(manifest.oauth2.client_id ?? "")) {
     throw new Error("Build verification failed: manifest OAuth client ID is invalid.");
   }
-  if (
-    !manifest.oauth2.scopes?.includes(
-      "https://www.googleapis.com/auth/generative-language.retriever",
-    )
-  ) {
-    throw new Error("Build verification failed: Gemini OAuth scope is missing.");
+  for (const scope of [
+    "https://www.googleapis.com/auth/generative-language.retriever",
+    "https://www.googleapis.com/auth/userinfo.email",
+  ]) {
+    if (!manifest.oauth2.scopes?.includes(scope)) {
+      throw new Error(`Build verification failed: OAuth scope ${scope} is missing.`);
+    }
   }
+}
+if (!manifest.host_permissions?.includes("https://www.googleapis.com/*")) {
+  throw new Error("Build verification failed: Google UserInfo host permission is missing.");
 }
 const actionIcon = manifest.action?.default_icon;
 const iconPaths = [

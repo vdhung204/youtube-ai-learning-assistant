@@ -23,6 +23,11 @@ export interface GoogleSession {
 
 const OAUTH_CLIENT_ID_PATTERN = /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/i;
 const GOOGLE_TOKEN_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
+const GOOGLE_USER_INFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
+const GOOGLE_OAUTH_SCOPES = [
+  "https://www.googleapis.com/auth/generative-language.retriever",
+  "https://www.googleapis.com/auth/userinfo.email",
+];
 
 function hasIdentityRuntime(): boolean {
   return (
@@ -55,19 +60,62 @@ function accountLabel(email: string): string {
   return localPart || "Google";
 }
 
-async function readProfile(): Promise<GoogleAccount> {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function readTokenAccount(token: string): Promise<GoogleAccount> {
+  let response: Response;
   try {
-    const profile = await chrome.identity.getProfileUserInfo({
-      accountStatus: chrome.identity.AccountStatus.ANY,
+    response = await fetch(GOOGLE_USER_INFO_URL, {
+      credentials: "omit",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      method: "GET",
     });
-    return {
-      email: profile.email,
-      id: profile.id,
-      label: accountLabel(profile.email),
-    };
   } catch {
-    return { email: "", id: "", label: "Google" };
+    throw new GoogleAuthError(
+      "UNAVAILABLE",
+      "Không thể xác minh tài khoản Google đang cấp token. Hãy kiểm tra mạng rồi thử lại.",
+    );
   }
+
+  if (response.status === 401) {
+    await invalidateGoogleToken(token);
+    await chrome.identity.clearAllCachedAuthTokens();
+    throw new GoogleAuthError("SIGNED_OUT", "Phiên Google đã hết hạn. Hãy đăng nhập lại.");
+  }
+  if (response.status === 403) {
+    throw new GoogleAuthError(
+      "PERMISSION_DENIED",
+      "Bạn chưa cấp quyền đọc email để xác minh tài khoản Google đang sử dụng.",
+    );
+  }
+  if (!response.ok) {
+    throw new GoogleAuthError(
+      "UNAVAILABLE",
+      "Google không thể xác minh tài khoản đang sử dụng. Hãy thử lại sau.",
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new GoogleAuthError("UNAVAILABLE", "Google trả về thông tin tài khoản không hợp lệ.");
+  }
+  if (!isRecord(body) || typeof body.id !== "string" || typeof body.email !== "string") {
+    throw new GoogleAuthError("UNAVAILABLE", "Google trả về thông tin tài khoản không hợp lệ.");
+  }
+
+  const id = body.id.trim();
+  const email = body.email.trim();
+  if (!id || !email) {
+    throw new GoogleAuthError("UNAVAILABLE", "Google không trả về email của tài khoản đang sử dụng.");
+  }
+  return { email, id, label: accountLabel(email) };
 }
 
 export async function getGoogleSession(interactive: boolean): Promise<GoogleSession> {
@@ -75,12 +123,15 @@ export async function getGoogleSession(interactive: boolean): Promise<GoogleSess
 
   let result: chrome.identity.GetAuthTokenResult;
   try {
-    result = await chrome.identity.getAuthToken({ interactive });
+    result = await chrome.identity.getAuthToken({
+      interactive,
+      scopes: GOOGLE_OAUTH_SCOPES,
+    });
   } catch {
     throw new GoogleAuthError(
       interactive ? "PERMISSION_DENIED" : "SIGNED_OUT",
       interactive
-        ? "Bạn chưa cấp quyền Google cho tiện ích."
+        ? "Bạn chưa hoàn tất hoặc đã từ chối cấp quyền Google cho tiện ích."
         : "Bạn chưa đăng nhập hoặc chưa cấp quyền Google cho tiện ích.",
     );
   }
@@ -94,7 +145,21 @@ export async function getGoogleSession(interactive: boolean): Promise<GoogleSess
     );
   }
 
-  return { account: await readProfile(), token: result.token };
+  if (
+    result.grantedScopes &&
+    GOOGLE_OAUTH_SCOPES.some((scope) => !result.grantedScopes?.includes(scope))
+  ) {
+    await invalidateGoogleToken(result.token);
+    await chrome.identity.clearAllCachedAuthTokens();
+    throw new GoogleAuthError(
+      interactive ? "PERMISSION_DENIED" : "SIGNED_OUT",
+      interactive
+        ? "Bạn cần cấp đủ quyền Gemini và email để tiếp tục."
+        : "Phiên Google cũ chưa có đủ quyền. Hãy đăng nhập lại.",
+    );
+  }
+
+  return { account: await readTokenAccount(result.token), token: result.token };
 }
 
 export async function invalidateGoogleToken(token: string): Promise<void> {

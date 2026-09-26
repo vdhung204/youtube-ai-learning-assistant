@@ -23,6 +23,8 @@ const idleState: YouTubeContextState = {
   message: "Video YouTube sẽ được nhận diện sau khi đăng nhập Google.",
 };
 
+export const NOTICE_AUTO_DISMISS_MS = 5_000;
+
 export function useYouTubeContext(enabled = true) {
   const [state, setState] = useState<YouTubeContextState>(enabled ? loadingState : idleState);
   const [notice, setNotice] = useState<AppNotice | null>(null);
@@ -87,6 +89,16 @@ export function useYouTubeContext(enabled = true) {
       refreshRequestId.current += 1;
     };
   }, [refresh]);
+
+  useEffect(() => {
+    if (!notice || notice.tone !== "success") {
+      return;
+    }
+    const timeout = globalThis.setTimeout(() => {
+      setNotice(null);
+    }, NOTICE_AUTO_DISMISS_MS);
+    return () => globalThis.clearTimeout(timeout);
+  }, [notice]);
 
   useEffect(() => {
     if (!enabled || !hasChromeExtensionRuntime()) {

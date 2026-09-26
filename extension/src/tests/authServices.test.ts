@@ -8,9 +8,15 @@ import {
   GeminiAccessError,
   resolveGeminiModel,
 } from "../integrations/gemini/client";
-import { createChromeMock } from "./chromeMock";
+import {
+  createChromeMock,
+  TEST_GOOGLE_EMAIL_SCOPE,
+  TEST_GOOGLE_SCOPE,
+} from "./chromeMock";
 
 afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -18,6 +24,13 @@ describe("Google OAuth service", () => {
   it("gets a cached token non-interactively and reads the signed-in profile", async () => {
     const chromeMock = createChromeMock();
     vi.stubGlobal("chrome", chromeMock);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ email: "learner@example.com", id: "google-account-id" }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
 
     await expect(getGoogleSession(false)).resolves.toEqual({
       account: {
@@ -27,10 +40,15 @@ describe("Google OAuth service", () => {
       },
       token: "test-google-access-token",
     });
-    expect(chromeMock.identity.getAuthToken).toHaveBeenCalledWith({ interactive: false });
-    expect(chromeMock.identity.getProfileUserInfo).toHaveBeenCalledWith({
-      accountStatus: "ANY",
+    expect(chromeMock.identity.getAuthToken).toHaveBeenCalledWith({
+      interactive: false,
+      scopes: [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE],
     });
+    expect(chromeMock.identity.getProfileUserInfo).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://www.googleapis.com/oauth2/v2/userinfo",
+      expect.objectContaining({ credentials: "omit", method: "GET" }),
+    );
   });
 
   it("requires an explicit interactive request before prompting for permission", async () => {
@@ -41,7 +59,10 @@ describe("Google OAuth service", () => {
       code: "SIGNED_OUT",
     } satisfies Partial<GoogleAuthError>);
     expect(getAuthToken).toHaveBeenCalledOnce();
-    expect(getAuthToken).toHaveBeenCalledWith({ interactive: false });
+    expect(getAuthToken).toHaveBeenCalledWith({
+      interactive: false,
+      scopes: [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE],
+    });
   });
 
   it("does not start OAuth when the build has no configured client ID", async () => {
@@ -98,7 +119,7 @@ describe("Gemini model resolution", () => {
         JSON.stringify({
           models: [
             {
-              name: "models/gemini-2.0-flash",
+              name: "models/gemini-3.6-flash",
               supportedGenerationMethods: ["generateContent"],
             },
           ],
@@ -110,7 +131,7 @@ describe("Gemini model resolution", () => {
 
     await expect(
       resolveGeminiModel("private-oauth-token", { projectId: "test-google-project" }),
-    ).resolves.toBe("models/gemini-2.0-flash");
+    ).resolves.toBe("models/gemini-3.6-flash");
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -135,7 +156,7 @@ describe("Gemini model resolution", () => {
   ] as const)("maps HTTP %i to %s", async (status, code) => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status })));
 
-    await expect(resolveGeminiModel("test-token")).rejects.toMatchObject({
+    await expect(resolveGeminiModel("test-token", { maxRetries: 0 })).rejects.toMatchObject({
       code,
       status,
     } satisfies Partial<GeminiAccessError>);

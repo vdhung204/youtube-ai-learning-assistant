@@ -122,16 +122,26 @@ describe("real learning flows", () => {
     await user.click(screen.getByText("Truy xuất và mô hình ngôn ngữ"));
     await user.click(screen.getByRole("button", { name: "Câu tiếp theo" }));
     await user.click(screen.getByText("Trước khi generator viết"));
-    await user.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await user.click(screen.getByRole("button", { name: "Câu tiếp theo" }));
+    for (let index = 0; index < 4; index += 1) {
+      await user.click(screen.getByText("Truy xuất và mô hình ngôn ngữ"));
+      await user.click(screen.getByRole("button", {
+        name: index === 3 ? "Nộp bài" : "Câu tiếp theo",
+      }));
+    }
 
     expect(await screen.findByLabelText("Điểm 100 trên 100")).toBeTruthy();
-    expect(screen.getByText("Trả lời đúng 2/2 câu trong lần làm hiện tại.")).toBeTruthy();
+    expect(screen.getByText("Trả lời đúng 6/6 câu trong lần làm hiện tại.")).toBeTruthy();
     const assessments = requestBodies("/assessments/quiz");
     expect(assessments).toHaveLength(1);
     expect(assessments[0]).toMatchObject({
       userAnswers: [
         { questionId: expect.any(String), selectedAnswer: 0 },
         { questionId: expect.any(String), selectedAnswer: 1 },
+        { questionId: expect.any(String), selectedAnswer: 0 },
+        { questionId: expect.any(String), selectedAnswer: 0 },
+        { questionId: expect.any(String), selectedAnswer: 0 },
+        { questionId: expect.any(String), selectedAnswer: 0 },
       ],
     });
   });
