@@ -119,6 +119,7 @@ test("prompts keep transcript in data and include output schemas", () => {
   assert.ok(prompt.userContent.includes(malicious.chunks[0].text));
   assert.ok(prompt.responseSchema);
   const responseProperties = prompt.responseSchema.properties as Record<string, Record<string, unknown>>;
+  assert.equal(responseProperties.questions.minItems, 5);
   assert.equal(responseProperties.questions.maxItems, 5);
   const questionSchema = responseProperties.questions.items as { properties: Record<string, Record<string, unknown>> };
   assert.equal(questionSchema.properties.options.minItems, 4);

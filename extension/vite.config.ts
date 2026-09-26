@@ -6,7 +6,10 @@ import { loadEnv, type Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 
 const rootDirectory = fileURLToPath(new URL(".", import.meta.url));
-const googleOAuthScope = "https://www.googleapis.com/auth/generative-language.retriever";
+const googleOAuthScopes = [
+  "https://www.googleapis.com/auth/generative-language.retriever",
+  "https://www.googleapis.com/auth/userinfo.email",
+];
 const googleClientIdPattern = /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/i;
 
 function configureOAuthManifest(clientId: string): Plugin {
@@ -26,7 +29,7 @@ function configureOAuthManifest(clientId: string): Plugin {
         }
         manifest.oauth2 = {
           client_id: clientId,
-          scopes: [googleOAuthScope],
+          scopes: googleOAuthScopes,
         };
       }
       await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");

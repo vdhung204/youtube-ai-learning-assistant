@@ -7,6 +7,7 @@ import {
   createChromeMock,
   createLearningChromeMock,
   createReadyLearningFetchMock,
+  TEST_GOOGLE_EMAIL_SCOPE,
   TEST_GOOGLE_SCOPE,
 } from "./chromeMock";
 
@@ -101,7 +102,10 @@ describe("Chrome integration states", () => {
         if (!interactive) {
           throw new Error("No cached grant");
         }
-        return { grantedScopes: [TEST_GOOGLE_SCOPE], token: "interactive-token" };
+        return {
+          grantedScopes: [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE],
+          token: "interactive-token",
+        };
       },
     );
     const chromeMock = createChromeMock({ getAuthToken });
@@ -113,14 +117,15 @@ describe("Chrome integration states", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Đăng nhập bằng Google" })).toBeTruthy();
-    expect(getAuthToken).toHaveBeenCalledWith({ interactive: false });
-    expect(getAuthToken).not.toHaveBeenCalledWith({ interactive: true });
+    const scopes = [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE];
+    expect(getAuthToken).toHaveBeenCalledWith({ interactive: false, scopes });
+    expect(getAuthToken).not.toHaveBeenCalledWith({ interactive: true, scopes });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(chromeMock.tabs.query).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Đăng nhập bằng Google" }));
     expect(await screen.findByRole("button", { name: "Quiz" })).toBeTruthy();
-    expect(getAuthToken).toHaveBeenCalledWith({ interactive: true });
+    expect(getAuthToken).toHaveBeenCalledWith({ interactive: true, scopes });
     await waitFor(() => {
       expect(
         fetchMock.mock.calls.some(([url]) => String(url).startsWith("http://127.0.0.1:8765/")),

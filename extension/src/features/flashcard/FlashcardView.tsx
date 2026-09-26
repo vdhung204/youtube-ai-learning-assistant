@@ -1,66 +1,39 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   answerVideoQuestion,
   type GenerateContent,
 } from "../../integrations/learning/pipeline";
 import type { CurrentVideo, Flashcard, FlashcardConfidence } from "../../types/learning";
+import type { LearningContentLoader } from "../../integrations/learning/types";
+import { useGeneratedContent } from "../../sidebar/hooks/useGeneratedContent";
 import { AskAI } from "../../sidebar/components/AskAI";
 import { Button, Icon, ProgressBar, RuntimeStateCard } from "../../sidebar/components/ui";
 import { formatDuration } from "../../sidebar/videoPresentation";
 
 interface FlashcardViewProps {
   generateContent: GenerateContent;
-  loadFlashcards: (video: CurrentVideo, options?: { regenerate?: boolean }) => Promise<Flashcard[]>;
+  loadFlashcards: LearningContentLoader<Flashcard>;
   onSeek: (seconds: number) => void;
   video: CurrentVideo;
 }
 
-type FlashcardLoadState =
-  | { status: "loading" }
-  | { status: "ready"; cards: Flashcard[] }
-  | { status: "error"; message: string };
-
 export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }: FlashcardViewProps) {
-  const [loadState, setLoadState] = useState<FlashcardLoadState>({ status: "loading" });
-  const [generationRequest, setGenerationRequest] = useState({ regenerate: false, version: 0 });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [chatExpanded, setChatExpanded] = useState(false);
   const [confidence, setConfidence] = useState<Record<string, FlashcardConfidence>>({});
 
-  useEffect(() => {
-    let active = true;
-    setLoadState({ status: "loading" });
+  const resetProgress = useCallback(() => {
     setCurrentIndex(0);
     setFlipped(false);
     setConfidence({});
-    void loadFlashcards(video, { regenerate: generationRequest.regenerate })
-      .then((cards) => {
-        if (active) {
-          setLoadState({ status: "ready", cards });
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setLoadState({
-            status: "error",
-            message: error instanceof Error ? error.message : "Không thể tạo flashcard từ video.",
-          });
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [
-    generationRequest.regenerate,
-    generationRequest.version,
+  }, []);
+  const { loadState, retry, regenerate } = useGeneratedContent(
+    video,
     loadFlashcards,
-    video.channel,
-    video.durationSec,
-    video.language,
-    video.title,
-    video.videoId,
-  ]);
+    resetProgress,
+    "Không thể tạo flashcard từ video.",
+  );
 
   if (loadState.status === "loading") {
     return (
@@ -76,11 +49,11 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
     return (
       <div className="view-stack flashcard-view">
         <RuntimeStateCard
-        message={loadState.message}
+          message={loadState.message}
           title="Không thể tạo Flashcards"
         >
           <Button
-            onClick={() => setGenerationRequest((request) => ({ regenerate: false, version: request.version + 1 }))}
+            onClick={retry}
             tone="secondary"
           >
             Thử lại
@@ -90,7 +63,7 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
     );
   }
 
-  const cards = loadState.cards;
+  const cards = loadState.items;
   const card = cards[currentIndex];
   const currentNumber = currentIndex + 1;
   const moveTo = (nextIndex: number) => {
@@ -119,7 +92,7 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
               <span>Bộ flashcard đã lưu cho video này</span>
               <Button
                 aria-label="Thêm Flashcards mới"
-                onClick={() => setGenerationRequest((request) => ({ regenerate: true, version: request.version + 1 }))}
+                onClick={regenerate}
                 tone="secondary"
               >
                 + Thêm
