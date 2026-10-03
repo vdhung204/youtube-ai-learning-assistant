@@ -5,7 +5,7 @@ import {
   generateQuiz,
   LearningPipelineError,
 } from "../integrations/learning/pipeline";
-import { GeminiAccessError } from "../integrations/gemini/client";
+import { AiGatewayError } from "../integrations/ai-gateway/client";
 import { retrieve } from "../integrations/local-service/client";
 import type { CurrentVideo } from "../types/learning";
 
@@ -63,9 +63,9 @@ beforeEach(() => {
 });
 
 describe("learning generation pipeline", () => {
-  it("retrieves quiz context, validates Gemini JSON, and maps the source timestamp", async () => {
+  it("retrieves quiz context, sends a strict gateway request, and maps validated items", async () => {
     const generate = vi.fn().mockResolvedValue({
-      questions: Array.from({ length: 6 }, (_, index) => quizQuestion(index)),
+      items: Array.from({ length: 6 }, (_, index) => quizQuestion(index)),
       status: "ok",
     });
 
@@ -78,12 +78,16 @@ describe("learning generation pipeline", () => {
     );
     expect(questions).toHaveLength(6);
     expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({ responseSchema: expect.any(Object) }),
       expect.objectContaining({
-        maxOutputTokens: 6_144,
-        maxRetries: 1,
-        temperature: 0.1,
-        thinkingLevel: "LOW",
+        task: "questions",
+        requestedCount: 6,
+        language: "vi",
+        context: expect.objectContaining({ videoId: video.videoId }),
+      }),
+      expect.objectContaining({
+        maxRetries: 0,
+        timeoutMs: 35_000,
+        validate: expect.any(Function),
       }),
     );
     expect(questions[0]).toMatchObject({
@@ -92,9 +96,10 @@ describe("learning generation pipeline", () => {
     });
   });
 
-  it("does not spend a second generation call after a truncated quiz response", async () => {
-    const error = new GeminiAccessError("OUTPUT_TRUNCATED", "truncated", 200, {
+  it("does not spend a second pipeline call after a retryable gateway failure", async () => {
+    const error = new AiGatewayError("SERVER_ERROR", "gateway unavailable", {
       retryable: true,
+      status: 503,
     });
     const generate = vi.fn().mockRejectedValue(error);
 
@@ -105,13 +110,13 @@ describe("learning generation pipeline", () => {
 
   it("retrieves flashcard context and maps validated cards", async () => {
     const generate = vi.fn().mockResolvedValue({
-      flashcards: [{
-        back: "Truy xuất trước, sinh câu trả lời sau.",
+      items: Array.from({ length: 6 }, (_, index) => ({
+        back: `Truy xuất trước, sinh câu trả lời sau (${index + 1}).`,
         evidence: "RAG kết hợp truy xuất với mô hình ngôn ngữ",
-        front: "RAG hoạt động thế nào?",
+        front: `RAG hoạt động thế nào? ${index + 1}`,
         sourceChunkId: chunk.chunkId,
         topic: "RAG",
-      }],
+      })),
       status: "ok",
     });
 
@@ -123,19 +128,19 @@ describe("learning generation pipeline", () => {
       sourceTimestamp: { chunkId: chunk.chunkId, startSec: 42, endSec: 55 },
     });
     expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({ responseSchema: expect.any(Object) }),
+      expect.objectContaining({ task: "flashcards", requestedCount: 6 }),
       expect.objectContaining({
-        maxOutputTokens: 2_048,
-        maxRetries: 1,
-        temperature: 0.1,
-        thinkingLevel: "LOW",
+        maxRetries: 0,
+        timeoutMs: 35_000,
+        validate: expect.any(Function),
       }),
     );
   });
 
-  it("does not spend a second generation call after a truncated flashcard response", async () => {
-    const error = new GeminiAccessError("OUTPUT_TRUNCATED", "truncated", 200, {
+  it("does not spend a second pipeline call after a flashcard gateway failure", async () => {
+    const error = new AiGatewayError("SERVER_ERROR", "gateway unavailable", {
       retryable: true,
+      status: 503,
     });
     const generate = vi.fn().mockRejectedValue(error);
 
@@ -146,7 +151,7 @@ describe("learning generation pipeline", () => {
 
   it("rejects a successful quiz payload that contains fewer than six questions", async () => {
     const generate = vi.fn().mockResolvedValue({
-      questions: Array.from({ length: 5 }, (_, index) => quizQuestion(index)),
+      items: Array.from({ length: 5 }, (_, index) => quizQuestion(index)),
       status: "ok",
     });
 
@@ -158,7 +163,7 @@ describe("learning generation pipeline", () => {
 
   it("uses review retrieval for AskAI and returns only grounded sources", async () => {
     const generate = vi.fn().mockResolvedValue({
-      answers: [{
+      items: [{
         answer: "RAG giúp câu trả lời bám sát nguồn đã truy xuất.",
         evidence: "câu trả lời bám sát nguồn",
         sourceChunkId: chunk.chunkId,
@@ -174,15 +179,15 @@ describe("learning generation pipeline", () => {
       query: "RAG có ích gì?",
     });
     expect(generate.mock.calls[0]?.[1]).toMatchObject({
-      maxOutputTokens: 3_072,
-      maxRetries: 1,
-      thinkingLevel: "LOW",
+      maxRetries: 0,
+      timeoutMs: 35_000,
+      validate: expect.any(Function),
     });
     expect(answer.paragraphs).toEqual(["RAG giúp câu trả lời bám sát nguồn đã truy xuất."]);
     expect(answer.sources).toEqual([expect.objectContaining({ chunkId: "chunk-1", startSec: 42 })]);
   });
 
-  it("reports no-context explicitly and never calls Gemini", async () => {
+  it("reports no-context explicitly and never calls the gateway", async () => {
     retrieveMock.mockResolvedValueOnce({
       chunks: [],
       purpose: "quiz",

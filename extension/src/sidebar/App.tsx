@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { FlashcardView } from "../features/flashcard/FlashcardView";
-import { LoginScreen } from "../features/authentication/LoginScreen";
 import { AssessmentView } from "../features/learning-assessment/AssessmentView";
 import { QuizView } from "../features/quiz/QuizView";
+import { generateContent } from "../integrations/ai-gateway/client";
 import type { AssessmentResponse, Question } from "../types/api";
 import type { AppView } from "../types/learning";
 import { AppShell } from "./components/AppShell";
 import { Button, RuntimeStateCard } from "./components/ui";
 import { useLocalServiceHealth } from "./hooks/useLocalServiceHealth";
-import { useGoogleAuth } from "./hooks/useGoogleAuth";
 import { useLearningContentCache } from "./hooks/useLearningContentCache";
 import { useVideoRagSession } from "./hooks/useVideoRagSession";
 import { useYouTubeContext } from "./hooks/useYouTubeContext";
@@ -25,14 +24,12 @@ export function App() {
   const [isDark, setIsDark] = useState(false);
   const [assessmentSession, setAssessmentSession] = useState<AssessmentSession | null>(null);
   const [quizAttempt, setQuizAttempt] = useState(0);
-  const auth = useGoogleAuth();
-  const learningContent = useLearningContentCache(auth.generateContent);
-  const authenticated = auth.state.status === "ready";
-  const serviceHealth = useLocalServiceHealth(authenticated);
-  const youtube = useYouTubeContext(authenticated);
+  const learningContent = useLearningContentCache(generateContent);
+  const serviceHealth = useLocalServiceHealth(true);
+  const youtube = useYouTubeContext(true);
   const video = youtube.state.status === "ready" ? youtube.state.video : undefined;
   const ragSession = useVideoRagSession({
-    enabled: authenticated,
+    enabled: true,
     serviceStatus: serviceHealth.state.status,
     video,
   });
@@ -58,12 +55,12 @@ export function App() {
     setActiveView("quiz");
   };
 
-  const renderAuthenticatedView = () => {
+  const renderActiveView = () => {
     if (activeView === "home") {
       return (
         <HomeView
           extensionOrigin={serviceHealth.extensionOrigin}
-          generateContent={auth.generateContent}
+          generateContent={generateContent}
           onNavigate={setActiveView}
           onRefreshHealth={serviceHealth.refresh}
           onRetryRag={ragSession.retry}
@@ -113,7 +110,7 @@ export function App() {
     if (activeView === "quiz") {
       return (
         <QuizView
-          generateContent={auth.generateContent}
+          generateContent={generateContent}
           key={`${video.videoId}-${quizAttempt}`}
           loadQuiz={learningContent.loadQuiz}
           onComplete={completeQuiz}
@@ -125,7 +122,7 @@ export function App() {
 
     return (
       <FlashcardView
-        generateContent={auth.generateContent}
+        generateContent={generateContent}
         key={video.videoId}
         loadFlashcards={learningContent.loadFlashcards}
         onSeek={(seconds) => void youtube.seekTo(seconds)}
@@ -137,28 +134,15 @@ export function App() {
   return (
     <AppShell
       activeView={activeView}
-      authState={auth.state}
       isDark={isDark}
       notice={youtube.notice}
       onDismissNotice={youtube.dismissNotice}
       onNavigate={setActiveView}
-      onSignIn={() => void auth.signIn()}
-      onSignOut={() => void auth.signOut()}
       onToggleTheme={() => setIsDark((current) => !current)}
-      showNavigation={authenticated}
     >
-      {authenticated ? (
-        <div className="learning-session" key={video?.videoId ?? "no-video"}>
-          {renderAuthenticatedView()}
-        </div>
-      ) : (
-        <LoginScreen
-          onRetry={() => void auth.retry()}
-          onSignIn={() => void auth.signIn()}
-          onSignOut={() => void auth.signOut()}
-          state={auth.state}
-        />
-      )}
+      <div className="learning-session" key={video?.videoId ?? "no-video"}>
+        {renderActiveView()}
+      </div>
     </AppShell>
   );
 }

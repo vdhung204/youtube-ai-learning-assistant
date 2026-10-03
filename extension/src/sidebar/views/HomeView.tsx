@@ -137,7 +137,7 @@ export function HomeView({
         onExpandedChange={setChatExpanded}
         onSourceSelect={onSeek}
         placeholder="VD: Khái niệm chính trong video là gì?"
-        statusLabel={ragReady ? "RAG + Gemini" : "Chưa sẵn sàng"}
+        statusLabel={ragReady ? "RAG + AI" : "Chưa sẵn sàng"}
       />
     </div>
   );
@@ -146,7 +146,7 @@ export function HomeView({
 const serviceStatusLabels: Record<LocalServiceHealthState["status"], string> = {
   checking: "Đang kiểm tra",
   error: "Lỗi kết nối",
-  idle: "Chờ đăng nhập",
+  idle: "Đang khởi tạo",
   not_ready: "RAG chưa sẵn sàng",
   offline: "Service ngoại tuyến",
   ready: "RAG sẵn sàng",

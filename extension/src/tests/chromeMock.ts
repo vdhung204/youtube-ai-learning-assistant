@@ -1,19 +1,6 @@
 import { vi } from "vitest";
 
 export const TEST_EXTENSION_ID = "a".repeat(32);
-export const TEST_GOOGLE_CLIENT_ID =
-  "123456789-test.apps.googleusercontent.com";
-export const TEST_GOOGLE_SCOPE =
-  "https://www.googleapis.com/auth/generative-language.retriever";
-export const TEST_GOOGLE_EMAIL_SCOPE =
-  "https://www.googleapis.com/auth/userinfo.email";
-
-interface ChromeMockOptions {
-  email?: string;
-  getAuthToken?: ReturnType<typeof vi.fn>;
-  sendMessage?: ReturnType<typeof vi.fn>;
-}
-
 export const TEST_VIDEO_ID = "dQw4w9WgXcQ";
 
 export const TEST_VIDEO_CONTEXT = {
@@ -50,12 +37,15 @@ export const TEST_TRANSCRIPT = {
   videoId: TEST_VIDEO_ID,
 } as const;
 
+interface ChromeMockOptions {
+  sendMessage?: ReturnType<typeof vi.fn>;
+}
+
 interface LearningChromeMockOptions {
   noTranscript?: boolean;
   sendMessage?: ReturnType<typeof vi.fn>;
 }
 
-/** Chrome APIs for a real authenticated learning session on one YouTube tab. */
 export function createLearningChromeMock(options: LearningChromeMockOptions = {}) {
   const sendMessage = options.sendMessage ?? vi.fn(
     async (_tabId: number, message: { seconds?: number; type: string; videoId?: string }) => {
@@ -92,45 +82,16 @@ export function createLearningChromeMock(options: LearningChromeMockOptions = {}
 }
 
 export function createChromeMock(options: ChromeMockOptions = {}) {
-  const runtimeMessageEvent = {
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-  };
-  const identityChangeEvent = {
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-  };
-
   return {
-    identity: {
-      AccountStatus: { ANY: "ANY", SYNC: "SYNC" },
-      clearAllCachedAuthTokens: vi.fn().mockResolvedValue(undefined),
-      getAuthToken:
-        options.getAuthToken ??
-        vi.fn().mockResolvedValue({
-          grantedScopes: [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE],
-          token: "test-google-access-token",
-        }),
-      getProfileUserInfo: vi.fn().mockResolvedValue({
-        email: options.email ?? "learner@example.com",
-        id: "google-account-id",
-      }),
-      onSignInChanged: identityChangeEvent,
-      removeCachedAuthToken: vi.fn().mockResolvedValue(undefined),
-    },
     runtime: {
       getManifest: () => ({
         manifest_version: 3,
         name: "YouTube AI Learning Assistant",
-        oauth2: {
-          client_id: TEST_GOOGLE_CLIENT_ID,
-          scopes: [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE],
-        },
         version: "0.1.0",
       }),
       getURL: () => `chrome-extension://${TEST_EXTENSION_ID}/`,
       id: TEST_EXTENSION_ID,
-      onMessage: runtimeMessageEvent,
+      onMessage: { addListener: vi.fn(), removeListener: vi.fn() },
     },
     tabs: {
       onActivated: { addListener: vi.fn(), removeListener: vi.fn() },
@@ -139,53 +100,6 @@ export function createChromeMock(options: ChromeMockOptions = {}) {
       sendMessage: options.sendMessage ?? vi.fn(),
     },
   };
-}
-
-export function createAuthenticatedFetchMock(localResponse?: Response) {
-  return vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
-    const url = String(input);
-    if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
-      return new Response(JSON.stringify({ email: "learner@example.com", id: "google-account-id" }), {
-        status: 200,
-      });
-    }
-    if (url.startsWith("https://generativelanguage.googleapis.com/")) {
-      const configuredModel = import.meta.env.VITE_YALA_GEMINI_MODEL?.trim();
-      return new Response(
-        JSON.stringify({
-          models: [
-            {
-              name: configuredModel ? `models/${configuredModel.replace(/^models\//u, "")}` : "models/gemini-test",
-              supportedGenerationMethods: ["generateContent"],
-            },
-          ],
-        }),
-        { status: 200 },
-      );
-    }
-    if (url.startsWith("http://127.0.0.1:8765/")) {
-      return (
-        localResponse ??
-        new Response(
-          JSON.stringify({
-            embeddingModelReady: false,
-            error: {
-              code: "SERVICE_NOT_READY",
-              details: null,
-              message: "Local RAG Service chưa sẵn sàng.",
-              retryable: true,
-            },
-            pipelineVersion: "unconfigured",
-            serviceVersion: "0.1.0",
-            status: "not_ready",
-            vectorStoreReady: false,
-          }),
-          { status: 503 },
-        )
-      );
-    }
-    throw new Error(`Unexpected fetch URL in test: ${url}`);
-  });
 }
 
 interface LearningFetchMockOptions {
@@ -221,121 +135,81 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-function generatedPayload(kind: "answers" | "flashcards" | "questions") {
-  if (kind === "answers") {
-    return {
-      answers: [
-        {
-          answer: "RAG kết hợp bước truy xuất với mô hình ngôn ngữ để câu trả lời bám vào nguồn.",
-          evidence: "combines retrieval with a language model",
-          sourceChunkId: "chunk-1",
-          topic: "RAG",
-        },
-      ],
-      status: "ok",
-    };
+function generatedItems(task: "answers" | "flashcards" | "questions") {
+  if (task === "answers") {
+    return [{
+      answer: "RAG kết hợp bước truy xuất với mô hình ngôn ngữ để câu trả lời bám vào nguồn.",
+      evidence: "combines retrieval with a language model",
+      sourceChunkId: "chunk-1",
+      topic: "RAG",
+    }];
   }
-  if (kind === "flashcards") {
-    return {
-      flashcards: [
-        {
-          back: "Kết hợp truy xuất với mô hình ngôn ngữ để câu trả lời bám nguồn.",
-          evidence: "combines retrieval with a language model",
-          front: "RAG kết hợp hai bước nào?",
-          sourceChunkId: "chunk-1",
-          topic: "RAG",
-        },
-      ],
-      status: "ok",
-    };
+  if (task === "flashcards") {
+    return Array.from({ length: 6 }, (_, index) => ({
+      back: `Kết hợp truy xuất với mô hình ngôn ngữ để câu trả lời bám nguồn (${index + 1}).`,
+      evidence: "combines retrieval with a language model",
+      front: `RAG kết hợp hai bước nào? Thẻ ${index + 1}`,
+      sourceChunkId: "chunk-1",
+      topic: "RAG",
+    }));
   }
-  return {
-    questions: [
-      {
-        correctAnswer: 0,
-        evidence: "combines retrieval with a language model",
-        explanation: "Đây là hai thành phần được nêu trong transcript.",
-        options: [
-          "Truy xuất và mô hình ngôn ngữ",
-          "Chỉ mô hình ngôn ngữ",
-          "Chỉ cơ sở dữ liệu quan hệ",
-          "Truy xuất và trình biên dịch",
-        ],
-        question: "RAG kết hợp những thành phần nào?",
-        sourceChunkId: "chunk-1",
-        topic: "RAG",
-      },
-      {
-        correctAnswer: 1,
-        evidence: "selects relevant passages before the generator writes its response",
-        explanation: "Retriever chọn đoạn liên quan trước khi generator viết.",
-        options: [
-          "Sau khi generator viết",
-          "Trước khi generator viết",
-          "Trong lúc người dùng đăng nhập",
-          "Sau khi xóa toàn bộ transcript",
-        ],
-        question: "Retriever chọn các đoạn liên quan vào lúc nào?",
-        sourceChunkId: "chunk-2",
-        topic: "Retrieval",
-      },
-      ...Array.from({ length: 4 }, (_, index) => ({
-        correctAnswer: 0,
-        evidence: "combines retrieval with a language model",
-        explanation: "Transcript cho thấy RAG kết hợp truy xuất với mô hình ngôn ngữ. Vì vậy đáp án đầu tiên giữ đủ hai thành phần, còn các phương án khác bỏ sót hoặc thay sai quy trình.",
-        options: [
-          "Truy xuất và mô hình ngôn ngữ",
-          "Chỉ mô hình ngôn ngữ",
-          "Chỉ truy xuất dữ liệu",
-          "Trình biên dịch và cơ sở dữ liệu",
-        ],
-        question: `Câu hỏi bổ sung ${index + 3}: Thành phần nào mô tả đúng RAG?`,
-        sourceChunkId: "chunk-1",
-        topic: "RAG",
-      })),
-    ],
-    status: "ok",
-  };
+  return [
+    {
+      correctAnswer: 0,
+      evidence: "combines retrieval with a language model",
+      explanation: "Đây là hai thành phần được nêu trong transcript.",
+      options: [
+        "Truy xuất và mô hình ngôn ngữ",
+        "Chỉ mô hình ngôn ngữ",
+        "Chỉ cơ sở dữ liệu quan hệ",
+        "Truy xuất và trình biên dịch",
+      ],
+      question: "RAG kết hợp những thành phần nào?",
+      sourceChunkId: "chunk-1",
+      topic: "RAG",
+    },
+    {
+      correctAnswer: 1,
+      evidence: "selects relevant passages before the generator writes its response",
+      explanation: "Retriever chọn đoạn liên quan trước khi generator viết.",
+      options: [
+        "Sau khi generator viết",
+        "Trước khi generator viết",
+        "Trong lúc người dùng cấu hình",
+        "Sau khi xóa toàn bộ transcript",
+      ],
+      question: "Retriever chọn các đoạn liên quan vào lúc nào?",
+      sourceChunkId: "chunk-2",
+      topic: "Retrieval",
+    },
+    ...Array.from({ length: 4 }, (_, index) => ({
+      correctAnswer: 0,
+      evidence: "combines retrieval with a language model",
+      explanation: "Transcript cho thấy RAG kết hợp truy xuất với mô hình ngôn ngữ. Vì vậy đáp án đầu tiên giữ đủ hai thành phần, còn các phương án khác bỏ sót hoặc thay sai quy trình.",
+      options: [
+        "Truy xuất và mô hình ngôn ngữ",
+        "Chỉ mô hình ngôn ngữ",
+        "Chỉ truy xuất dữ liệu",
+        "Trình biên dịch và cơ sở dữ liệu",
+      ],
+      question: `Câu hỏi bổ sung ${index + 3}: Thành phần nào mô tả đúng RAG?`,
+      sourceChunkId: "chunk-1",
+      topic: "RAG",
+    })),
+  ];
 }
 
-/**
- * Contract-aware fetch double for App integration tests. OAuth is accepted only
- * by Google endpoints; every Local RAG response follows the backend schema.
- */
+/** Contract-aware fetch double for App integration tests. */
 export function createReadyLearningFetchMock(options: LearningFetchMockOptions = {}) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
-      return jsonResponse({ email: "learner@example.com", id: "google-account-id" });
-    }
-    if (url === "https://generativelanguage.googleapis.com/v1beta/models?pageSize=50") {
-      const configuredModel = import.meta.env.VITE_YALA_GEMINI_MODEL?.trim();
-      return jsonResponse({
-        models: [
-          {
-            name: configuredModel ? `models/${configuredModel.replace(/^models\//u, "")}` : "models/gemini-test-flash",
-            supportedGenerationMethods: ["generateContent"],
-          },
-        ],
-      });
-    }
-    if (url.includes(":generateContent")) {
+    if (url.endsWith("/api/generate")) {
       const request = JSON.parse(String(init?.body)) as {
-        generationConfig?: { responseSchema?: { properties?: Record<string, unknown> } };
+        task: "answers" | "flashcards" | "questions";
       };
-      const properties = request.generationConfig?.responseSchema?.properties ?? {};
-      const kind = Object.hasOwn(properties, "questions")
-        ? "questions"
-        : Object.hasOwn(properties, "flashcards")
-          ? "flashcards"
-          : "answers";
       return jsonResponse({
-        candidates: [
-          {
-            content: { parts: [{ text: JSON.stringify(generatedPayload(kind)) }] },
-            finishReason: "STOP",
-          },
-        ],
+        data: { items: generatedItems(request.task), status: "ok" },
+        meta: { requestId: "request-test" },
       });
     }
     if (!url.startsWith("http://127.0.0.1:8765/api/v1")) {
@@ -378,7 +252,9 @@ export function createReadyLearningFetchMock(options: LearningFetchMockOptions =
       });
     }
     if (url.endsWith(`/videos/${TEST_VIDEO_ID}/retrieve`)) {
-      const request = JSON.parse(String(init?.body)) as { purpose: "quiz" | "flashcard" | "review" };
+      const request = JSON.parse(String(init?.body)) as {
+        purpose: "quiz" | "flashcard" | "review";
+      };
       return jsonResponse({
         chunks: options.noContext ? [] : retrievedChunks,
         ...(options.noContext ? { reason: "NO_RELEVANT_CONTEXT" } : {}),
@@ -388,7 +264,12 @@ export function createReadyLearningFetchMock(options: LearningFetchMockOptions =
     }
     if (url.endsWith(`/videos/${TEST_VIDEO_ID}/assessments/quiz`)) {
       const request = JSON.parse(String(init?.body)) as {
-        questions: Array<{ correctAnswer: number; questionId: string; sourceTimestamp: { chunkId: string; startSec: number; endSec: number }; topic: string }>;
+        questions: Array<{
+          correctAnswer: number;
+          questionId: string;
+          sourceTimestamp: { chunkId: string; startSec: number; endSec: number };
+          topic: string;
+        }>;
         userAnswers: Array<{ questionId: string; selectedAnswer: number | null }>;
       };
       const results = request.questions.map((question) => {

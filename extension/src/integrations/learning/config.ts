@@ -9,12 +9,12 @@ export const QUIZ_STORAGE_PREFIX = "yala:quiz-cache:v3:";
 export const FLASHCARD_STORAGE_PREFIX = "yala:flashcard-cache:v2:";
 
 const SHARED_GENERATION_OPTIONS = {
-  maxRetries: 1,
-  thinkingLevel: "LOW",
+  maxRetries: 0,
+  timeoutMs: 35_000,
 } as const;
 
 export const LEARNING_GENERATION_OPTIONS = {
-  quiz: { ...SHARED_GENERATION_OPTIONS, maxOutputTokens: 6_144, temperature: 0.1 },
-  flashcard: { ...SHARED_GENERATION_OPTIONS, maxOutputTokens: 2_048, temperature: 0.1 },
-  review: { ...SHARED_GENERATION_OPTIONS, maxOutputTokens: 3_072 },
+  quiz: { ...SHARED_GENERATION_OPTIONS },
+  flashcard: { ...SHARED_GENERATION_OPTIONS },
+  review: { ...SHARED_GENERATION_OPTIONS },
 } satisfies Record<string, LearningGenerationOptions>;

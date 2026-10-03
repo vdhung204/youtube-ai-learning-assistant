@@ -39,7 +39,7 @@ function requestBodies(pathSuffix: string): Array<Record<string, unknown>> {
 }
 
 describe("real learning flows", () => {
-  it("answers with review retrieval and Gemini, then collapses immediately", async () => {
+  it("answers with review retrieval and the AI Gateway, then collapses immediately", async () => {
     const user = userEvent.setup();
     await renderReadyApp();
 
@@ -55,6 +55,15 @@ describe("real learning flows", () => {
     expect(requestBodies("/retrieve")).toContainEqual(
       expect.objectContaining({ purpose: "review", query: "RAG có tác dụng gì?" }),
     );
+    expect(requestBodies("/api/generate")).toEqual([
+      expect.objectContaining({
+        context: expect.objectContaining({ videoId: "dQw4w9WgXcQ" }),
+        language: "vi",
+        question: "RAG có tác dụng gì?",
+        task: "answers",
+      }),
+    ]);
+    expect(requestBodies("/api/generate")[0]).not.toHaveProperty("requestedCount");
 
     await user.click(screen.getByRole("button", { name: "Thu nhỏ hội thoại" }));
     expect(screen.queryByRole("button", { name: "Thu nhỏ hội thoại" })).toBeNull();
@@ -66,7 +75,7 @@ describe("real learning flows", () => {
     await renderReadyApp();
     await user.click(screen.getByRole("button", { name: "Flashcard" }));
 
-    expect(await screen.findByText("Thẻ 1 / 1")).toBeTruthy();
+    expect(await screen.findByText("Thẻ 1 / 6")).toBeTruthy();
     expect(requestBodies("/retrieve")).toContainEqual(
       expect.objectContaining({ purpose: "flashcard" }),
     );
@@ -81,12 +90,12 @@ describe("real learning flows", () => {
     await renderReadyApp();
 
     await user.click(screen.getByRole("button", { name: "Flashcard" }));
-    expect(await screen.findByText("Thẻ 1 / 1")).toBeTruthy();
+    expect(await screen.findByText("Thẻ 1 / 6")).toBeTruthy();
     expect(requestBodies("/retrieve").filter((body) => body.purpose === "flashcard")).toHaveLength(1);
 
     await user.click(screen.getByRole("button", { name: "Trang chính" }));
     await user.click(screen.getByRole("button", { name: "Flashcard" }));
-    expect(await screen.findByText("Thẻ 1 / 1")).toBeTruthy();
+    expect(await screen.findByText("Thẻ 1 / 6")).toBeTruthy();
     expect(requestBodies("/retrieve").filter((body) => body.purpose === "flashcard")).toHaveLength(1);
 
     await user.click(screen.getByRole("button", { name: "Thêm Flashcards mới" }));
@@ -146,8 +155,11 @@ describe("real learning flows", () => {
     });
   });
 
-  it("never sends the Google OAuth token or credentials to Local RAG", async () => {
+  it("never sends credentials or provider configuration from the extension", async () => {
+    const user = userEvent.setup();
     await renderReadyApp();
+    await user.click(screen.getByRole("button", { name: "Quiz" }));
+    await screen.findByRole("heading", { name: "RAG kết hợp những thành phần nào?" });
 
     await waitFor(() => {
       expect(
@@ -157,12 +169,15 @@ describe("real learning flows", () => {
       ).toBe(true);
     });
     for (const [input, init] of fetchMock.mock.calls) {
-      if (!String(input).startsWith("http://127.0.0.1:8765/")) {
+      const url = String(input);
+      if (!url.startsWith("http://127.0.0.1:8765/") && !url.endsWith("/api/generate")) {
         continue;
       }
       expect(init?.credentials).toBe("omit");
       expect(new Headers(init?.headers).has("Authorization")).toBe(false);
-      expect(String(init?.body ?? "")).not.toContain("test-google-access-token");
+      expect(String(init?.body ?? "")).not.toMatch(
+        /"(?:apiKey|model|prompt|responseSchema|systemInstruction)"\s*:/iu,
+      );
     }
   });
 });

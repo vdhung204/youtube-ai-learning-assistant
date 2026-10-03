@@ -1,7 +1,8 @@
 import {
-  buildChatPrompt,
-  buildFlashcardPrompt,
-  buildQuizPrompt,
+  AIContentError,
+  buildChatRequest,
+  buildFlashcardRequest,
+  buildQuizRequest,
   mapFlashcards,
   mapQuiz,
   validateChat,
@@ -20,10 +21,62 @@ import {
   QUIZ_GENERATION_COUNT,
   RETRIEVAL_MAX_RESULTS,
 } from "./config";
-import type { GenerateContent } from "./types";
+import type { GenerateContent, LearningLoadStage } from "./types";
 
 export { FLASHCARD_GENERATION_COUNT, QUIZ_GENERATION_COUNT } from "./config";
 export type { GenerateContent } from "./types";
+
+type LearningLatencyStage =
+  | "gateway_total"
+  | "parse_validate"
+  | "pipeline_total"
+  | "retrieval_context";
+
+function logLearningLatency(
+  stage: LearningLatencyStage,
+  purpose: RetrievalPurpose,
+  startedAt: number,
+  outcome: "error" | "ok",
+  details: Record<string, number> = {},
+): void {
+  // Do not add transcript text, prompts, questions, or credentials here.
+  console.info("yala_learning_latency", {
+    ...details,
+    durationMs: Date.now() - startedAt,
+    outcome,
+    purpose,
+    stage,
+  });
+}
+
+async function measureLearning<T>(
+  stage: LearningLatencyStage,
+  purpose: RetrievalPurpose,
+  operation: () => Promise<T>,
+  details?: (result: T) => Record<string, number>,
+): Promise<T> {
+  const startedAt = Date.now();
+  try {
+    const result = await operation();
+    logLearningLatency(stage, purpose, startedAt, "ok", details?.(result));
+    return result;
+  } catch (error) {
+    logLearningLatency(stage, purpose, startedAt, "error");
+    throw error;
+  }
+}
+
+function measureValidation<T>(purpose: RetrievalPurpose, operation: () => T): T {
+  const startedAt = Date.now();
+  try {
+    const result = operation();
+    logLearningLatency("parse_validate", purpose, startedAt, "ok");
+    return result;
+  } catch (error) {
+    logLearningLatency("parse_validate", purpose, startedAt, "error");
+    throw error;
+  }
+}
 
 export class LearningPipelineError extends Error {
   readonly code: "NO_CONTEXT" | "INSUFFICIENT_CONTEXT";
@@ -41,10 +94,15 @@ async function retrieveContext(
   purpose: RetrievalPurpose,
   signal?: AbortSignal,
 ): Promise<SourceContext> {
-  const result = await retrieve(
-    video.videoId,
-    { query, purpose, maxResults: RETRIEVAL_MAX_RESULTS },
-    { signal },
+  const result = await measureLearning(
+    "retrieval_context",
+    purpose,
+    () => retrieve(
+      video.videoId,
+      { query, purpose, maxResults: RETRIEVAL_MAX_RESULTS },
+      { signal },
+    ),
+    (retrieved) => ({ chunkCount: retrieved.chunks.length }),
   );
   if (result.videoId !== video.videoId || result.chunks.length === 0) {
     throw new LearningPipelineError("NO_CONTEXT");
@@ -60,46 +118,70 @@ export async function generateQuiz(
   video: CurrentVideo,
   generateContent: GenerateContent,
   signal?: AbortSignal,
+  onStage?: (stage: LearningLoadStage) => void,
 ): Promise<Question[]> {
-  const context = await retrieveContext(
-    video,
-    `Các khái niệm, luận điểm và kiến thức quan trọng trong video ${video.title}`,
-    "quiz",
-    signal,
-  );
-  const prompt = buildQuizPrompt(context, QUIZ_GENERATION_COUNT, video.language || "vi");
-  const raw = await generateContent(prompt, {
-    ...LEARNING_GENERATION_OPTIONS.quiz,
-    signal,
+  return measureLearning("pipeline_total", "quiz", async () => {
+    onStage?.("retrieving");
+    const context = await retrieveContext(
+      video,
+      `Các khái niệm, luận điểm và kiến thức quan trọng trong video ${video.title}`,
+      "quiz",
+      signal,
+    );
+    onStage?.("generating");
+    const request = buildQuizRequest(context, QUIZ_GENERATION_COUNT, video.language || "vi");
+    const validated = await measureLearning("gateway_total", "quiz", () => generateContent(request, {
+      ...LEARNING_GENERATION_OPTIONS.quiz,
+      signal,
+      validate: (raw) => measureValidation("quiz", () => {
+        const result = validateQuiz(raw, context);
+        if (result.status === "ok" && result.items.length !== QUIZ_GENERATION_COUNT) {
+          throw new AIContentError("AI_ITEM_COUNT_INVALID");
+        }
+        return result;
+      }),
+    }));
+    const questions = mapQuiz(validated, context);
+    if (questions.length !== QUIZ_GENERATION_COUNT) {
+      throw new LearningPipelineError("INSUFFICIENT_CONTEXT");
+    }
+    return questions;
   });
-  const questions = mapQuiz(validateQuiz(raw, context), context);
-  if (questions.length !== QUIZ_GENERATION_COUNT) {
-    throw new LearningPipelineError("INSUFFICIENT_CONTEXT");
-  }
-  return questions;
 }
 
 export async function generateFlashcards(
   video: CurrentVideo,
   generateContent: GenerateContent,
   signal?: AbortSignal,
+  onStage?: (stage: LearningLoadStage) => void,
 ): Promise<Flashcard[]> {
-  const context = await retrieveContext(
-    video,
-    `Các thuật ngữ, định nghĩa và kiến thức cần ghi nhớ trong video ${video.title}`,
-    "flashcard",
-    signal,
-  );
-  const prompt = buildFlashcardPrompt(context, FLASHCARD_GENERATION_COUNT, video.language || "vi");
-  const raw = await generateContent(prompt, {
-    ...LEARNING_GENERATION_OPTIONS.flashcard,
-    signal,
+  return measureLearning("pipeline_total", "flashcard", async () => {
+    onStage?.("retrieving");
+    const context = await retrieveContext(
+      video,
+      `Các thuật ngữ, định nghĩa và kiến thức cần ghi nhớ trong video ${video.title}`,
+      "flashcard",
+      signal,
+    );
+    onStage?.("generating");
+    const request = buildFlashcardRequest(context, FLASHCARD_GENERATION_COUNT, video.language || "vi");
+    const validated = await measureLearning("gateway_total", "flashcard", () => generateContent(request, {
+      ...LEARNING_GENERATION_OPTIONS.flashcard,
+      signal,
+      validate: (raw) => measureValidation("flashcard", () => {
+        const result = validateFlashcards(raw, context);
+        if (result.status === "ok" && result.items.length !== FLASHCARD_GENERATION_COUNT) {
+          throw new AIContentError("AI_ITEM_COUNT_INVALID");
+        }
+        return result;
+      }),
+    }));
+    const cards = mapFlashcards(validated, context);
+    if (cards.length !== FLASHCARD_GENERATION_COUNT) {
+      throw new LearningPipelineError("INSUFFICIENT_CONTEXT");
+    }
+    return cards.map(toLearningFlashcard);
   });
-  const cards = mapFlashcards(validateFlashcards(raw, context), context);
-  if (cards.length === 0) {
-    throw new LearningPipelineError("INSUFFICIENT_CONTEXT");
-  }
-  return cards.map(toLearningFlashcard);
 }
 
 function toLearningFlashcard(card: MappedFlashcard): Flashcard {
@@ -124,20 +206,25 @@ export async function answerVideoQuestion(
   generateContent: GenerateContent,
   signal?: AbortSignal,
 ): Promise<AssistantAnswer> {
-  const context = await retrieveContext(video, question, "review", signal);
-  const raw = await generateContent(buildChatPrompt(context, question, video.language || "vi"), {
-    ...LEARNING_GENERATION_OPTIONS.review,
-    signal,
-  });
-  const result = validateChat(raw, context);
-  if (result.status === "insufficient_context" || result.items.length === 0) {
-    throw new LearningPipelineError("INSUFFICIENT_CONTEXT");
-  }
+  return measureLearning("pipeline_total", "review", async () => {
+    const context = await retrieveContext(video, question, "review", signal);
+    const result = await measureLearning("gateway_total", "review", () => generateContent(
+      buildChatRequest(context, question, video.language || "vi"),
+      {
+        ...LEARNING_GENERATION_OPTIONS.review,
+        signal,
+        validate: (raw) => measureValidation("review", () => validateChat(raw, context)),
+      },
+    ));
+    if (result.status === "insufficient_context" || result.items.length === 0) {
+      throw new LearningPipelineError("INSUFFICIENT_CONTEXT");
+    }
 
-  return {
-    paragraphs: result.items.map((item) => item.answer),
-    sources: collectAnswerSources(result.items, context),
-  };
+    return {
+      paragraphs: result.items.map((item) => item.answer),
+      sources: collectAnswerSources(result.items, context),
+    };
+  });
 }
 
 function collectAnswerSources(items: ChatAnswerItem[], context: SourceContext): VideoSource[] {

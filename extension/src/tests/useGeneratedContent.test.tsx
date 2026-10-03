@@ -1,5 +1,6 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { LoadLearningContentOptions } from "../integrations/learning/types";
 import { useGeneratedContent } from "../sidebar/hooks/useGeneratedContent";
 import type { CurrentVideo } from "../types/learning";
 
@@ -40,7 +41,10 @@ describe("useGeneratedContent", () => {
     }));
     rerender({ currentVideo: { ...video, currentTimeSec: 30, thumbnailLabel: "Updated" } });
 
-    expect(loadContent).toHaveBeenCalledExactlyOnceWith(video, { regenerate: false });
+    expect(loadContent).toHaveBeenCalledOnce();
+    expect(loadContent.mock.calls[0]?.[0]).toEqual(video);
+    expect(loadContent.mock.calls[0]?.[1]).toMatchObject({ regenerate: false });
+    expect(loadContent.mock.calls[0]?.[1]?.onStage).toEqual(expect.any(Function));
     expect(resetProgress).toHaveBeenCalledOnce();
   });
 
@@ -61,8 +65,8 @@ describe("useGeneratedContent", () => {
     await act(async () => result.current.retry());
 
     expect(result.current.loadState).toEqual({ status: "ready", items: ["second"] });
-    expect(loadContent.mock.calls.map(([, options]) => options)).toEqual([
-      { regenerate: false }, { regenerate: true }, { regenerate: true }, { regenerate: false },
+    expect(loadContent.mock.calls.map(([, options]) => options?.regenerate)).toEqual([
+      false, true, true, false,
     ]);
     expect(resetProgress).toHaveBeenCalledTimes(4);
   });
@@ -111,7 +115,29 @@ describe("useGeneratedContent", () => {
     unmount();
     await act(async () => request.resolve(["cached after unmount"]));
 
-    expect(result.current.loadState).toEqual({ status: "loading" });
+    expect(result.current.loadState).toEqual({ status: "loading", stage: "cache" });
     expect(loadContent).toHaveBeenCalledOnce();
+  });
+
+  it("publishes retrieval and generation loading stages", async () => {
+    const request = pendingContent();
+    const loadContent = vi.fn((_video: CurrentVideo, options?: LoadLearningContentOptions) => {
+      options?.onStage?.("retrieving");
+      return request.promise;
+    });
+    const resetProgress = vi.fn();
+    const { result } = renderHook(() => useGeneratedContent(video, loadContent, resetProgress, "Fallback"));
+
+    await waitFor(() => expect(result.current.loadState).toEqual({
+      status: "loading",
+      stage: "retrieving",
+    }));
+    await act(async () => {
+      loadContent.mock.calls[0]?.[1]?.onStage?.("generating");
+    });
+    expect(result.current.loadState).toEqual({ status: "loading", stage: "generating" });
+
+    await act(async () => request.resolve(["ready"]));
+    expect(result.current.loadState).toEqual({ status: "ready", items: ["ready"] });
   });
 });

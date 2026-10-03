@@ -36,12 +36,23 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
   );
 
   if (loadState.status === "loading") {
+    const loadingCopy = {
+      cache: {
+        message: "Đang kiểm tra bộ thẻ đã lưu…",
+        title: "Đang mở Flashcards",
+      },
+      generating: {
+        message: "Gemini đang tạo thẻ ghi nhớ từ ngữ cảnh đã chọn…",
+        title: "Đang tạo Flashcards",
+      },
+      retrieving: {
+        message: "Đang tìm các đoạn transcript liên quan…",
+        title: "Đang tìm nội dung",
+      },
+    }[loadState.stage];
     return (
       <div className="view-stack flashcard-view">
-        <RuntimeStateCard
-          message="Đang truy xuất transcript và tạo bộ thẻ ghi nhớ…"
-          title="Đang tạo Flashcards"
-        />
+        <RuntimeStateCard {...loadingCopy} />
       </div>
     );
   }
@@ -172,7 +183,7 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
         onExpandedChange={setChatExpanded}
         onSourceSelect={onSeek}
         placeholder="VD: Giải thích dễ hiểu hơn bằng ví dụ?"
-        statusLabel="RAG + Gemini"
+        statusLabel="RAG + AI"
       />
     </div>
   );

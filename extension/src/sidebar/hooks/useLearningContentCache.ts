@@ -27,7 +27,7 @@ export function useLearningContentCache(generateContent: GenerateContent) {
       cache: quizCache.current,
       storagePrefix: QUIZ_STORAGE_PREFIX,
       videoId: video.videoId,
-      generate: () => generateQuiz(video, generateContentRef.current),
+      generate: () => generateQuiz(video, generateContentRef.current, undefined, options.onStage),
       regenerate: options.regenerate,
     })
   ), []);
@@ -37,7 +37,7 @@ export function useLearningContentCache(generateContent: GenerateContent) {
       cache: flashcardCache.current,
       storagePrefix: FLASHCARD_STORAGE_PREFIX,
       videoId: video.videoId,
-      generate: () => generateFlashcards(video, generateContentRef.current),
+      generate: () => generateFlashcards(video, generateContentRef.current, undefined, options.onStage),
       regenerate: options.regenerate,
     })
   ), []);

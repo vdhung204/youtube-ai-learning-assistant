@@ -16,7 +16,7 @@ Sở hữu:
 - `extension/src/tests/`
 - `extension/public/`
 
-Trách nhiệm chính: React/TypeScript/Manifest V3, sidebar, YouTube Adapter, timestamp navigation, Google OAuth UI, Gemini transport và tích hợp kết quả vào giao diện.
+Trách nhiệm chính: React/TypeScript/Manifest V3, sidebar, YouTube Adapter, timestamp navigation, AI Gateway client và tích hợp kết quả vào giao diện.
 
 Ranh giới: không tự thay đổi prompt, AI output schema, chunking, embedding, retrieval, ChromaDB schema hoặc learning-assessment logic.
 
@@ -32,6 +32,16 @@ Sở hữu:
 Trách nhiệm chính: khung FastAPI/service localhost, lifecycle, health check, giới hạn input, xử lý lỗi giao tiếp, tích hợp các module RAG và script vận hành.
 
 Ranh giới: không tự thay đổi chunking, embedding model, retrieval, ChromaDB collection/metadata, prompt hoặc assessment logic.
+
+## AI Gateway — Backend dùng chung
+
+Sở hữu:
+
+- `gateway/`
+
+Trách nhiệm chính: giữ Gemini credential ở server, kiểm tra request/response, dựng prompt cố định theo task, timeout/retry, CORS, rate limit và vận hành Vercel.
+
+Ranh giới: không nhận prompt, model hoặc JSON schema tùy ý từ extension; không ghi transcript, câu hỏi hoặc kết quả sinh vào log.
 
 ## Thành viên 3 — AI/RAG Lead
 
@@ -57,7 +67,7 @@ Sở hữu:
 - `tests/e2e/`
 - `docs/testing/`
 
-Trách nhiệm chính: test plan, integration/E2E, kiểm thử OAuth và bảo mật, test report, bằng chứng nghiệm thu, slide và video demo.
+Trách nhiệm chính: test plan, integration/E2E, kiểm thử AI Gateway/quota/bảo mật, test report, bằng chứng nghiệm thu, slide và video demo.
 
 Thành viên 4 không sửa trực tiếp source module để làm test pass; lỗi được tạo issue và chuyển cho owner tương ứng.
 
@@ -71,10 +81,11 @@ Các vị trí sau cần review của các owner bị ảnh hưởng:
 - `README.md`, `CONTRIBUTING.md`, `OWNERS.md`
 - Manifest, dependency file và lock file
 - Interface giữa extension với Local RAG Service
+- Interface giữa extension với AI Gateway
 - Interface giữa Local RAG Service với pipeline AI/RAG
 
 Quy tắc review contract:
 
 - Contract Extension <-> Local Service: Thành viên 1 + Thành viên 2 + Thành viên 3.
-- Contract Gemini/AI output: Thành viên 1 + Thành viên 3 + Thành viên 4.
+- Contract AI Gateway/AI output: Thành viên 1 + Thành viên 3 + Thành viên 4.
 - Test acceptance và privacy/security: owner liên quan + Thành viên 4.

@@ -20,7 +20,7 @@ const loadingState: YouTubeContextState = {
 
 const idleState: YouTubeContextState = {
   status: "idle",
-  message: "Video YouTube sẽ được nhận diện sau khi đăng nhập Google.",
+  message: "Đang chuẩn bị nhận diện video YouTube…",
 };
 
 export const NOTICE_AUTO_DISMISS_MS = 5_000;

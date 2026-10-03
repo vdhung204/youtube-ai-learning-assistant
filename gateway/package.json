@@ -1,0 +1,21 @@
+{
+  "name": "yala-ai-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npx --yes vercel@61.1.0 dev",
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit --pretty false",
+    "check": "npm run typecheck && npm test",
+    "deploy": "npx --yes vercel@61.1.0 --prod"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

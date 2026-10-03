@@ -43,12 +43,23 @@ export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video 
   useEffect(() => () => assessmentController.current?.abort(), []);
 
   if (loadState.status === "loading") {
+    const loadingCopy = {
+      cache: {
+        message: "Đang kiểm tra nội dung Quiz đã lưu…",
+        title: "Đang mở Quiz",
+      },
+      generating: {
+        message: "Gemini đang tạo câu hỏi từ ngữ cảnh đã chọn…",
+        title: "Đang tạo câu hỏi",
+      },
+      retrieving: {
+        message: "Đang tìm các đoạn transcript liên quan…",
+        title: "Đang tìm nội dung",
+      },
+    }[loadState.stage];
     return (
       <div className="view-stack quiz-view">
-        <RuntimeStateCard
-          message="Đang truy xuất transcript và yêu cầu Gemini tạo câu hỏi…"
-          title="Đang tạo Quiz"
-        />
+        <RuntimeStateCard {...loadingCopy} />
       </div>
     );
   }
@@ -176,7 +187,7 @@ export function QuizView({ generateContent, loadQuiz, onComplete, onSeek, video 
         onExpandedChange={setChatExpanded}
         onSourceSelect={onSeek}
         placeholder="VD: Gợi ý phương pháp suy luận câu này là gì?"
-        statusLabel="RAG + Gemini"
+        statusLabel="RAG + AI"
       />
     </div>
   );

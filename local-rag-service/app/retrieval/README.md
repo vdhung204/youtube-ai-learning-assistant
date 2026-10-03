@@ -20,7 +20,7 @@ quiz result -> deterministic scoring/topic analysis -> review timestamps
   chung về năng lực người học.
 - Mỗi collection được phân biệt theo model, dimension và pipeline version. Một thế hệ index
   mới chỉ được công bố sau khi ghi đủ dữ liệu. Query bắt buộc lọc `videoId` và generation.
-- Chỉ transcript chunk/embedding/timestamp được lưu. Không lưu OAuth token, câu trả lời,
+- Chỉ transcript chunk/embedding/timestamp được lưu. Không lưu Gemini API key, câu trả lời,
   điểm số hay lịch sử học tập.
 
 Các giá trị trên được chọn từ benchmark phát triển trong
@@ -60,7 +60,7 @@ Các cấu hình có thể thay qua biến môi trường trước khi start:
 | `YALA_MERGE_GAP_SEC` | 1 |
 | `YALA_TOP_K` | 5 |
 | `YALA_SIMILARITY_THRESHOLD` | 0.35 |
-| `YALA_CONTEXT_BUDGET` | 6000 UTF-8 bytes, a conservative Gemini prompt budget |
+| `YALA_CONTEXT_BUDGET` | 6000 UTF-8 bytes, ngân sách context thận trọng cho AI Gateway |
 | `YALA_DEDUP_OVERLAP` | 0.8 |
 | `YALA_STRONG_TOPIC_RATIO` | 0.7 |
 | `YALA_EMBEDDING_BATCH_SIZE` | 16 |
@@ -111,8 +111,8 @@ Chạy lại benchmark:
 
 ## Giới hạn tích hợp
 
-- TV1 vẫn phải nối `PromptRequest` vào Gemini transport và chỉ đưa kết quả qua validator/mapper.
-- TV4 cần chạy E2E trên video thật, OAuth thật và Gemini thật.
+- TV1 vẫn phải nối request nghiệp vụ vào AI Gateway và chỉ đưa kết quả qua validator/mapper.
+- TV4 cần chạy E2E trên video thật, AI Gateway thật và Gemini thật.
 - V1 dùng một writer process cho ChromaDB. Writer thứ hai trên cùng cache bị từ chối để tránh
   hỏng dữ liệu.
 - Timestamp của fragment tách từ một segment dài kế thừa khoảng thời gian của segment nguồn;

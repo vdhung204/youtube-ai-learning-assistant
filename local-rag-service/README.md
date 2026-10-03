@@ -4,7 +4,7 @@ Service Python chỉ chạy trên localhost, phục vụ xử lý transcript, em
 
 - Thành viên 2 sở hữu khung service, transport, health check và script vận hành.
 - Thành viên 3 sở hữu toàn bộ logic AI/RAG và ChromaDB.
-- OAuth token không được gửi tới service này.
+- Gemini API key và credential của AI Gateway không được gửi tới service này.
 - Dữ liệu ChromaDB là cache cục bộ và không được commit.
 
 ## Trạng thái bàn giao TV2
@@ -33,7 +33,7 @@ Yêu cầu Python 3.11+ và PowerShell. Chạy tại thư mục gốc repository
 
 Setup tạo `local-rag-service/.venv`, cài các phiên bản trong
 `scripts/requirements-local-service.txt`. Không cần activate venv, không cần API key,
-Google OAuth, ChromaDB hay tải model để kiểm thử riêng phần TV2.
+AI Gateway, ChromaDB hay tải model để kiểm thử riêng phần TV2.
 
 Base URL: `http://127.0.0.1:8765/api/v1`. Xem schema dự thảo tại
 `http://127.0.0.1:8765/openapi.json` khi service đang chạy.
@@ -144,6 +144,6 @@ Starlette 1.6.0 phát cảnh báo deprecation khi TestClient dùng httpx; bộ t
    đưa contract đã duyệt vào `shared/contracts/` rồi mới dùng chung hai phía.
 2. TV3 cung cấp factory/adapter theo interface; TV2 cấu hình và chạy lại integration
    với embedding + ChromaDB thật, nhất là cache hit/restart và hai video độc lập.
-3. TV1 nối client 6 endpoint, TV4 chạy E2E extension → RAG → Gemini → assessment.
+3. TV1 nối client 6 endpoint, TV4 chạy E2E extension → RAG → AI Gateway → Gemini → assessment.
 4. Có review của thành viên liên quan trước khi merge theo `CONTRIBUTING.md`.
 
