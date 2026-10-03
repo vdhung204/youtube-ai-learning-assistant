@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { generateHandler } from "../src/generate-handler.ts";
-import type { NodeRequestLike, NodeResponseLike } from "../src/http.ts";
+import { sendError, type NodeRequestLike, type NodeResponseLike } from "../src/http.ts";
+import { GatewayError } from "../src/errors.ts";
 import { ORIGIN, rawQuestionsRequest } from "./fixtures.ts";
 
 class TestResponse implements NodeResponseLike {
@@ -80,3 +81,24 @@ test("rejects arbitrary provider controls before making an upstream call", async
   assert.equal(response.headers.get("access-control-allow-origin"), ORIGIN);
   assert.match(response.headers.get("access-control-expose-headers") ?? "", /X-Request-Id/u);
 }));
+
+test("logs provider diagnostics for 429 without exposing them in the public response", (t) => {
+  const log = t.mock.method(console, "warn", () => {});
+  const response = new TestResponse();
+  const diagnostics = {
+    providerStatus: 429, providerCode: "too_many_requests", model: "gemini-3.6-flash",
+    attempt: 1, errorBodyState: "parsed" as const,
+    quotaViolations: [{ metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests", limit: "0" }],
+  };
+  sendError(response, new GatewayError("UPSTREAM_RATE_LIMITED", 429, true, {
+    retryAfterSeconds: 18643, providerDiagnostics: diagnostics,
+  }), "diagnostic-request");
+  assert.equal(response.statusCode, 429);
+  assert.equal(response.headers.get("retry-after"), "18643");
+  assert.deepEqual(log.mock.calls[0]?.arguments, ["gateway_request_failed", {
+    code: "UPSTREAM_RATE_LIMITED", requestId: "diagnostic-request", status: 429,
+    providerDiagnostics: diagnostics,
+  }]);
+  assert.equal(JSON.stringify(response.body).includes("quotaViolations"), false);
+  assert.equal(JSON.stringify(response.body).includes("gemini-3.6-flash"), false);
+});

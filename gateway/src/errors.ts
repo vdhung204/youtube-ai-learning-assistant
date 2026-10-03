@@ -1,3 +1,5 @@
+import type { ProviderDiagnostics } from "./provider-diagnostics.ts";
+
 export type ErrorCode =
   | "BAD_REQUEST"
   | "CONTENT_BLOCKED"
@@ -38,12 +40,17 @@ export class GatewayError extends Error {
   readonly status: number;
   readonly retryable: boolean;
   readonly retryAfterSeconds?: number;
+  readonly providerDiagnostics?: ProviderDiagnostics & { model: string; attempt: number };
 
   constructor(
     code: ErrorCode,
     status: number,
     retryable: boolean,
-    options: { cause?: unknown; retryAfterSeconds?: number } = {},
+    options: {
+      cause?: unknown;
+      retryAfterSeconds?: number;
+      providerDiagnostics?: ProviderDiagnostics & { model: string; attempt: number };
+    } = {},
   ) {
     super(PUBLIC_MESSAGES[code], options.cause === undefined ? undefined : { cause: options.cause });
     this.name = "GatewayError";
@@ -52,6 +59,9 @@ export class GatewayError extends Error {
     this.retryable = retryable;
     if (options.retryAfterSeconds !== undefined) {
       this.retryAfterSeconds = options.retryAfterSeconds;
+    }
+    if (options.providerDiagnostics !== undefined) {
+      this.providerDiagnostics = options.providerDiagnostics;
     }
   }
 }

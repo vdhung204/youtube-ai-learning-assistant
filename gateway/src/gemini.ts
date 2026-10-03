@@ -4,6 +4,7 @@ import { GatewayError } from "./errors.ts";
 import { isRecord } from "./input-validation.ts";
 import { validateGeneratedOutput } from "./output-validation.ts";
 import { responseSchema, systemInstruction, userContent } from "./prompts.ts";
+import { readProviderDiagnostics, type ProviderDiagnostics } from "./provider-diagnostics.ts";
 
 const GEMINI_INTERACTIONS_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const MAX_PROVIDER_RESPONSE_BYTES = 512 * 1024;
@@ -21,7 +22,9 @@ export interface GeminiMetric {
   durationMs: number;
   outcome: "error" | "ok";
   providerStatus?: number;
-  stage: "provider_fetch" | "provider_response_read" | "provider_parse_validate";
+  model?: string;
+  providerDiagnostics?: ProviderDiagnostics;
+  stage: "provider_fetch" | "provider_response_read" | "provider_parse_validate" | "provider_error";
 }
 
 function emitMetric(
@@ -67,35 +70,24 @@ export function buildGeminiRequestBody(
   };
 }
 
-function retryAfterSeconds(response: Response): number | undefined {
-  const value = response.headers.get("retry-after")?.trim();
-  if (!value) return undefined;
-  const seconds = Number(value);
-  if (Number.isFinite(seconds) && seconds >= 0) {
-    return Math.min(Math.ceil(seconds), 60);
-  }
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return undefined;
-  return Math.min(Math.max(0, Math.ceil((timestamp - Date.now()) / 1_000)), 60);
-}
-
-async function providerHttpError(response: Response): Promise<never> {
+function providerHttpError(
+  response: Response,
+  diagnostics: ProviderDiagnostics & { model: string; attempt: number },
+): never {
+  const options = {
+    providerDiagnostics: diagnostics,
+    ...(diagnostics.retryAfterSeconds === undefined ? {} : { retryAfterSeconds: diagnostics.retryAfterSeconds }),
+  };
   if (response.status === 401 || response.status === 403) {
-    throw new GatewayError("UPSTREAM_AUTH_ERROR", 503, false);
+    throw new GatewayError("UPSTREAM_AUTH_ERROR", 503, false, options);
   }
   if (response.status === 429) {
-    const retryAfter = retryAfterSeconds(response);
-    throw new GatewayError("UPSTREAM_RATE_LIMITED", 429, true, {
-      ...(retryAfter === undefined ? {} : { retryAfterSeconds: retryAfter }),
-    });
+    throw new GatewayError("UPSTREAM_RATE_LIMITED", 429, true, options);
   }
   if (response.status === 408 || response.status >= 500) {
-    const retryAfter = retryAfterSeconds(response);
-    throw new GatewayError("UPSTREAM_UNAVAILABLE", 503, true, {
-      ...(retryAfter === undefined ? {} : { retryAfterSeconds: retryAfter }),
-    });
+    throw new GatewayError("UPSTREAM_UNAVAILABLE", 503, true, options);
   }
-  throw new GatewayError("UPSTREAM_REJECTED", 502, false);
+  throw new GatewayError("UPSTREAM_REJECTED", 502, false, options);
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -205,7 +197,17 @@ async function generateOnce(
     stage: "provider_fetch",
   });
   if (!response.ok) {
-    await providerHttpError(response);
+    const diagnostics = await readProviderDiagnostics(response, signal);
+    emitMetric(dependencies, {
+      attempt,
+      model: config.geminiModel,
+      durationMs: Date.now() - fetchStartedAt,
+      outcome: "error",
+      providerStatus: response.status,
+      providerDiagnostics: diagnostics,
+      stage: "provider_error",
+    });
+    providerHttpError(response, { ...diagnostics, model: config.geminiModel, attempt });
   }
 
   const readStartedAt = Date.now();

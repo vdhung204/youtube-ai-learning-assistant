@@ -72,12 +72,14 @@ export function sendError(
       requestId: id,
     },
   };
-  // Never log request bodies, transcripts, prompts, provider responses, or secrets.
-  if (normalized.status >= 500) {
-    console.error("gateway_request_failed", {
+  // Only the allowlisted diagnostics are logged, never raw provider error bodies.
+  if (normalized.status >= 500 || normalized.providerDiagnostics) {
+    const log = normalized.status >= 500 ? console.error : console.warn;
+    log("gateway_request_failed", {
       code: normalized.code,
       requestId: id,
       status: normalized.status,
+      ...(normalized.providerDiagnostics ? { providerDiagnostics: normalized.providerDiagnostics } : {}),
     });
   }
   response.status(normalized.status).json(body);

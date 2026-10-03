@@ -220,3 +220,31 @@ test("returns a long provider Retry-After without retrying inside the function",
   assert.equal(calls, 1);
   assert.equal(sleeps, 0);
 });
+
+test("records safe provider diagnostics and preserves multi-hour backoff on 429", async () => {
+  const metrics: GeminiMetric[] = [];
+  let calls = 0;
+  let sleeps = 0;
+  await assert.rejects(generateWithGemini(questionsRequest, gatewayConfig, neverAbort, {
+    fetchImpl: (async () => {
+      calls += 1;
+      return Response.json({ error: {
+        code: "too_many_requests",
+        message: "You exceeded your current quota, please check your plan and billing details. test-secret-key",
+      } }, { status: 429, headers: { "Retry-After": "18643" } });
+    }) as typeof fetch,
+    onMetric: (metric) => metrics.push(metric),
+    sleep: async () => { sleeps += 1; },
+  }), (error: unknown) => {
+    assert.ok(error instanceof GatewayError);
+    assert.equal(error.code, "UPSTREAM_RATE_LIMITED");
+    assert.equal(error.retryAfterSeconds, 18643);
+    assert.equal(error.providerDiagnostics?.model, gatewayConfig.geminiModel);
+    assert.equal(error.providerDiagnostics?.providerCode, "too_many_requests");
+    return true;
+  });
+  assert.equal(calls, 1);
+  assert.equal(sleeps, 0);
+  assert.equal(metrics.find((metric) => metric.stage === "provider_error")?.providerDiagnostics?.errorBodyState, "parsed");
+  assert.equal(JSON.stringify(metrics).includes("test-secret-key"), false);
+});

@@ -58,14 +58,37 @@ export function parseTranscriptTimestamp(value: string): number | null {
 }
 
 export function readTranscriptRows(root: ParentNode = document): TranscriptDomRow[] {
+  const rows = readTranscriptRowsWithSelectors(
+    root,
+    TRANSCRIPT_SEGMENT_SELECTOR,
+    ".segment-timestamp, [class*='segment-timestamp'], .cue-group-start-offset",
+    ".segment-text, [class*='segment-text'], yt-formatted-string",
+  );
+  if (rows.length > 0) {
+    return rows;
+  }
+  return readTranscriptRowsWithSelectors(
+    root,
+    "transcript-segment-view-model",
+    ".ytwTranscriptSegmentViewModelTimestamp",
+    "span[role='text']",
+  );
+}
+
+function readTranscriptRowsWithSelectors(
+  root: ParentNode,
+  segmentSelector: string,
+  timestampSelector: string,
+  textSelector: string,
+): TranscriptDomRow[] {
   const rows: TranscriptDomRow[] = [];
   const seen = new Set<string>();
-  for (const segment of root.querySelectorAll<HTMLElement>(TRANSCRIPT_SEGMENT_SELECTOR)) {
+  for (const segment of root.querySelectorAll<HTMLElement>(segmentSelector)) {
     const timestamp = segment.querySelector<HTMLElement>(
-      ".segment-timestamp, [class*='segment-timestamp'], .cue-group-start-offset",
+      timestampSelector,
     )?.textContent ?? "";
     const text = segment.querySelector<HTMLElement>(
-      ".segment-text, [class*='segment-text'], yt-formatted-string",
+      textSelector,
     )?.textContent ?? "";
     const startSec = parseTranscriptTimestamp(timestamp);
     const normalizedText = text.normalize("NFC").replace(/\s+/gu, " ").trim();

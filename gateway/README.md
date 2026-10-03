@@ -56,6 +56,27 @@ All failures use one contract:
 
 Provider response bodies are never forwarded to the extension.
 
+### Diagnosing provider errors in Vercel
+
+Search Logs by `requestId` and open the `gateway_latency` entry with
+`stage: "provider_error"`, or the final `gateway_request_failed` entry. Its
+`providerDiagnostics` contains the HTTP status, recognized provider code,
+recognized message hints, quota metric/ID/limit and retry delay when Google
+supplies them. The final entry also includes the configured model and attempt.
+The error body is read for at most one second and 16 KiB; `errorBodyState`
+distinguishes a parsed error from an unavailable body.
+
+Only allowlisted fields and fixed message summaries are logged. Raw messages,
+prompts, transcripts, API keys, URLs and project/consumer identifiers are omitted.
+These diagnostics are server-only and do not change the extension's error contract.
+A `too_many_requests` code or a message suggesting a billing check does **not**
+prove a daily quota was exhausted. If no quota details are present, the provider
+has not supplied enough information to identify the exhausted limit.
+
+`Retry-After` preserves the provider's full delay, including multi-hour delays,
+instead of shortening it to 60 seconds. Delays longer than four seconds are
+returned to the caller without another provider attempt inside the function.
+
 ## Request contract
 
 Send `Content-Type: application/json`. `language` is an optional BCP-47-like tag and defaults to
