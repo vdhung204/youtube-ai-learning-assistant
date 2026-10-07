@@ -92,6 +92,15 @@ test("assessment validates numeric consistency and source", () => {
   const invalid = assessment(); invalid.reviewTimestamps[0].startSec = 0;
   assert.throws(() => validateLearningAssessment(invalid, context));
 });
+
+test("local assessment supports a long video quiz beyond one hundred questions", () => {
+  const result = {...assessment(), totalCount: 125,
+    questionResults: Array.from({length: 125}, (_, i) => ({
+      questionId: `q${i}`, correct: false, correctAnswer: 0, selectedAnswer: 1,
+    }))};
+  assert.equal(validateLearningAssessment(result, context).totalCount, 125);
+  assert.throws(() => validateLearningAssessment({...result, totalCount: 2001}, context));
+});
 test("feedback cannot add scores or discuss unassessed topics", () => {
   const validated = validateLearningAssessment(assessment(), context);
   const raw = { status: "ok", feedback: [{ topic: "Tuple", comment: "Bạn nên ôn lại tuple.",

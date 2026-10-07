@@ -38,6 +38,14 @@ afterEach(() => {
 });
 
 describe("AI Gateway client contract", () => {
+  it("preserves long provider Retry-After without retrying early", async () => {
+    const fetchMock = vi.fn(async () => Response.json({error: {code: "UPSTREAM_RATE_LIMITED", retryable: true}},
+      {status: 429, headers: {"Retry-After": "18643"}}));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(generateContent(buildQuizRequest(context, 5), {maxRetries: 2}))
+      .rejects.toMatchObject({code: "RATE_LIMITED", retryAfterMs: 18_643_000});
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
   it("sends only allowlisted business data and normalizes the gateway envelope", async () => {
     const fetchMock = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response(JSON.stringify({
       data: { status: "ok", items: [quizItem] },

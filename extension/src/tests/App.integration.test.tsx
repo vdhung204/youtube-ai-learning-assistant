@@ -9,6 +9,7 @@ import {
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -76,7 +77,7 @@ describe("Chrome integration states", () => {
     );
   });
 
-  it("shows an explicit retry state when retrieval has no relevant context", async () => {
+  it("does not call AI when the full video has no learning context", async () => {
     vi.stubGlobal("chrome", createLearningChromeMock());
     vi.stubGlobal("fetch", createReadyLearningFetchMock({ noContext: true }));
     const user = userEvent.setup();
@@ -87,9 +88,8 @@ describe("Chrome integration states", () => {
     });
     await user.click(screen.getByRole("button", { name: "Quiz" }));
 
-    expect(await screen.findByRole("heading", { name: "Không thể tạo Quiz" })).toBeTruthy();
-    expect(screen.getByText("Không tìm thấy đoạn transcript liên quan.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Thử lại" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Video chưa có câu hỏi" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Học phần tiếp" })).toBeNull();
   });
 
   it("starts the learning UI without an account or sign-in step", async () => {

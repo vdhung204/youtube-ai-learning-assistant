@@ -15,10 +15,13 @@ import {
 import type { LearningContentLoader } from "../../integrations/learning/types";
 import type { Question } from "../../types/api";
 import type { Flashcard } from "../../types/learning";
+import { learningScopeKey } from "../../integrations/learning/sections";
 
 export function useLearningContentCache(generateContent: GenerateContent) {
   const quizCache = useRef<LearningContentCache<Question>>(new Map());
   const flashcardCache = useRef<LearningContentCache<Flashcard>>(new Map());
+  const quizPages = useRef<LearningContentCache<Question>>(new Map());
+  const flashcardPages = useRef<LearningContentCache<Flashcard>>(new Map());
   const generateContentRef = useRef(generateContent);
   generateContentRef.current = generateContent;
 
@@ -26,8 +29,8 @@ export function useLearningContentCache(generateContent: GenerateContent) {
     loadCachedContent({
       cache: quizCache.current,
       storagePrefix: QUIZ_STORAGE_PREFIX,
-      videoId: video.videoId,
-      generate: () => generateQuiz(video, generateContentRef.current, undefined, options.onStage),
+      videoId: learningScopeKey(video),
+      generate: () => generateQuiz(video, generateContentRef.current, undefined, options.onStage, options.regenerate, quizPages.current),
       regenerate: options.regenerate,
     })
   ), []);
@@ -36,8 +39,8 @@ export function useLearningContentCache(generateContent: GenerateContent) {
     loadCachedContent({
       cache: flashcardCache.current,
       storagePrefix: FLASHCARD_STORAGE_PREFIX,
-      videoId: video.videoId,
-      generate: () => generateFlashcards(video, generateContentRef.current, undefined, options.onStage),
+      videoId: learningScopeKey(video),
+      generate: () => generateFlashcards(video, generateContentRef.current, undefined, options.onStage, options.regenerate, flashcardPages.current),
       regenerate: options.regenerate,
     })
   ), []);

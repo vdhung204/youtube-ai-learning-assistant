@@ -148,6 +148,7 @@ function isRetrieveResponse(value: unknown): value is RetrieveResponse {
     isRecord(value) &&
     typeof value.videoId === "string" &&
     ["quiz", "flashcard", "review"].includes(String(value.purpose)) &&
+    (value.nextPosition === undefined || isNonNegativeInteger(value.nextPosition)) &&
     Array.isArray(value.chunks) &&
     value.chunks.every(
       (chunk) =>

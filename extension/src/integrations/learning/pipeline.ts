@@ -22,9 +22,64 @@ import {
   RETRIEVAL_MAX_RESULTS,
 } from "./config";
 import type { GenerateContent, LearningLoadStage } from "./types";
+import { learningScopeKey } from "./sections";
 
 export { FLASHCARD_GENERATION_COUNT, QUIZ_GENERATION_COUNT } from "./config";
 export type { GenerateContent } from "./types";
+
+// Keep completed pages during this extension session so a retry after a later
+// page fails does not pay to regenerate the successful pages.
+
+async function cachedPage<T>(cache: Map<string, Promise<T[]>>, key: string,
+  regenerate: boolean, generate: () => Promise<T[]>): Promise<T[]> {
+  if (!regenerate && cache.has(key)) return cache.get(key)!;
+  const request = generate();
+  cache.set(key, request);
+  if (cache.size > 200) cache.delete(cache.keys().next().value!);
+  try { return await request; } catch (error) {
+    if (cache.get(key) === request) cache.delete(key);
+    throw error;
+  }
+}
+
+async function* chapterContexts(video: CurrentVideo, purpose: "quiz" | "flashcard",
+  signal?: AbortSignal, onStage?: (stage: LearningLoadStage) => void): AsyncGenerator<SourceContext> {
+  let afterPosition: number | undefined;
+  do {
+    signal?.throwIfAborted();
+    onStage?.("retrieving");
+    const result = await retrieve(video.videoId, {
+      query: video.learningSection?.title.slice(0, 150) || "Nội dung phần học",
+      purpose, maxResults: 12,
+      startSec: video.learningSection?.startSec ?? 0,
+      endSec: video.learningSection?.endSec ?? video.durationSec,
+      ...(afterPosition === undefined ? {} : {afterPosition}),
+    }, {signal});
+    if (result.videoId !== video.videoId || result.chunks.some(c => c.videoId !== video.videoId)) {
+      throw new LearningPipelineError("NO_CONTEXT");
+    }
+    if (result.nextPosition !== undefined && (!result.chunks.length || result.nextPosition <= (afterPosition ?? -1)
+      || result.nextPosition !== result.chunks[result.chunks.length - 1].position)) {
+      throw new Error("Không thể đọc tiếp nội dung phần học. Hãy thử lại.");
+    }
+    if (result.chunks.length) yield {videoId: video.videoId, durationSec: video.durationSec, chunks: result.chunks};
+    afterPosition = result.nextPosition;
+  } while (afterPosition !== undefined);
+}
+
+function pageKey(video: CurrentVideo, context: SourceContext): string {
+  return `${learningScopeKey(video)}:${video.language}:${context.chunks.map(c => c.chunkId).join(",")}`;
+}
+
+function distinctItems<T>(items: T[], text: (item: T) => string): T[] {
+  const seen = new Set<string>();
+  return items.filter(item => {
+    const key = text(item).normalize("NFC").toLocaleLowerCase().replace(/[\p{P}\p{Z}\s]+/gu, " ").trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
 type LearningLatencyStage =
   | "gateway_total"
@@ -119,33 +174,31 @@ export async function generateQuiz(
   generateContent: GenerateContent,
   signal?: AbortSignal,
   onStage?: (stage: LearningLoadStage) => void,
+  regenerate = false,
+  quizPages = new Map<string, Promise<Question[]>>(),
 ): Promise<Question[]> {
   return measureLearning("pipeline_total", "quiz", async () => {
-    onStage?.("retrieving");
-    const context = await retrieveContext(
-      video,
-      `Các khái niệm, luận điểm và kiến thức quan trọng trong video ${video.title}`,
-      "quiz",
-      signal,
-    );
-    onStage?.("generating");
-    const request = buildQuizRequest(context, QUIZ_GENERATION_COUNT, video.language || "vi");
-    const validated = await measureLearning("gateway_total", "quiz", () => generateContent(request, {
-      ...LEARNING_GENERATION_OPTIONS.quiz,
-      signal,
-      validate: (raw) => measureValidation("quiz", () => {
-        const result = validateQuiz(raw, context);
-        if (result.status === "ok" && result.items.length !== QUIZ_GENERATION_COUNT) {
-          throw new AIContentError("AI_ITEM_COUNT_INVALID");
-        }
-        return result;
-      }),
-    }));
-    const questions = mapQuiz(validated, context);
-    if (questions.length !== QUIZ_GENERATION_COUNT) {
-      throw new LearningPipelineError("INSUFFICIENT_CONTEXT");
+    const questions: Question[] = [];
+    for await (const context of chapterContexts(video, "quiz", signal, onStage)) {
+      onStage?.("generating");
+      questions.push(...await cachedPage(quizPages, pageKey(video, context), regenerate, async () => {
+        const request = buildQuizRequest(context, QUIZ_GENERATION_COUNT, video.language || "vi");
+        const validated = await measureLearning("gateway_total", "quiz", () => generateContent(request, {
+          ...LEARNING_GENERATION_OPTIONS.quiz,
+          signal,
+          validate: (raw) => measureValidation("quiz", () => {
+            const result = validateQuiz(raw, context);
+            if (result.items.length > QUIZ_GENERATION_COUNT) {
+              throw new AIContentError("AI_ITEM_COUNT_INVALID");
+            }
+            return result;
+          }),
+        }));
+        return mapQuiz(validated, context);
+      }));
     }
-    return questions;
+    return distinctItems(questions, q => q.question).map((q, index) => ({...q,
+      questionId: `${learningScopeKey(video)}:q:${index}`}));
   });
 }
 
@@ -154,33 +207,31 @@ export async function generateFlashcards(
   generateContent: GenerateContent,
   signal?: AbortSignal,
   onStage?: (stage: LearningLoadStage) => void,
+  regenerate = false,
+  flashcardPages = new Map<string, Promise<Flashcard[]>>(),
 ): Promise<Flashcard[]> {
   return measureLearning("pipeline_total", "flashcard", async () => {
-    onStage?.("retrieving");
-    const context = await retrieveContext(
-      video,
-      `Các thuật ngữ, định nghĩa và kiến thức cần ghi nhớ trong video ${video.title}`,
-      "flashcard",
-      signal,
-    );
-    onStage?.("generating");
-    const request = buildFlashcardRequest(context, FLASHCARD_GENERATION_COUNT, video.language || "vi");
-    const validated = await measureLearning("gateway_total", "flashcard", () => generateContent(request, {
-      ...LEARNING_GENERATION_OPTIONS.flashcard,
-      signal,
-      validate: (raw) => measureValidation("flashcard", () => {
-        const result = validateFlashcards(raw, context);
-        if (result.status === "ok" && result.items.length !== FLASHCARD_GENERATION_COUNT) {
-          throw new AIContentError("AI_ITEM_COUNT_INVALID");
-        }
-        return result;
-      }),
-    }));
-    const cards = mapFlashcards(validated, context);
-    if (cards.length !== FLASHCARD_GENERATION_COUNT) {
-      throw new LearningPipelineError("INSUFFICIENT_CONTEXT");
+    const cards: Flashcard[] = [];
+    for await (const context of chapterContexts(video, "flashcard", signal, onStage)) {
+      onStage?.("generating");
+      cards.push(...await cachedPage(flashcardPages, pageKey(video, context), regenerate, async () => {
+        const request = buildFlashcardRequest(context, FLASHCARD_GENERATION_COUNT, video.language || "vi");
+        const validated = await measureLearning("gateway_total", "flashcard", () => generateContent(request, {
+          ...LEARNING_GENERATION_OPTIONS.flashcard,
+          signal,
+          validate: (raw) => measureValidation("flashcard", () => {
+            const result = validateFlashcards(raw, context);
+            if (result.items.length > FLASHCARD_GENERATION_COUNT) {
+              throw new AIContentError("AI_ITEM_COUNT_INVALID");
+            }
+            return result;
+          }),
+        }));
+        return mapFlashcards(validated, context).map(toLearningFlashcard);
+      }));
     }
-    return cards.map(toLearningFlashcard);
+    return distinctItems(cards, c => c.front).map((c, index) => ({...c,
+      flashcardId: `${learningScopeKey(video)}:f:${index}`}));
   });
 }
 

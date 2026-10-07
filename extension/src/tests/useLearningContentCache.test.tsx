@@ -52,6 +52,17 @@ afterEach(() => {
 });
 
 describe("useLearningContentCache", () => {
+  it("keeps chapter decks separate and only generates a chapter when selected", async () => {
+    generateQuizMock.mockResolvedValueOnce(savedQuiz).mockResolvedValueOnce([{...savedQuiz[0], questionId: "chapter2"}]);
+    const {result} = renderHook(() => useLearningContentCache(vi.fn() as GenerateContent));
+    const first = {...video, learningSection: {id: "0-60", title: "One", startSec: 0, endSec: 60, source: "youtube" as const}};
+    const second = {...video, learningSection: {id: "60-120", title: "Two", startSec: 60, endSec: 120, source: "youtube" as const}};
+    await expect(result.current.loadQuiz(first)).resolves.toEqual(savedQuiz);
+    expect(generateQuizMock).toHaveBeenCalledTimes(1);
+    await expect(result.current.loadQuiz(second)).resolves.toMatchObject([{questionId: "chapter2"}]);
+    await expect(result.current.loadQuiz(first)).resolves.toEqual(savedQuiz);
+    expect(generateQuizMock).toHaveBeenCalledTimes(2);
+  });
   it("restores the last good quiz after a failed regeneration", async () => {
     const failure = new Error("quota exhausted");
     generateQuizMock

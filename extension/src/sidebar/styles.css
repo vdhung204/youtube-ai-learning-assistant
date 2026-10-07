@@ -2072,3 +2072,19 @@ button:disabled {
     transition-duration: 0.01ms !important;
   }
 }
+.learning-section-picker { padding: 14px; margin-bottom: 14px; display: grid; gap: 8px; }
+.learning-section-picker label { font-weight: 700; font-size: 13px; }
+.learning-section-picker select { width: 100%; min-width: 0; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; background: inherit; color: inherit; font: inherit; }
+.learning-section-picker p { margin: 0; font-size: 12px; opacity: .75; }
+.learning-section-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.quiz-generation-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.quiz-generation-status .runtime-status-line,
+.quiz-generation-status small {
+  flex-basis: 100%;
+}

@@ -75,6 +75,8 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
   }
 
   const cards = loadState.items;
+  if (!cards.length) return <RuntimeStateCard title="Phần này chưa có thẻ ghi nhớ"
+    message="Không tìm thấy ý kiến thức đủ rõ để tạo flashcard. Bạn có thể chọn Học phần tiếp." />;
   const card = cards[currentIndex];
   const currentNumber = currentIndex + 1;
   const moveTo = (nextIndex: number) => {
@@ -100,7 +102,7 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
         <>
           <section className="deck-header">
             <div className="generated-content-actions">
-              <span>Bộ flashcard đã lưu cho video này</span>
+              <span>{video.learningSection?.title ?? "Nội dung video"}</span>
               <Button
                 aria-label="Thêm Flashcards mới"
                 onClick={regenerate}

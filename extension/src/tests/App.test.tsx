@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../sidebar/App";
@@ -39,6 +39,67 @@ function requestBodies(pathSuffix: string): Array<Record<string, unknown>> {
 }
 
 describe("real learning flows", () => {
+  it("appends the next batch without remounting the question or losing answers, then freezes submission", async () => {
+    const original = fetchMock.getMockImplementation()!;
+    let release: () => void = () => {};
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    let retrievals = 0;
+    let generations = 0;
+    fetchMock.mockImplementation(async (input, init) => {
+      const response = await original(input, init);
+      if (String(input).endsWith("/retrieve")) {
+        const body = await response.json();
+        const offset = retrievals++ * 2;
+        body.chunks = body.chunks.map((c: Record<string, unknown>) => ({...c, position: Number(c.position) + offset}));
+        return Response.json({...body, nextPosition: offset + 1});
+      }
+      if (!String(input).endsWith("/api/generate")) return response;
+      const page = generations++;
+      if (page >= 1) await gate;
+      if (page >= 2) return new Promise<Response>(() => {});
+      const body = await response.json();
+      if (page) body.data.items = body.data.items.map((q: Record<string, unknown>, i: number) => ({...q, question: `Câu đợt hai ${i}?`}));
+      return Response.json(body);
+    });
+    const user = userEvent.setup();
+    await renderReadyApp();
+    await user.click(screen.getByRole("button", {name: "Bắt đầu Quiz"}));
+    await screen.findByText("Câu 1 / 5");
+    await user.click(screen.getByText("Truy xuất và mô hình ngôn ngữ"));
+    const radio = screen.getAllByRole("radio")[0] as HTMLInputElement;
+    const card = screen.getByRole("heading", {name: "RAG kết hợp những thành phần nào?"});
+    const scroller = card.closest(".quiz-view")!;
+    scroller.scrollTop = 90;
+    await act(async () => { release(); });
+    await screen.findByText("Câu 1 / 10");
+    expect(screen.getAllByRole("radio")[0]).toBe(radio);
+    expect(radio.checked).toBe(true);
+    expect(screen.getByRole("heading", {name: "RAG kết hợp những thành phần nào?"})).toBe(card);
+    expect(scroller.scrollTop).toBe(90);
+    expect(requestBodies("/api/generate").every(b => b.requestedCount === 5)).toBe(true);
+    await user.click(screen.getByRole("button", {name: "Nộp bài"}));
+    await screen.findByLabelText("Điểm 10 trên 100");
+    expect((requestBodies("/assessments/quiz")[0].questions as unknown[])).toHaveLength(10);
+    const inFlight = fetchMock.mock.calls.filter(([input]) => String(input).endsWith("/api/generate")).at(-1);
+    expect(inFlight?.[1]?.signal?.aborted).toBe(true);
+  });
+  it("requests the whole video and keeps the current question and answer across tab changes", async () => {
+    const user = userEvent.setup();
+    await renderReadyApp();
+    await user.click(screen.getByRole("button", {name: "Bắt đầu Quiz"}));
+    await screen.findByText("Câu 1 / 5");
+    const first = requestBodies("/retrieve")[0];
+    expect(first).toMatchObject({startSec: 0, endSec: 300});
+    expect(requestBodies("/api/generate")).toHaveLength(1);
+    expect(screen.queryByRole("combobox", {name: /Chọn phần học/u})).toBeNull();
+    await user.click(screen.getByRole("button", {name: "Câu tiếp theo"}));
+    await user.click(screen.getByText("Trước khi generator viết"));
+    await user.click(screen.getByRole("button", {name: "Trang chính"}));
+    await user.click(screen.getByRole("button", {name: "Quiz"}));
+    await screen.findByText("Câu 2 / 5");
+    expect((screen.getAllByRole("radio")[1] as HTMLInputElement).checked).toBe(true);
+    expect(requestBodies("/api/generate")).toHaveLength(1);
+  });
   it("answers with review retrieval and the AI Gateway, then collapses immediately", async () => {
     const user = userEvent.setup();
     await renderReadyApp();
@@ -85,7 +146,7 @@ describe("real learning flows", () => {
     expect(screen.getByRole("button", { name: "Đã nhớ" }).getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("caches Quiz and Flashcards per video and regenerates only from the add buttons", async () => {
+  it("caches Quiz and Flashcards per video and only regenerates Flashcards explicitly", async () => {
     const user = userEvent.setup();
     await renderReadyApp();
 
@@ -112,10 +173,7 @@ describe("real learning flows", () => {
     expect(await screen.findByRole("heading", { name: "RAG kết hợp những thành phần nào?" })).toBeTruthy();
     expect(requestBodies("/retrieve").filter((body) => body.purpose === "quiz")).toHaveLength(1);
 
-    await user.click(screen.getByRole("button", { name: "Thêm Quiz mới" }));
-    await waitFor(() => {
-      expect(requestBodies("/retrieve").filter((body) => body.purpose === "quiz")).toHaveLength(2);
-    });
+    expect(screen.queryByRole("button", {name: "Thêm Quiz mới"})).toBeNull();
   });
 
   it("generates a Quiz, submits answers to assessQuiz, and uses the backend result", async () => {
@@ -132,22 +190,21 @@ describe("real learning flows", () => {
     await user.click(screen.getByRole("button", { name: "Câu tiếp theo" }));
     await user.click(screen.getByText("Trước khi generator viết"));
     await user.click(screen.getByRole("button", { name: "Câu tiếp theo" }));
-    for (let index = 0; index < 4; index += 1) {
+    for (let index = 0; index < 3; index += 1) {
       await user.click(screen.getByText("Truy xuất và mô hình ngôn ngữ"));
       await user.click(screen.getByRole("button", {
-        name: index === 3 ? "Nộp bài" : "Câu tiếp theo",
+        name: index === 2 ? "Nộp bài" : "Câu tiếp theo",
       }));
     }
 
     expect(await screen.findByLabelText("Điểm 100 trên 100")).toBeTruthy();
-    expect(screen.getByText("Trả lời đúng 6/6 câu trong lần làm hiện tại.")).toBeTruthy();
+    expect(screen.getByText("Trả lời đúng 5/5 câu trong lần làm hiện tại.")).toBeTruthy();
     const assessments = requestBodies("/assessments/quiz");
     expect(assessments).toHaveLength(1);
     expect(assessments[0]).toMatchObject({
       userAnswers: [
         { questionId: expect.any(String), selectedAnswer: 0 },
         { questionId: expect.any(String), selectedAnswer: 1 },
-        { questionId: expect.any(String), selectedAnswer: 0 },
         { questionId: expect.any(String), selectedAnswer: 0 },
         { questionId: expect.any(String), selectedAnswer: 0 },
         { questionId: expect.any(String), selectedAnswer: 0 },

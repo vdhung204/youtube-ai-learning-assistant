@@ -56,6 +56,19 @@ class RetrieveRequest(DTO):
     query: Annotated[str, Field(min_length=1, max_length=2000)]
     purpose: Purpose
     maxResults: Annotated[int, Field(ge=1)] | None = None
+    startSec: Seconds | None = None
+    endSec: Seconds | None = None
+    afterPosition: Count | None = None
+
+    @model_validator(mode="after")
+    def valid_range(self):
+        if (self.startSec is None) != (self.endSec is None):
+            raise ValueError("Both range boundaries are required")
+        if self.startSec is not None and (self.endSec <= self.startSec or self.purpose == "review"):
+            raise ValueError("Invalid chapter range")
+        if self.afterPosition is not None and self.startSec is None:
+            raise ValueError("Cursor requires chapter range")
+        return self
 
 
 class SourceTimestamp(Timestamp):
@@ -85,8 +98,8 @@ class UserAnswer(DTO):
 
 class AssessmentRequest(DTO):
     quizId: Text | None = None
-    questions: Annotated[list[Question], Field(min_length=1, max_length=100)]
-    userAnswers: Annotated[list[UserAnswer], Field(max_length=100)]
+    questions: Annotated[list[Question], Field(min_length=1, max_length=2000)]
+    userAnswers: Annotated[list[UserAnswer], Field(max_length=2000)]
 
     @model_validator(mode="after")
     def valid_answers(self):
@@ -158,6 +171,7 @@ class RetrieveResponse(DTO):
     purpose: Purpose
     chunks: list[RetrievedChunk]
     reason: Literal["NO_RELEVANT_CONTEXT"] | None = None
+    nextPosition: Count | None = None
 
 
 class QuestionResult(DTO):

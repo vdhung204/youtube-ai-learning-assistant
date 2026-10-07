@@ -9,7 +9,6 @@ const DEFAULT_TIMEOUT_MS = 35_000;
 const MAX_GATEWAY_RESPONSE_BYTES = 1_000_000;
 const MAX_GATEWAY_REQUEST_BYTES = 64_000;
 const MAX_RETRY_DELAY_MS = 10_000;
-const MAX_RETRY_AFTER_MS = 60_000;
 const RETRYABLE_STATUS = new Set([502, 503, 504]);
 const TEST_GATEWAY_ORIGIN = "https://gateway.test";
 
@@ -145,13 +144,13 @@ function retryAfterMs(headers: Headers): number | undefined {
   }
   const seconds = Number(value);
   if (Number.isFinite(seconds) && seconds >= 0) {
-    return Math.min(seconds * 1_000, MAX_RETRY_AFTER_MS);
+    return Math.min(seconds * 1_000, Number.MAX_SAFE_INTEGER);
   }
   const date = Date.parse(value);
   if (!Number.isFinite(date)) {
     return undefined;
   }
-  return Math.min(Math.max(date - Date.now(), 0), MAX_RETRY_AFTER_MS);
+  return Math.max(date - Date.now(), 0);
 }
 
 function publicMessage(code: AiGatewayErrorCode): string {
@@ -297,7 +296,7 @@ function retryable(error: unknown): boolean {
 
 function delayFor(error: unknown, retryIndex: number): number {
   if (error instanceof AiGatewayError && error.retryAfterMs !== undefined) {
-    return Math.min(error.retryAfterMs, MAX_RETRY_DELAY_MS);
+    return error.retryAfterMs;
   }
   return Math.min(300 * 2 ** retryIndex + Math.floor(Math.random() * 150), MAX_RETRY_DELAY_MS);
 }

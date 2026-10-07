@@ -4,7 +4,7 @@ from app.transcript.normalizer import normalize_text
 
 
 def score_quiz(questions: list[dict], answers: list[dict]) -> dict:
-    if not isinstance(questions, list) or not 1 <= len(questions) <= 100 or not isinstance(answers, list):
+    if not isinstance(questions, list) or not 1 <= len(questions) <= 2000 or not isinstance(answers, list):
         raise ServiceError("QUIZ_INVALID")
     by_id = {}
     for question in questions:

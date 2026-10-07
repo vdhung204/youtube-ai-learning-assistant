@@ -44,6 +44,25 @@ Gateway dựng lại prompt và output schema theo loại tác vụ do server h�
 
 ## 3. Luồng một yêu cầu sinh nội dung
 
+Quiz là một bộ câu hỏi chung cho toàn video. Extension đọc tuần tự các trang
+transcript (tối đa 6 chunk, vẫn chịu ngân sách context), yêu cầu tối đa 5 câu mỗi
+lần gọi AI và nối ngay kết quả đã kiểm tra vào bộ đang làm. AI được trả ít hơn
+5 câu hoặc mảng rỗng nếu đoạn không có đủ ý kiến thức. Chỉ có một request tạo
+quiz đang chạy; thành công thì đọc trang tiếp theo. Câu trùng văn bản được bỏ.
+ID câu, đáp án và câu đang xem giữ nguyên khi thêm batch hoặc chuyển tab UI.
+Cache cục bộ lưu các batch thành công cùng con trỏ, không dùng lại cache chapter cũ.
+Nộp bài hủy sinh tiếp và đóng băng bộ câu hiện có; làm lại dùng chính bộ đã chốt.
+
+429/503 và lỗi mạng tạm thời được thử lại tối đa hai lần mỗi batch. Client giữ
+nguyên `Retry-After`; nếu không có header thì backoff tăng dần. Khi cần chờ hơn
+5 phút hoặc hết số lần thử, tạm dừng để người dùng tiếp tục sau, giữ nguyên dữ
+liệu. UI không đếm ngược hoặc hứa thời gian hoàn thành. Nút tiếp tục cũng không
+được bỏ qua thời điểm `Retry-After`. Assessment hỗ trợ tối đa 2.000 câu; giới hạn
+body 2 MiB vẫn áp dụng. Nếu đạt giới hạn câu, UI dừng rõ ràng thay vì bỏ âm thầm.
+
+Flashcard vẫn học theo chapter/phần khoảng 5 phút hoặc 8.000 ký tự tại biên
+phụ đề, tối đa 10 thẻ mỗi request, cache riêng theo video/phần.
+
 1. Extension lấy transcript từ tab YouTube và gửi transcript cho Local RAG Service qua localhost.
 2. Local service trả các chunk liên quan cùng `chunkId`, score và timestamp.
 3. Extension gửi loại tác vụ cùng dữ liệu đầu vào đã giới hạn tới `POST /api/generate`.

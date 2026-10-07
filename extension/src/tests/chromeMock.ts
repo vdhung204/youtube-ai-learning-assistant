@@ -206,9 +206,10 @@ export function createReadyLearningFetchMock(options: LearningFetchMockOptions =
     if (url.endsWith("/api/generate")) {
       const request = JSON.parse(String(init?.body)) as {
         task: "answers" | "flashcards" | "questions";
+        requestedCount?: number;
       };
       return jsonResponse({
-        data: { items: generatedItems(request.task), status: "ok" },
+        data: { items: generatedItems(request.task).slice(0, request.requestedCount ?? Infinity), status: "ok" },
         meta: { requestId: "request-test" },
       });
     }

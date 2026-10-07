@@ -4,11 +4,20 @@ export type AppView = "home" | "quiz" | "flashcard" | "assessment";
 export type AskAIContext = Exclude<AppView, "assessment">;
 
 export interface CurrentVideo extends Video {
+  learningSection?: LearningSection;
   channel: string;
   currentTimeSec: number;
   dataSource: "youtube";
   thumbnailUrl?: string;
   thumbnailLabel: string;
+}
+
+export interface LearningSection {
+  id: string;
+  title: string;
+  startSec: number;
+  endSec: number;
+  source: "youtube" | "transcript";
 }
 
 export type FlashcardConfidence = "known" | "review";

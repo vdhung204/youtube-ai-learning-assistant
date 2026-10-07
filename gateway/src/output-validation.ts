@@ -160,8 +160,7 @@ export function validateGeneratedOutput(raw: unknown, request: GenerateRequest):
   const count = requestedItemCount(request);
   if (
     rawItems.length < 1 ||
-    rawItems.length > count ||
-    ((request.task === "questions" || request.task === "flashcards") && rawItems.length !== count)
+    rawItems.length > count
   ) {
     invalid();
   }

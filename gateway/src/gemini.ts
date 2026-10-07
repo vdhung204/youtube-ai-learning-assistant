@@ -37,9 +37,9 @@ function emitMetric(
 function maxOutputTokens(request: GenerateRequest): number {
   switch (request.task) {
     case "questions":
-      return 3_072;
+      return Math.max(3_072, request.requestedCount * 512 + 512);
     case "flashcards":
-      return 2_048;
+      return Math.max(2_048, request.requestedCount * 320 + 512);
     case "answers":
       return 3_072;
     case "feedback":

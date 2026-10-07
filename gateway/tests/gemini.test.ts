@@ -103,7 +103,7 @@ test("returns a normalized item envelope for grounded valid output", async () =>
   assert.equal(JSON.stringify(metrics).includes("test-secret-key"), false);
 });
 
-test("accepts an empty insufficient-context result even for exact-count tasks", async () => {
+test("accepts an empty insufficient-context result for a chapter without teachable ideas", async () => {
   const fetchImpl = (async () => interactionResponse({
     status: "insufficient_context",
     questions: [],
@@ -125,7 +125,7 @@ test("retries the whole operation when JSON is valid but semantic validation fai
     calls += 1;
     if (calls === 1) {
       const short = validProviderOutput();
-      short.questions.pop();
+      short.questions[0]!.evidence = "Unsupported evidence not in the transcript";
       return interactionResponse(short);
     }
     return interactionResponse(validProviderOutput());
@@ -138,6 +138,18 @@ test("retries the whole operation when JSON is valid but semantic validation fai
   });
   assert.equal(result.status, "ok");
   assert.equal(calls, 2);
+});
+
+test("accepts fewer grounded questions than the batch maximum without retrying", async () => {
+  let calls = 0;
+  const output = validProviderOutput();
+  output.questions.pop();
+  const result = await generateWithGemini(questionsRequest, gatewayConfig, neverAbort, {
+    fetchImpl: (async () => { calls++; return interactionResponse(output); }) as typeof fetch,
+    sleep: noSleep,
+  });
+  assert.equal(result.items.length, 1);
+  assert.equal(calls, 1);
 });
 
 test("retries malformed generated JSON and then exposes only a normalized error", async () => {

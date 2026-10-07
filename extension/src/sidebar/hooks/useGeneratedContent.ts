@@ -59,6 +59,7 @@ export function useGeneratedContent<T>(
     video.language,
     video.title,
     video.videoId,
+    video.learningSection?.id,
   ]);
 
   const requestContent = useCallback((regenerate: boolean) => {
