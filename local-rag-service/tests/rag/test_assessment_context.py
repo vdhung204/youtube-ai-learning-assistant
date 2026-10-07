@@ -5,7 +5,7 @@ from helpers import VIDEO, quiz
 from app.core.errors import ServiceError
 from app.assessment.scorer import score_quiz
 from app.assessment.topic_analyzer import analyze_topics
-from app.retrieval.context_builder import build_context
+from app.retrieval.context_builder import build_context, build_overview_context, serialize_context
 from app.chunking.token_counter import Utf8Counter
 from app.retrieval.deduplicator import deduplicate
 
@@ -16,6 +16,17 @@ def chunk(identifier="c1", text="Tuple không thay đổi.", start=10, end=20, s
 
 
 class AssessmentTests(unittest.TestCase):
+    def test_long_video_quiz_can_score_more_than_100_questions(self):
+        from app.transport.models import AssessmentRequest
+        template = quiz(chunk())["questions"][0]
+        questions = [dict(deepcopy(template), questionId=f"q{i}") for i in range(125)]
+        answers = [{"questionId": f"q{i}", "selectedAnswer": 0} for i in range(120)]
+        AssessmentRequest.model_validate({"questions": questions, "userAnswers": answers})
+        result = score_quiz(questions, answers)
+        self.assertEqual(result["totalCount"], 125)
+        self.assertEqual(result["correctCount"], 120)
+        self.assertEqual(result["score"], 96)
+
     def test_wrong_missing_null_and_correct_answers(self):
         payload = quiz(chunk())
         for answers, expected in (([], 0), ([{"questionId": "q1", "selectedAnswer": None}], 0),
@@ -53,6 +64,27 @@ class AssessmentTests(unittest.TestCase):
 
 
 class ContextTests(unittest.TestCase):
+    def test_overview_covers_video_and_preserves_original_sources(self):
+        chunks = [dict(chunk(f"c{i}", f"Knowledge from section {i}.", i * 10, i * 10 + 10), position=i)
+                  for i in range(72)]
+        selected = build_overview_context(chunks, 6, 6000)
+        self.assertEqual(len(selected), 6)
+        # One passage from each sixth, rather than six near the outro/title.
+        self.assertEqual([c["position"] // 12 for c in selected], list(range(6)))
+        self.assertTrue(all(c in chunks for c in selected))
+
+    def test_overview_budget_keeps_coverage_and_deduplicates_text(self):
+        chunks = [dict(chunk(f"c{i}", f"Section {i}: " + "knowledge " * 10), position=i)
+                  for i in range(24)]
+        selected = build_overview_context(chunks, 6, 1000)
+        self.assertGreater(len(selected), 1)
+        self.assertLess(len(selected), 6)
+        self.assertLessEqual(len(serialize_context(selected).encode("utf-8")), 1000)
+        self.assertLess(selected[0]["position"], 8)
+        self.assertGreater(selected[-1]["position"], 16)
+        self.assertEqual(build_overview_context([chunk(), chunk("duplicate")], 6, 6000), [chunk()])
+        self.assertEqual(build_overview_context([], 6, 6000), [])
+
     def test_budget_counts_serialized_metadata_and_unicode(self):
         chunks = [chunk(), chunk("c2", "a" * 10000)]
         selected, rendered = build_context(chunks, 512)

@@ -28,8 +28,21 @@ class RealFacadeHttpTests(unittest.TestCase):
                         break
                     time.sleep(0.01)
                 self.assertEqual(state.json()["indexStatus"], "ready")
+                for invalid in ({"startSec": 10}, {"startSec": 30, "endSec": 10},
+                                {"afterPosition": 0}, {"startSec": 0, "endSec": 10, "purpose": "review"}):
+                    bad = client.post(base + "/retrieve", json={"query": "tuple", "purpose": "quiz", **invalid})
+                    self.assertEqual(bad.status_code, 400, bad.text)
+                chapter = client.post(base + "/retrieve", json={"query": "general", "purpose": "quiz",
+                                                               "startSec": 0, "endSec": 180, "maxResults": 1})
+                self.assertEqual(chapter.status_code, 200, chapter.text)
+                self.assertIn("nextPosition", chapter.json())
+                second = client.post(base + "/retrieve", json={"query": "general", "purpose": "quiz",
+                    "startSec": 0, "endSec": 180, "maxResults": 1, "afterPosition": chapter.json()["nextPosition"]})
+                self.assertEqual(second.status_code, 200, second.text)
+                self.assertNotIn("nextPosition", second.json())
+                self.assertEqual(second.json()["chunks"][0]["startSec"], 120)
                 self.assertEqual(client.post(base + "/index", json=payload()).status_code, 200)
-                retrieved = client.post(base + "/retrieve", json={"query": "tuple", "purpose": "quiz"})
+                retrieved = client.post(base + "/retrieve", json={"query": "tuple", "purpose": "review"})
                 self.assertEqual(retrieved.status_code, 200, retrieved.text)
                 chunks = retrieved.json()["chunks"]
                 assessment = client.post(base + "/assessments/quiz", json=quiz(chunks[0]))

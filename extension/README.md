@@ -6,10 +6,14 @@ React + TypeScript Chrome Extension (Manifest V3) rendered in Chrome's Side Pane
 
 Requirements: Node.js 20 or newer and npm.
 
-```bash
+```powershell
+Copy-Item .env.example .env.local
 npm install
 npm run dev
 ```
+
+Set `VITE_YALA_GATEWAY_URL` in `.env.local` before making a distributable build. See
+[AI Gateway configuration](#ai-gateway-configuration).
 
 Quality checks:
 
@@ -28,52 +32,55 @@ npm run build
 5. Click the extension toolbar action to open the Side Panel.
 
 The build emits the Side Panel page, Manifest V3 service worker, and YouTube content script into `dist/`.
+The Side Panel is disabled globally and enabled only for individual `https://www.youtube.com`
+tabs. If the user switches to another site, Chrome hides/disables the panel for that tab; returning
+to YouTube makes it available again.
 
 After each build, reload the unpacked extension and refresh the active YouTube tab so Chrome injects the latest content script.
 
 ## Frontend structure
 
 - `src/sidebar`: application shell, shared UI, presentation helpers, state hooks, and page views.
-- `src/features`: cohesive authentication, Quiz, Flashcard, and assessment screens.
-- `src/integrations`: typed adapters for Chrome/YouTube, Google OAuth, Gemini, and Local RAG.
+- `src/features`: cohesive Quiz, Flashcard, and assessment screens.
+- `src/integrations`: typed adapters for Chrome/YouTube, AI Gateway, and Local RAG.
 - `src/types`: contracts shared across runtime boundaries; runtime payloads are still validated.
-- `src/ai-content`: independently owned prompt, grounding validator, and trusted timestamp mapper package.
+- `src/ai-content`: independently owned request builders, grounding validators, and trusted timestamp mappers.
 
 Small one-use view components live with their owning view. Reusable controls live in
 `sidebar/components/ui.tsx`, while integration and security boundaries remain separate modules.
 
-## Google OAuth and Gemini access
+## AI Gateway configuration
 
-The extension uses `chrome.identity`; it never persists an OAuth access token in `localStorage`,
-`chrome.storage`, ChromaDB, or the Local RAG Service. A token exists only transiently in runtime
-memory and Chrome Identity's cache, and is sent only to Google's Generative Language API.
-Localhost requests continue to use `credentials: "omit"` and do not include `Authorization`,
-cookies, or API keys.
+The extension does not use `chrome.identity`, Google OAuth, or a provider API key. It sends a
+strict business request to the project's AI Gateway; the gateway owns the Gemini key, model,
+prompt, output schema, validation, and provider retries. End users do not enter credentials and
+do not register their machine or Extension ID with Google Cloud.
 
-Initial development setup:
+Create `extension/.env.local` from `.env.example`:
 
-1. Build and load `extension/dist` once, then copy its ID from `chrome://extensions`.
-2. In Google Cloud, enable the **Generative Language API**, configure the OAuth consent screen,
-   and add the development Google accounts as test users.
-3. Create an OAuth client with application type **Chrome Extension** and use the copied extension
-   ID as its Item ID.
-4. Copy `.env.example` to `.env.local`, then replace both public identifiers. Never add a client
-   secret or access token.
-5. Run `npm run build`, reload the extension, and refresh the active YouTube tab.
+```dotenv
+VITE_YALA_GATEWAY_URL=https://your-gateway.vercel.app
+```
 
-The OAuth client is injected into `dist/manifest.json` only during a configured build. A build
-without `VITE_YALA_GOOGLE_OAUTH_CLIENT_ID` remains loadable and displays a configuration message
-instead of opening a broken OAuth flow.
+The value is the gateway base URL; the client resolves its `/api/generate` endpoint. Production
+must use HTTPS. `http://localhost` and `http://127.0.0.1` are accepted only for local development.
+The build injects only the matching gateway origin into `dist/manifest.json`; it does not grant
+host access to Google APIs.
 
-Authentication behavior:
+For a stable ID while repeatedly loading an unpacked build, set the optional base64 public
+manifest key as `VITE_YALA_EXTENSION_PUBLIC_KEY` (see `.env.example`). A Chrome Web Store release already has one stable Extension ID, so
+the gateway operator configures its origin once and every user installs the same build without
+submitting an ID. Never put a private signing key, Gemini key, token, or cookie in an extension
+environment variable; every `VITE_...` value is public in the bundle.
 
-- Opening the side panel performs a non-interactive cached-token check.
-- The interactive OAuth window opens only after the user selects **Đăng nhập bằng Google**.
-- After authorization, the extension checks that the account can list a Gemini model supporting
-  `generateContent`; 401, 403, 429, network, and invalid-response states are shown separately.
-- Signing out removes the cached token and account preference from Chrome Identity.
-- Local RAG Service health is checked only after Google and Gemini are ready, but the Local RAG
-  Service remains deliberately unauthenticated and never receives the Google token.
+The gateway uses an exact extension-origin allowlist as defense in depth. CORS is not user
+authentication and does not stop scripts outside a browser from calling a public endpoint, so a
+production deployment also needs distributed rate limiting, Gemini quota/budget alerts, and key
+rotation. Gateway setup is documented in [`../gateway/README.md`](../gateway/README.md); the full
+trust boundary is in [`../docs/architecture/ai-gateway.md`](../docs/architecture/ai-gateway.md).
+
+Requests to both the gateway and Local RAG Service use `credentials: "omit"`; no cookies,
+Google tokens, or API keys are sent by the extension.
 
 ## Local Service health check
 
@@ -106,6 +113,7 @@ both `vectorStoreReady` and `embeddingModelReady` set to `true`.
 - Quiz and Flashcard generation grounded by purpose-specific retrieval, strict validation, and timestamp mapping
 - Quiz assessment through the Local RAG Service, including backend score, topic feedback, and review timestamps
 - Explicit loading, no-video, no-transcript, no-context, service-offline, stale, provider-error, and retry states
-- Google OAuth tokens kept in memory and sent only to Google's Generative Language API; localhost requests omit credentials
+- AI generation through a server-owned gateway with strict task contracts, bounded retries, cancellation, and sanitized errors
+- No Google login, `chrome.identity`, direct Gemini host permission, or provider key in the extension bundle
 
 No sample learning data is imported by the production runtime.

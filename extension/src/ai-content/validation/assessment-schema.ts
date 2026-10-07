@@ -7,7 +7,7 @@ import { exactKeys, fail, grounding, integer, number, object, parseRaw, sourceMa
 export function validateLearningAssessment(raw: unknown, context: SourceContext): Validated<LearningAssessment> {
   const data = parseRaw(raw), sources = sourceMap(context);
   exactKeys(data, ["score", "correctCount", "totalCount", "questionResults", "strongTopics", "weakTopics", "reviewTimestamps"]);
-  const totalCount = integer(data.totalCount, 1, 100), correctCount = integer(data.correctCount, 0, totalCount);
+  const totalCount = integer(data.totalCount, 1, 2000), correctCount = integer(data.correctCount, 0, totalCount);
   const score = number(data.score);
   if (Math.abs(score - correctCount / totalCount * 100) > 0.011) fail();
   if (!Array.isArray(data.questionResults) || data.questionResults.length !== totalCount) fail();

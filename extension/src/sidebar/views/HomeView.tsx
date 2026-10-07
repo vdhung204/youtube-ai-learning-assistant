@@ -1,8 +1,6 @@
 import { useState } from "react";
 import {
   answerVideoQuestion,
-  FLASHCARD_GENERATION_COUNT,
-  QUIZ_GENERATION_COUNT,
   type GenerateContent,
 } from "../../integrations/learning/pipeline";
 import type { AppView, CurrentVideo } from "../../types/learning";
@@ -95,10 +93,10 @@ export function HomeView({
       <section aria-label="Bắt đầu học nhanh" className="quick-action-grid">
         <article className="quick-card quick-card--quiz">
           <div className="quick-card-topline">
-            <span className="count-badge">Tối đa {QUIZ_GENERATION_COUNT} câu</span>
+            <span className="count-badge">5 câu mỗi đợt</span>
           </div>
           <h2>Tạo Quiz nhanh</h2>
-          <p>Trắc nghiệm bám sát video với timestamp.</p>
+          <p>Quiz cho toàn video. Làm ngay các câu đã có trong khi AI tạo tiếp.</p>
           <Button disabled={!ragReady} fullWidth onClick={() => onNavigate("quiz")}>
             Bắt đầu Quiz
             <Icon name="arrow-forward" size={15} />
@@ -107,7 +105,7 @@ export function HomeView({
 
         <article className="quick-card quick-card--flashcard">
           <div className="quick-card-topline">
-            <span className="count-badge">Tối đa {FLASHCARD_GENERATION_COUNT} thẻ</span>
+            <span className="count-badge">Theo từng chapter</span>
           </div>
           <h2>Ôn Flashcards</h2>
           <p>Lật thẻ ghi nhớ khái niệm quan trọng.</p>
@@ -137,7 +135,7 @@ export function HomeView({
         onExpandedChange={setChatExpanded}
         onSourceSelect={onSeek}
         placeholder="VD: Khái niệm chính trong video là gì?"
-        statusLabel={ragReady ? "RAG + Gemini" : "Chưa sẵn sàng"}
+        statusLabel={ragReady ? "RAG + AI" : "Chưa sẵn sàng"}
       />
     </div>
   );
@@ -146,7 +144,7 @@ export function HomeView({
 const serviceStatusLabels: Record<LocalServiceHealthState["status"], string> = {
   checking: "Đang kiểm tra",
   error: "Lỗi kết nối",
-  idle: "Chờ đăng nhập",
+  idle: "Đang khởi tạo",
   not_ready: "RAG chưa sẵn sàng",
   offline: "Service ngoại tuyến",
   ready: "RAG sẵn sàng",

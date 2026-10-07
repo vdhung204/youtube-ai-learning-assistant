@@ -3,16 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../sidebar/App";
 import {
-  createAuthenticatedFetchMock,
-  createChromeMock,
   createLearningChromeMock,
   createReadyLearningFetchMock,
-  TEST_GOOGLE_EMAIL_SCOPE,
-  TEST_GOOGLE_SCOPE,
 } from "./chromeMock";
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -40,7 +37,7 @@ describe("Chrome integration states", () => {
     expect(await screen.findByText("Đã chuyển video tới 42 giây.")).toBeTruthy();
   });
 
-  it("shows a terminal no-transcript state and does not call index or Gemini", async () => {
+  it("shows a terminal no-transcript state and does not call index or the AI Gateway", async () => {
     const chromeMock = createLearningChromeMock({ noTranscript: true });
     const fetchMock = createReadyLearningFetchMock();
     vi.stubGlobal("chrome", chromeMock);
@@ -59,7 +56,7 @@ describe("Chrome integration states", () => {
       fetchMock.mock.calls.some(([input]) => String(input).includes("/index")),
     ).toBe(false);
     expect(
-      fetchMock.mock.calls.some(([input]) => String(input).includes(":generateContent")),
+      fetchMock.mock.calls.some(([input]) => String(input).endsWith("/api/generate")),
     ).toBe(false);
   });
 
@@ -80,7 +77,7 @@ describe("Chrome integration states", () => {
     );
   });
 
-  it("shows an explicit retry state when retrieval has no relevant context", async () => {
+  it("does not call AI when the full video has no learning context", async () => {
     vi.stubGlobal("chrome", createLearningChromeMock());
     vi.stubGlobal("fetch", createReadyLearningFetchMock({ noContext: true }));
     const user = userEvent.setup();
@@ -91,59 +88,21 @@ describe("Chrome integration states", () => {
     });
     await user.click(screen.getByRole("button", { name: "Quiz" }));
 
-    expect(await screen.findByRole("heading", { name: "Không thể tạo Quiz" })).toBeTruthy();
-    expect(screen.getByText("Không tìm thấy đoạn transcript liên quan.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Thử lại" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Video chưa có câu hỏi" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Học phần tiếp" })).toBeNull();
   });
 
-  it("only opens interactive OAuth after a user click and can sign out", async () => {
-    const getAuthToken = vi.fn(
-      async ({ interactive }: chrome.identity.TokenDetails): Promise<chrome.identity.GetAuthTokenResult> => {
-        if (!interactive) {
-          throw new Error("No cached grant");
-        }
-        return {
-          grantedScopes: [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE],
-          token: "interactive-token",
-        };
-      },
-    );
-    const chromeMock = createChromeMock({ getAuthToken });
-    const fetchMock = createAuthenticatedFetchMock();
+  it("starts the learning UI without an account or sign-in step", async () => {
+    const chromeMock = createLearningChromeMock();
     vi.stubGlobal("chrome", chromeMock);
-    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", createReadyLearningFetchMock());
 
-    const user = userEvent.setup();
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "Đăng nhập bằng Google" })).toBeTruthy();
-    const scopes = [TEST_GOOGLE_SCOPE, TEST_GOOGLE_EMAIL_SCOPE];
-    expect(getAuthToken).toHaveBeenCalledWith({ interactive: false, scopes });
-    expect(getAuthToken).not.toHaveBeenCalledWith({ interactive: true, scopes });
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(chromeMock.tabs.query).not.toHaveBeenCalled();
-
-    await user.click(screen.getByRole("button", { name: "Đăng nhập bằng Google" }));
     expect(await screen.findByRole("button", { name: "Quiz" })).toBeTruthy();
-    expect(getAuthToken).toHaveBeenCalledWith({ interactive: true, scopes });
+    expect(screen.queryByText(/đăng nhập/iu)).toBeNull();
     await waitFor(() => {
-      expect(
-        fetchMock.mock.calls.some(([url]) => String(url).startsWith("http://127.0.0.1:8765/")),
-      ).toBe(true);
+      expect(chromeMock.tabs.query).toHaveBeenCalled();
     });
-    const localRequest = fetchMock.mock.calls.find(([url]) =>
-      String(url).startsWith("http://127.0.0.1:8765/"),
-    );
-    expect(localRequest?.[1]).toMatchObject({ credentials: "omit" });
-    expect(new Headers(localRequest?.[1]?.headers).has("Authorization")).toBe(false);
-
-    await user.click(screen.getByRole("button", { name: "Tài khoản learner" }));
-    await user.click(screen.getByRole("menuitem", { name: "Đăng xuất khỏi tiện ích" }));
-
-    expect(await screen.findByText("Bạn đã đăng xuất khỏi tiện ích.")).toBeTruthy();
-    expect(chromeMock.identity.removeCachedAuthToken).toHaveBeenCalledWith({
-      token: "interactive-token",
-    });
-    expect(chromeMock.identity.clearAllCachedAuthTokens).toHaveBeenCalledTimes(1);
   });
 });

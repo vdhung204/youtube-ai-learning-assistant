@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import type { LearningContentLoader } from "../../integrations/learning/types";
+import type {
+  LearningContentLoader,
+  LearningLoadStage,
+} from "../../integrations/learning/types";
 import type { CurrentVideo } from "../../types/learning";
 
 type ContentLoadState<T> =
-  | { status: "loading" }
+  | { status: "loading"; stage: LearningLoadStage }
   | { status: "ready"; items: T[] }
   | { status: "error"; message: string };
 
@@ -13,14 +16,21 @@ export function useGeneratedContent<T>(
   resetProgress: () => void,
   fallbackErrorMessage: string,
 ) {
-  const [loadState, setLoadState] = useState<ContentLoadState<T>>({ status: "loading" });
+  const [loadState, setLoadState] = useState<ContentLoadState<T>>({ status: "loading", stage: "cache" });
   const [generationRequest, setGenerationRequest] = useState({ regenerate: false, version: 0 });
 
   useEffect(() => {
     let active = true;
-    setLoadState({ status: "loading" });
+    setLoadState({ status: "loading", stage: "cache" });
     resetProgress();
-    void loadContent(video, { regenerate: generationRequest.regenerate })
+    void loadContent(video, {
+      onStage: (stage) => {
+        if (active) {
+          setLoadState({ status: "loading", stage });
+        }
+      },
+      regenerate: generationRequest.regenerate,
+    })
       .then((items) => {
         if (active) {
           setLoadState({ status: "ready", items });
@@ -49,6 +59,7 @@ export function useGeneratedContent<T>(
     video.language,
     video.title,
     video.videoId,
+    video.learningSection?.id,
   ]);
 
   const requestContent = useCallback((regenerate: boolean) => {

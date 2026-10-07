@@ -3,9 +3,8 @@ import {
   answerVideoQuestion,
   generateFlashcards,
   generateQuiz,
-  LearningPipelineError,
 } from "../integrations/learning/pipeline";
-import { GeminiAccessError } from "../integrations/gemini/client";
+import { AiGatewayError } from "../integrations/ai-gateway/client";
 import { retrieve } from "../integrations/local-service/client";
 import type { CurrentVideo } from "../types/learning";
 
@@ -63,9 +62,45 @@ beforeEach(() => {
 });
 
 describe("learning generation pipeline", () => {
-  it("retrieves quiz context, validates Gemini JSON, and maps the source timestamp", async () => {
+  it("reads every page in the selected chapter, skips empty introductions, and retains unique IDs", async () => {
+    const section = {id: "20-150", title: "RAG", startSec: 20, endSec: 150, source: "youtube" as const};
+    retrieveMock.mockResolvedValueOnce({videoId: video.videoId, purpose: "quiz", chunks: [chunk], nextPosition: 0})
+      .mockResolvedValueOnce({videoId: video.videoId, purpose: "quiz", chunks: [{...chunk, chunkId: "chunk-2", position: 1}]});
+    const generate = vi.fn().mockResolvedValueOnce({status: "insufficient_context", items: []})
+      .mockResolvedValueOnce({status: "ok", items: [quizQuestion(0), quizQuestion(1)].map(q => ({...q, sourceChunkId: "chunk-2"}))});
+    const questions = await generateQuiz({...video, learningSection: section}, generate);
+    expect(questions).toHaveLength(2);
+    expect(questions[0].questionId).toContain("20-150");
+    expect(new Set(questions.map(q => q.questionId)).size).toBe(2);
+    expect(retrieveMock.mock.calls[1][1]).toMatchObject({startSec: 20, endSec: 150, afterPosition: 0});
+    expect(generate).toHaveBeenCalledTimes(2);
+  });
+
+  it("reuses completed pages after a later page fails and deduplicates results across pages", async () => {
+    const page1 = {videoId: video.videoId, purpose: "quiz" as const, chunks: [chunk], nextPosition: 0};
+    const page2 = {videoId: video.videoId, purpose: "quiz" as const, chunks: [{...chunk, chunkId: "chunk-2", position: 1}]};
+    retrieveMock.mockResolvedValueOnce(page1).mockResolvedValueOnce(page2)
+      .mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
+    const generate = vi.fn().mockResolvedValueOnce({status: "ok", items: [quizQuestion(0)]})
+      .mockRejectedValueOnce(new Error("temporary"))
+      .mockResolvedValueOnce({status: "ok", items: [{...quizQuestion(0), sourceChunkId: "chunk-2"}, {...quizQuestion(1), sourceChunkId: "chunk-2"}]});
+    const pages = new Map();
+    await expect(generateQuiz(video, generate, undefined, undefined, false, pages)).rejects.toThrow("temporary");
+    const questions = await generateQuiz(video, generate, undefined, undefined, false, pages);
+    expect(questions).toHaveLength(2);
+    expect(generate).toHaveBeenCalledTimes(3);
+  });
+
+  it("rejects a non-advancing cursor instead of generating forever", async () => {
+    retrieveMock.mockResolvedValue({videoId: video.videoId, purpose: "quiz", chunks: [chunk], nextPosition: 0});
+    const generate = vi.fn().mockResolvedValue({status: "ok", items: [quizQuestion(0)]});
+    await expect(generateQuiz(video, generate)).rejects.toThrow("Không thể đọc tiếp");
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
+  it("retrieves quiz context, sends a strict gateway request, and maps validated items", async () => {
     const generate = vi.fn().mockResolvedValue({
-      questions: Array.from({ length: 6 }, (_, index) => quizQuestion(index)),
+      items: Array.from({ length: 6 }, (_, index) => quizQuestion(index)),
       status: "ok",
     });
 
@@ -73,28 +108,33 @@ describe("learning generation pipeline", () => {
 
     expect(retrieveMock).toHaveBeenCalledWith(
       video.videoId,
-      expect.objectContaining({ maxResults: 6, purpose: "quiz" }),
+      expect.objectContaining({ maxResults: 12, purpose: "quiz", startSec: 0, endSec: 180 }),
       { signal: undefined },
     );
     expect(questions).toHaveLength(6);
     expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({ responseSchema: expect.any(Object) }),
       expect.objectContaining({
-        maxOutputTokens: 6_144,
-        maxRetries: 1,
-        temperature: 0.1,
-        thinkingLevel: "LOW",
+        task: "questions",
+        requestedCount: 10,
+        language: "vi",
+        context: expect.objectContaining({ videoId: video.videoId }),
+      }),
+      expect.objectContaining({
+        maxRetries: 0,
+        timeoutMs: 35_000,
+        validate: expect.any(Function),
       }),
     );
     expect(questions[0]).toMatchObject({
-      questionId: `${video.videoId}:q:0`,
+      questionId: `${video.videoId}:whole:q:0`,
       sourceTimestamp: { chunkId: chunk.chunkId, startSec: 42, endSec: 55 },
     });
   });
 
-  it("does not spend a second generation call after a truncated quiz response", async () => {
-    const error = new GeminiAccessError("OUTPUT_TRUNCATED", "truncated", 200, {
+  it("does not spend a second pipeline call after a retryable gateway failure", async () => {
+    const error = new AiGatewayError("SERVER_ERROR", "gateway unavailable", {
       retryable: true,
+      status: 503,
     });
     const generate = vi.fn().mockRejectedValue(error);
 
@@ -105,13 +145,13 @@ describe("learning generation pipeline", () => {
 
   it("retrieves flashcard context and maps validated cards", async () => {
     const generate = vi.fn().mockResolvedValue({
-      flashcards: [{
-        back: "Truy xuất trước, sinh câu trả lời sau.",
+      items: Array.from({ length: 6 }, (_, index) => ({
+        back: `Truy xuất trước, sinh câu trả lời sau (${index + 1}).`,
         evidence: "RAG kết hợp truy xuất với mô hình ngôn ngữ",
-        front: "RAG hoạt động thế nào?",
+        front: `RAG hoạt động thế nào? ${index + 1}`,
         sourceChunkId: chunk.chunkId,
         topic: "RAG",
-      }],
+      })),
       status: "ok",
     });
 
@@ -119,23 +159,23 @@ describe("learning generation pipeline", () => {
 
     expect(retrieveMock.mock.calls[0]?.[1]).toMatchObject({ purpose: "flashcard" });
     expect(cards[0]).toMatchObject({
-      flashcardId: `${video.videoId}:f:0`,
+      flashcardId: `${video.videoId}:whole:f:0`,
       sourceTimestamp: { chunkId: chunk.chunkId, startSec: 42, endSec: 55 },
     });
     expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({ responseSchema: expect.any(Object) }),
+      expect.objectContaining({ task: "flashcards", requestedCount: 10 }),
       expect.objectContaining({
-        maxOutputTokens: 2_048,
-        maxRetries: 1,
-        temperature: 0.1,
-        thinkingLevel: "LOW",
+        maxRetries: 0,
+        timeoutMs: 35_000,
+        validate: expect.any(Function),
       }),
     );
   });
 
-  it("does not spend a second generation call after a truncated flashcard response", async () => {
-    const error = new GeminiAccessError("OUTPUT_TRUNCATED", "truncated", 200, {
+  it("does not spend a second pipeline call after a flashcard gateway failure", async () => {
+    const error = new AiGatewayError("SERVER_ERROR", "gateway unavailable", {
       retryable: true,
+      status: 503,
     });
     const generate = vi.fn().mockRejectedValue(error);
 
@@ -144,21 +184,19 @@ describe("learning generation pipeline", () => {
     expect(generate).toHaveBeenCalledOnce();
   });
 
-  it("rejects a successful quiz payload that contains fewer than six questions", async () => {
+  it("accepts fewer questions when the section has fewer teachable ideas", async () => {
     const generate = vi.fn().mockResolvedValue({
-      questions: Array.from({ length: 5 }, (_, index) => quizQuestion(index)),
+      items: Array.from({ length: 5 }, (_, index) => quizQuestion(index)),
       status: "ok",
     });
 
-    await expect(generateQuiz(video, generate)).rejects.toMatchObject({
-      code: "INSUFFICIENT_CONTEXT",
-    });
+    await expect(generateQuiz(video, generate)).resolves.toHaveLength(5);
     expect(generate).toHaveBeenCalledOnce();
   });
 
   it("uses review retrieval for AskAI and returns only grounded sources", async () => {
     const generate = vi.fn().mockResolvedValue({
-      answers: [{
+      items: [{
         answer: "RAG giúp câu trả lời bám sát nguồn đã truy xuất.",
         evidence: "câu trả lời bám sát nguồn",
         sourceChunkId: chunk.chunkId,
@@ -174,15 +212,15 @@ describe("learning generation pipeline", () => {
       query: "RAG có ích gì?",
     });
     expect(generate.mock.calls[0]?.[1]).toMatchObject({
-      maxOutputTokens: 3_072,
-      maxRetries: 1,
-      thinkingLevel: "LOW",
+      maxRetries: 0,
+      timeoutMs: 35_000,
+      validate: expect.any(Function),
     });
     expect(answer.paragraphs).toEqual(["RAG giúp câu trả lời bám sát nguồn đã truy xuất."]);
     expect(answer.sources).toEqual([expect.objectContaining({ chunkId: "chunk-1", startSec: 42 })]);
   });
 
-  it("reports no-context explicitly and never calls Gemini", async () => {
+  it("returns an empty section without calling the gateway when no transcript overlaps it", async () => {
     retrieveMock.mockResolvedValueOnce({
       chunks: [],
       purpose: "quiz",
@@ -191,9 +229,7 @@ describe("learning generation pipeline", () => {
     });
     const generate = vi.fn();
 
-    await expect(generateQuiz(video, generate)).rejects.toMatchObject({
-      code: "NO_CONTEXT",
-    } satisfies Partial<LearningPipelineError>);
+    await expect(generateQuiz(video, generate)).resolves.toEqual([]);
     expect(generate).not.toHaveBeenCalled();
   });
 });

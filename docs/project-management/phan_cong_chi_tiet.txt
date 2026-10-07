@@ -1,3 +1,7 @@
+TÀI LIỆU LỊCH SỬ - KHÔNG DÙNG ĐỂ CẤU HÌNH RUNTIME HIỆN TẠI
+Kiến trúc hiện hành: docs/architecture/ai-gateway.md
+Tài liệu dưới đây được giữ nguyên để truy vết quyết định trước migration.
+
 PHÂN CÔNG VÀ HƯỚNG DẪN CÔNG VIỆC CHI TIẾT
 DỰ ÁN YOUTUBE AI LEARNING ASSISTANT - PHIÊN BẢN V1
 Ngày cập nhật: 05/09/2026

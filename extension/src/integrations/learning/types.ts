@@ -1,18 +1,18 @@
-import type { PromptRequest } from "../../ai-content/index.ts";
-import type { GeminiGenerateOptions } from "../gemini/client";
+import type { GenerationRequest } from "../../ai-content/index.ts";
+import type { AiGatewayGenerateOptions } from "../ai-gateway/client";
 import type { CurrentVideo } from "../../types/learning";
 
-export type LearningGenerationOptions<T = unknown> = Omit<
-  GeminiGenerateOptions<T>,
-  "fallbackModels" | "model" | "projectId"
->;
+export type LearningGenerationOptions<T = unknown> = AiGatewayGenerateOptions<T>;
 
 export type GenerateContent = <T = unknown>(
-  prompt: PromptRequest,
+  request: GenerationRequest,
   options?: LearningGenerationOptions<T>,
 ) => Promise<T>;
 
+export type LearningLoadStage = "cache" | "generating" | "retrieving";
+
 export interface LoadLearningContentOptions {
+  onStage?: (stage: LearningLoadStage) => void;
   regenerate?: boolean;
 }
 

@@ -29,7 +29,21 @@ export type AIResult<T> = { status: "ok"; items: T[] } | { status: "insufficient
 
 declare const validated: unique symbol;
 export type Validated<T> = T & { readonly [validated]: true };
-export interface PromptRequest {
-  promptVersion: string; systemInstruction: string; userContent: string;
-  responseSchema: Record<string, unknown>;
+export type ContentKind = "questions" | "flashcards" | "feedback" | "answers";
+interface GenerationRequestBase {
+  language: string;
+  context: SourceContext;
 }
+export type GenerationRequest =
+  | (GenerationRequestBase & {
+      task: "questions" | "flashcards";
+      requestedCount: number;
+    })
+  | (GenerationRequestBase & {
+      task: "answers";
+      question: string;
+    })
+  | (GenerationRequestBase & {
+      task: "feedback";
+      assessment: LearningAssessment;
+    });

@@ -6,44 +6,82 @@ import { loadEnv, type Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 
 const rootDirectory = fileURLToPath(new URL(".", import.meta.url));
-const googleOAuthScopes = [
-  "https://www.googleapis.com/auth/generative-language.retriever",
-  "https://www.googleapis.com/auth/userinfo.email",
-];
-const googleClientIdPattern = /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/i;
+const extensionPublicKeyPattern = /^(?=.{64,4096}$)[A-Za-z0-9+/]+={0,2}$/;
 
-function configureOAuthManifest(clientId: string): Plugin {
+function gatewayHostPermission(configuredUrl: string): string | undefined {
+  if (!configuredUrl) {
+    return undefined;
+  }
+  let url: URL;
+  try {
+    url = new URL(configuredUrl);
+  } catch {
+    throw new Error("VITE_YALA_GATEWAY_URL must be an absolute URL.");
+  }
+  const localDevelopment =
+    url.protocol === "http:" && ["127.0.0.1", "localhost"].includes(url.hostname);
+  if ((url.protocol !== "https:" && !localDevelopment) || url.username || url.password) {
+    throw new Error("VITE_YALA_GATEWAY_URL must use HTTPS (HTTP is allowed only for localhost). ");
+  }
+  if (url.search || url.hash) {
+    throw new Error("VITE_YALA_GATEWAY_URL cannot contain a query or fragment.");
+  }
+  return `${url.origin}/*`;
+}
+
+function configureExtensionManifest(gatewayUrl: string, publicKey: string): Plugin {
   return {
     apply: "build",
     async closeBundle() {
       const manifestPath = resolve(rootDirectory, "dist/manifest.json");
       const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as Record<string, unknown>;
-      if (!clientId) {
-        delete manifest.oauth2;
-        console.warn(
-          "Google OAuth disabled: set VITE_YALA_GOOGLE_OAUTH_CLIENT_ID before building.",
-        );
+      delete manifest.oauth2;
+      const permissions = Array.isArray(manifest.permissions) ? manifest.permissions : [];
+      manifest.permissions = permissions.filter(
+        (permission) => permission !== "identity" && permission !== "identity.email",
+      );
+
+      const gatewayPermission = gatewayHostPermission(gatewayUrl);
+      const hostPermissions = Array.isArray(manifest.host_permissions)
+        ? manifest.host_permissions.filter(
+            (permission) =>
+              typeof permission === "string" &&
+              !permission.includes("googleapis.com") &&
+              !permission.includes("generativelanguage.googleapis.com"),
+          )
+        : [];
+      if (gatewayPermission && !hostPermissions.includes(gatewayPermission)) {
+        hostPermissions.push(gatewayPermission);
+      }
+      manifest.host_permissions = hostPermissions;
+      if (!gatewayPermission) {
+        console.warn("AI Gateway is not configured: set VITE_YALA_GATEWAY_URL before packaging.");
+      }
+
+      if (!publicKey) {
+        delete manifest.key;
       } else {
-        if (!googleClientIdPattern.test(clientId)) {
-          throw new Error("VITE_YALA_GOOGLE_OAUTH_CLIENT_ID is not a valid Google OAuth client ID.");
+        if (
+          !extensionPublicKeyPattern.test(publicKey) ||
+          publicKey.length % 4 !== 0
+        ) {
+          throw new Error("VITE_YALA_EXTENSION_PUBLIC_KEY is not valid base64 public-key data.");
         }
-        manifest.oauth2 = {
-          client_id: clientId,
-          scopes: googleOAuthScopes,
-        };
+        manifest.key = publicKey;
       }
       await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
     },
-    name: "configure-google-oauth-manifest",
+    name: "configure-extension-manifest",
   };
 }
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, rootDirectory, "VITE_YALA_");
-  const oauthClientId = env.VITE_YALA_GOOGLE_OAUTH_CLIENT_ID?.trim() ?? "";
+  const gatewayUrl = env.VITE_YALA_GATEWAY_URL?.trim() ?? "";
+  const publicKey = env.VITE_YALA_EXTENSION_PUBLIC_KEY?.trim() ?? "";
 
   return {
-    plugins: [react(), configureOAuthManifest(oauthClientId)],
+    plugins: [react(), configureExtensionManifest(gatewayUrl, publicKey)],
     build: {
       outDir: "dist",
       emptyOutDir: true,

@@ -36,12 +36,23 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
   );
 
   if (loadState.status === "loading") {
+    const loadingCopy = {
+      cache: {
+        message: "Đang kiểm tra bộ thẻ đã lưu…",
+        title: "Đang mở Flashcards",
+      },
+      generating: {
+        message: "Gemini đang tạo thẻ ghi nhớ từ ngữ cảnh đã chọn…",
+        title: "Đang tạo Flashcards",
+      },
+      retrieving: {
+        message: "Đang tìm các đoạn transcript liên quan…",
+        title: "Đang tìm nội dung",
+      },
+    }[loadState.stage];
     return (
       <div className="view-stack flashcard-view">
-        <RuntimeStateCard
-          message="Đang truy xuất transcript và tạo bộ thẻ ghi nhớ…"
-          title="Đang tạo Flashcards"
-        />
+        <RuntimeStateCard {...loadingCopy} />
       </div>
     );
   }
@@ -64,6 +75,8 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
   }
 
   const cards = loadState.items;
+  if (!cards.length) return <RuntimeStateCard title="Phần này chưa có thẻ ghi nhớ"
+    message="Không tìm thấy ý kiến thức đủ rõ để tạo flashcard. Bạn có thể chọn Học phần tiếp." />;
   const card = cards[currentIndex];
   const currentNumber = currentIndex + 1;
   const moveTo = (nextIndex: number) => {
@@ -89,7 +102,7 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
         <>
           <section className="deck-header">
             <div className="generated-content-actions">
-              <span>Bộ flashcard đã lưu cho video này</span>
+              <span>{video.learningSection?.title ?? "Nội dung video"}</span>
               <Button
                 aria-label="Thêm Flashcards mới"
                 onClick={regenerate}
@@ -172,7 +185,7 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
         onExpandedChange={setChatExpanded}
         onSourceSelect={onSeek}
         placeholder="VD: Giải thích dễ hiểu hơn bằng ví dụ?"
-        statusLabel="RAG + Gemini"
+        statusLabel="RAG + AI"
       />
     </div>
   );

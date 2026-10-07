@@ -16,7 +16,7 @@ Ngày hoàn thiện kỹ thuật: 10/09/2026
 - Prompt quiz/flashcard/feedback: version hóa, context-only, chống instruction trong transcript,
   yêu cầu evidence/chunk ID và trạng thái thiếu dữ kiện.
 - Validator/mapper: kiểm tra JSON, field, đáp án, duplicate, nguồn và timestamp; response thô
-  Gemini không đi thẳng vào UI.
+  Kết quả AI Gateway không đi thẳng vào UI.
 - Assessment: chấm điểm deterministic, nhóm strong/weak topic, lấy timestamp ôn lại cho câu
   sai/bỏ trống và không lưu bài làm hoặc điểm.
 - Facade cho đủ sáu Local REST API do TV2 cung cấp.
@@ -54,7 +54,7 @@ tài liệu đã được chạy trong môi trường dự án hiện tại.
 
 - Fixture benchmark là nội dung giáo dục Việt/Anh do dự án tự viết và có provenance rõ ràng;
   không chứa transcript người dùng và không giả là dữ liệu YouTube thật.
-- Chưa tuyên bố E2E Extension → OAuth → Gemini → Local Service: code transport/UI thuộc TV1,
+- Chưa tuyên bố E2E Extension → AI Gateway → Gemini → Local Service: code transport/UI thuộc TV1,
   còn E2E trên video thật thuộc TV4.
 - Contract trong ``shared/contracts/` chưa được tự ý thay đổi. TV1 và TV2 phải review schema
   xuất trước; TV4 review AI output/privacy và chạy E2E.
@@ -62,6 +62,6 @@ tài liệu đã được chạy trong môi trường dự án hiện tại.
 
 ## Người cần review
 
-- TV1: prompt request, validator/mapper và contract Gemini/UI.
+- TV1: request AI Gateway, validator/mapper và contract AI/UI.
 - TV2: facade, dependency và DTO Local Service.
 - TV4: fixture, metric, privacy và kịch bản E2E.

@@ -10,26 +10,32 @@ if (!existsSync(manifestPath)) {
 
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 const permissions = new Set(manifest.permissions ?? []);
-for (const permission of ["identity", "identity.email", "sidePanel"]) {
-  if (!permissions.has(permission)) {
-    throw new Error(`Build verification failed: manifest permission ${permission} is missing.`);
+if (!permissions.has("sidePanel")) {
+  throw new Error("Build verification failed: manifest permission sidePanel is missing.");
+}
+for (const forbiddenPermission of ["identity", "identity.email"]) {
+  if (permissions.has(forbiddenPermission)) {
+    throw new Error(`Build verification failed: obsolete permission ${forbiddenPermission} is present.`);
   }
 }
 if (manifest.oauth2) {
-  if (!/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/i.test(manifest.oauth2.client_id ?? "")) {
-    throw new Error("Build verification failed: manifest OAuth client ID is invalid.");
-  }
-  for (const scope of [
-    "https://www.googleapis.com/auth/generative-language.retriever",
-    "https://www.googleapis.com/auth/userinfo.email",
-  ]) {
-    if (!manifest.oauth2.scopes?.includes(scope)) {
-      throw new Error(`Build verification failed: OAuth scope ${scope} is missing.`);
-    }
+  throw new Error("Build verification failed: obsolete Google OAuth configuration is present.");
+}
+if (manifest.side_panel?.default_path) {
+  throw new Error(
+    "Build verification failed: a global side panel would expose the extension outside YouTube.",
+  );
+}
+for (const permission of manifest.host_permissions ?? []) {
+  if (/googleapis\.com/iu.test(permission)) {
+    throw new Error(`Build verification failed: direct Google API host ${permission} is present.`);
   }
 }
-if (!manifest.host_permissions?.includes("https://www.googleapis.com/*")) {
-  throw new Error("Build verification failed: Google UserInfo host permission is missing.");
+if (
+  manifest.key !== undefined &&
+  (!/^(?=.{64,4096}$)[A-Za-z0-9+/]+={0,2}$/u.test(manifest.key) || manifest.key.length % 4 !== 0)
+) {
+  throw new Error("Build verification failed: manifest public key is invalid.");
 }
 const actionIcon = manifest.action?.default_icon;
 const iconPaths = [
@@ -39,7 +45,7 @@ const iconPaths = [
 const requiredPaths = [
   ...new Set(
     [
-      manifest.side_panel?.default_path,
+      "index.html",
       manifest.background?.service_worker,
       ...(manifest.content_scripts?.flatMap((entry) => entry.js ?? []) ?? []),
       ...iconPaths,

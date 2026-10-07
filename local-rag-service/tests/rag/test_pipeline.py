@@ -42,15 +42,63 @@ class PipelineTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["cached"])
         self.assertEqual(self.embedder.document_calls, calls)
 
+    async def test_chapter_pagination_covers_every_matching_chunk_without_sampling(self):
+        data = payload()
+        data["transcriptSegments"] = [
+            {"text": f"List concept {i} teaches an independent lesson from this section.",
+             "startSec": i * 10.0, "endSec": i * 10.0 + 1, "position": i} for i in range(18)]
+        await self.rag.index(VIDEO, data)
+        await self.rag._jobs[VIDEO]
+        await self.indexed(OTHER_VIDEO)
+        expected = [c for c in self.rag.store.get_chunks(VIDEO) if c["startSec"] < 150 and c["endSec"] >= 20]
+        self.rag.retriever.config = replace(self.rag.retrieval_config, context_budget=800)
+        retrieved = []
+        cursor = None
+        for _ in range(30):
+            query = {"query": "generic unrelated query", "purpose": "quiz", "startSec": 20,
+                     "endSec": 150, "maxResults": 3}
+            if cursor is not None:
+                query["afterPosition"] = cursor
+            result = await self.rag.retrieve(VIDEO, query)
+            retrieved.extend(result["chunks"])
+            next_cursor = result.get("nextPosition")
+            if next_cursor is None:
+                break
+            self.assertGreater(next_cursor, -1 if cursor is None else cursor)
+            cursor = next_cursor
+        else:
+            self.fail("Cursor did not terminate")
+        self.assertGreater(len(expected), 6)
+        self.assertEqual(retrieved, expected)
+
     async def test_video_isolation_and_no_context(self):
         await self.indexed()
         await self.indexed(OTHER_VIDEO)
-        result = await self.rag.retrieve(VIDEO, {"query": "tuple", "purpose": "quiz"})
+        result = await self.rag.retrieve(VIDEO, {"query": "tuple", "purpose": "review"})
         self.assertEqual(len(result["chunks"]), 1)
         self.assertEqual(result["chunks"][0]["startSec"], 120)
         self.assertTrue(all(c["videoId"] == VIDEO for c in result["chunks"]))
-        empty = await self.rag.retrieve(VIDEO, {"query": "astronomy", "purpose": "quiz"})
+        empty = await self.rag.retrieve(VIDEO, {"query": "astronomy", "purpose": "review"})
         self.assertEqual(empty["reason"], "NO_RELEVANT_CONTEXT")
+
+    async def test_generation_uses_video_content_when_generic_query_matches_only_outro(self):
+        data = payload()
+        data["transcriptSegments"].append({
+            "text": "Subscribe for more videos about this history topic.",
+            "startSec": 170, "endSec": 180, "position": 2})
+        await self.rag.index(VIDEO, data)
+        await self.rag._jobs[VIDEO]
+        await self.indexed(OTHER_VIDEO)
+        # Synthetic encoder makes the generic query match only the outro.
+        review = await self.rag.retrieve(VIDEO, {"query": "important knowledge", "purpose": "review"})
+        self.assertEqual([c["startSec"] for c in review["chunks"]], [170])
+        original = self.rag.store.get_chunks(VIDEO)
+        for purpose in ("quiz", "flashcard"):
+            result = await self.rag.retrieve(VIDEO, {
+                "query": "important knowledge", "purpose": purpose, "maxResults": 6})
+            self.assertEqual(result["chunks"], original)
+            self.assertTrue(all(c["videoId"] == VIDEO for c in result["chunks"]))
+            self.assertIsNone(result["reason"])
 
     async def test_transcript_change_invalidates_cache_and_removes_old_chunks(self):
         await self.indexed()

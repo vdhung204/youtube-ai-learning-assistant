@@ -27,7 +27,7 @@ fix/<ten-loi>
 - Không commit file sinh tự động, cache, dữ liệu ChromaDB, transcript hoặc secret.
 - Mỗi commit nên hoàn thành một thay đổi có nghĩa và có thể review độc lập.
 - Nếu phát hiện cần đổi contract, dừng triển khai hai phía và cập nhật `shared/contracts/` trước.
-- Không đưa OAuth token qua Local RAG Service hoặc ghi token vào log.
+- Không đưa secret, Gemini API key, transcript hoặc nội dung AI vào log. Extension không được chứa provider credential.
 
 Quy ước commit gợi ý:
 
@@ -35,7 +35,7 @@ Quy ước commit gợi ý:
 feat(extension): add YouTube video detection
 feat(rag): add timestamp-aware chunking
 fix(service): handle local service unavailable
-test(e2e): cover denied OAuth permission
+test(e2e): cover gateway quota exhaustion
 docs(readme): update verified setup steps
 ```
 
@@ -68,7 +68,7 @@ Yêu cầu review tối thiểu:
 - Thay đổi trong module riêng: owner module review.
 - Thay đổi `shared/contracts/`: owner producer và consumer cùng review.
 - Thay đổi AI/RAG: Thành viên 3 review.
-- Thay đổi OAuth hoặc bảo mật: Thành viên 1 và Thành viên 4 review.
+- Thay đổi AI Gateway, quota hoặc bảo mật: Thành viên 1 và Thành viên 4 review.
 - Thay đổi luồng localhost/service: Thành viên 2 và bên gọi review.
 
 ## 5. Trình tự tích hợp khuyến nghị

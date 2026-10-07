@@ -89,7 +89,7 @@ Fixture không chunk/embed/search/chấm quiz thật và không dùng trong prod
 - Tự động: 25 test pass với facade fixture (gồm Swagger cùng origin); pip check pass.
 - Thực tế: setup venv, script start/stop, health 503, origin 403, OpenAPI 6 path.
 - Chưa có: shared contract được duyệt, factory TV3 thật, cache ChromaDB qua restart,
-  luồng Chrome Extension/OAuth/Gemini và review từ thành viên khác.
+  luồng Chrome Extension/AI Gateway/Gemini và review từ thành viên khác.
 - Reviewer cần có: TV1 (HTTP/DTO), TV3 (facade/DTO/dependency), TV4 (privacy/acceptance).
 
 Thiết kế lifecycle tham khảo [FastAPI lifespan](https://fastapi.tiangolo.com/advanced/events/);

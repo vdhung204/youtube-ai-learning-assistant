@@ -21,7 +21,7 @@
           "items": {
             "$ref": "#/$defs/Question"
           },
-          "maxItems": 100,
+          "maxItems": 2000,
           "minItems": 1,
           "title": "Questions",
           "type": "array"
@@ -30,7 +30,7 @@
           "items": {
             "$ref": "#/$defs/UserAnswer"
           },
-          "maxItems": 100,
+          "maxItems": 2000,
           "title": "Useranswers",
           "type": "array"
         }
@@ -474,6 +474,45 @@
           ],
           "default": null,
           "title": "Maxresults"
+        },
+        "startSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startsec"
+        },
+        "endSec": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endsec"
+        },
+        "afterPosition": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Afterposition"
         }
       },
       "required": [
@@ -519,6 +558,19 @@
           ],
           "default": null,
           "title": "Reason"
+        },
+        "nextPosition": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nextposition"
         }
       },
       "required": [

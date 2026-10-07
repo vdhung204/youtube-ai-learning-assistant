@@ -12,7 +12,8 @@ import type {
   TranscriptSegment,
   Video,
 } from "../../types/api";
-import type { VideoMilestone } from "../../types/learning";
+import type { LearningSection, VideoMilestone } from "../../types/learning";
+import { buildLearningSections } from "../../integrations/learning/sections";
 import { buildVideoMilestones } from "../videoPresentation";
 
 export type RagServiceStatus =
@@ -59,6 +60,7 @@ export type VideoRagSessionState =
       chunkCount: number;
       language: string;
       milestones: VideoMilestone[];
+      learningSections?: LearningSection[];
       pipelineVersion: string;
       segmentCount: number;
     })
@@ -358,6 +360,7 @@ export async function runVideoRagSession({
 
     const language = transcript.language.trim() || video.language.trim() || "und";
     const milestones = buildVideoMilestones(transcript.chapters ?? []);
+    const learningSections = buildLearningSections(milestones, video.durationSec, transcriptSegments);
     const payload: IndexRequest = {
       transcriptSegments,
       video: {
@@ -382,6 +385,7 @@ export async function runVideoRagSession({
           ? "Đã dùng chỉ mục video có sẵn trong Local RAG Service."
           : "Video đã được lập chỉ mục.",
         milestones,
+        learningSections,
         pipelineVersion: indexed.pipelineVersion,
         segmentCount: transcriptSegments.length,
         status: "ready",
@@ -417,6 +421,7 @@ export async function runVideoRagSession({
           language,
           message: "Video đã được lập chỉ mục và sẵn sàng để học.",
           milestones,
+          learningSections,
           pipelineVersion: status.pipelineVersion,
           segmentCount: transcriptSegments.length,
           status: "ready",

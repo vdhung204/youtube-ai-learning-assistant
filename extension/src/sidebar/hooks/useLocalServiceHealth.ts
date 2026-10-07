@@ -16,7 +16,7 @@ const initialState: LocalServiceHealthState = {
 
 const idleState: LocalServiceHealthState = {
   status: "idle",
-  message: "Local RAG Service sẽ được kiểm tra sau khi đăng nhập Google.",
+  message: "Đang chuẩn bị kiểm tra Local RAG Service…",
 };
 
 export function useLocalServiceHealth(enabled = true) {

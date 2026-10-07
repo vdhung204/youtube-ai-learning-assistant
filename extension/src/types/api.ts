@@ -52,6 +52,9 @@ export interface RetrieveRequest {
   query: string;
   purpose: RetrievalPurpose;
   maxResults?: number;
+  startSec?: number;
+  endSec?: number;
+  afterPosition?: number;
 }
 
 export interface RetrievedChunk extends Timestamp {
@@ -67,6 +70,7 @@ export interface RetrieveResponse {
   purpose: RetrievalPurpose;
   chunks: RetrievedChunk[];
   reason?: "NO_RELEVANT_CONTEXT";
+  nextPosition?: number;
 }
 
 export interface Question {
