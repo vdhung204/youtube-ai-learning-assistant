@@ -3,6 +3,9 @@
 Trạng thái: **hiện hành**. Tài liệu này thay thế luồng Chrome Identity/Google OAuth và việc
 extension gọi thẳng Gemini được mô tả trong các bản SDS/kế hoạch cũ.
 
+Đặc tả toàn hệ thống và bảng đối chiếu với SDS V1 nằm tại
+[SDS phiên bản 2](SDS_YouTube_AI_Learning_Assistant_V2.md).
+
 ## 1. Quyết định kiến trúc
 
 Extension gọi một API trung gian chạy bằng Vercel Functions. Chỉ gateway biết Gemini API key;
@@ -92,9 +95,10 @@ Gateway trả lỗi JSON ổn định với mã máy đọc được. Nhóm lỗ
 - provider timeout/network/quota;
 - provider trả JSON hoặc structured output không hợp lệ.
 
-Không trả raw provider response, stack trace hay secret cho client. Extension không tự retry lỗi
-gateway; lỗi tạm thời được hiển thị cùng thao tác “Thử lại”. Gateway là tầng duy nhất retry provider,
-tối đa theo `GEMINI_MAX_RETRIES`, và trả sớm nếu `Retry-After` không vừa deadline function.
+Không trả raw provider response, stack trace hay secret cho client. Gateway client của extension
+không tự retry ở tầng HTTP trong luồng học. Riêng scheduler quiz có thể thử lại batch lỗi theo
+chính sách ở mục 3. Gateway retry provider trong từng request theo `GEMINI_MAX_RETRIES`, và trả
+sớm nếu `Retry-After` không vừa deadline function. Hai tầng này cần được tính cùng khi đánh giá quota.
 
 Giới hạn server hiện hành:
 
@@ -107,9 +111,12 @@ Giới hạn server hiện hành:
 | Câu hỏi Ask AI | 2.000 ký tự |
 | Provider response | 512 KiB |
 
-Ngân sách output do gateway chọn theo task: `questions` 8.192 token, `flashcards` 4.096,
-`answers` 6.144 và `feedback` 4.096. Đây là trần request, không bảo đảm model luôn trả đủ nội dung
-và không làm tăng context/output limit vốn có của model.
+Ngân sách output do gateway chọn theo task: `questions` là
+`max(3072, requestedCount * 512 + 512)`, `flashcards` là
+`max(2048, requestedCount * 320 + 512)`, `answers` là 3.072 token và `feedback` là 2.048 token.
+Đây là trần request, không bảo đảm model luôn trả đủ nội dung và không làm tăng context/output
+limit vốn có của model. Provider adapter hiện dùng Gemini Interactions API; chi tiết wire request
+nằm trong `gateway/src/gemini.ts`, không thuộc contract mà extension được tùy ý cung cấp.
 
 ## 5. Bảo mật và chống lạm dụng
 
