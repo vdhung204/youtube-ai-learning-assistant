@@ -28,6 +28,20 @@ function pendingContent() {
 afterEach(cleanup);
 
 describe("useGeneratedContent", () => {
+  it("shows partial cards while later batches run and retains them after a failure", async () => {
+    const pending = pendingContent();
+    let options: LoadLearningContentOptions<string> | undefined;
+    const loader = vi.fn((_video, callbacks) => { options = callbacks; return pending.promise; });
+    const reset = vi.fn();
+    const { result } = renderHook(() => useGeneratedContent(video, loader, reset, "Fallback"));
+    act(() => options?.onItems?.(["first card"]));
+    expect(result.current.loadState).toMatchObject({ status: "ready", items: ["first card"], generating: true });
+    act(() => options?.onStage?.("retrieving"));
+    expect(result.current.loadState.status).toBe("ready");
+    await act(async () => pending.reject(new Error("quota exhausted")));
+    expect(result.current.loadState).toEqual({ status: "ready", items: ["first card"], message: "quota exhausted" });
+  });
+
   it("loads once and does not regenerate for playback or presentation-only changes", async () => {
     const loadContent = vi.fn().mockResolvedValue(["saved content"]);
     const resetProgress = vi.fn();

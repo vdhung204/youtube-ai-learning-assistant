@@ -87,6 +87,11 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
 
   return (
     <div className="view-stack flashcard-view">
+      {loadState.generating ? <p role="status">Đã có {cards.length} thẻ. Đang tạo thêm; bạn có thể học ngay.</p> : null}
+      {loadState.message ? <section role="status">
+        <p>Đã giữ {cards.length} thẻ. Chưa tạo được phần còn lại: {loadState.message}</p>
+        <Button onClick={retry} tone="secondary">Tiếp tục tạo</Button>
+      </section> : null}
       {chatExpanded ? (
         <section className="flashcard-summary">
           <div className="flashcard-summary-heading">
@@ -105,6 +110,7 @@ export function FlashcardView({ generateContent, loadFlashcards, onSeek, video }
               <span>{video.learningSection?.title ?? "Nội dung video"}</span>
               <Button
                 aria-label="Thêm Flashcards mới"
+                disabled={loadState.generating}
                 onClick={regenerate}
                 tone="secondary"
               >

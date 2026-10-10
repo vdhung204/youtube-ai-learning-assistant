@@ -11,12 +11,13 @@ export type GenerateContent = <T = unknown>(
 
 export type LearningLoadStage = "cache" | "generating" | "retrieving";
 
-export interface LoadLearningContentOptions {
+export interface LoadLearningContentOptions<T = unknown> {
   onStage?: (stage: LearningLoadStage) => void;
+  onItems?: (items: T[]) => void;
   regenerate?: boolean;
 }
 
 export type LearningContentLoader<T> = (
   video: CurrentVideo,
-  options?: LoadLearningContentOptions,
+  options?: LoadLearningContentOptions<T>,
 ) => Promise<T[]>;

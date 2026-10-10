@@ -7,7 +7,7 @@ import type { CurrentVideo } from "../../types/learning";
 
 type ContentLoadState<T> =
   | { status: "loading"; stage: LearningLoadStage }
-  | { status: "ready"; items: T[] }
+  | { status: "ready"; items: T[]; generating?: boolean; message?: string }
   | { status: "error"; message: string };
 
 export function useGeneratedContent<T>(
@@ -21,12 +21,19 @@ export function useGeneratedContent<T>(
 
   useEffect(() => {
     let active = true;
+    let partialItems: T[] = [];
     setLoadState({ status: "loading", stage: "cache" });
     resetProgress();
     void loadContent(video, {
       onStage: (stage) => {
         if (active) {
-          setLoadState({ status: "loading", stage });
+          if (!partialItems.length) setLoadState({ status: "loading", stage });
+        }
+      },
+      onItems: (items) => {
+        if (active && items.length) {
+          partialItems = items;
+          setLoadState({ status: "ready", items, generating: true });
         }
       },
       regenerate: generationRequest.regenerate,
@@ -38,7 +45,10 @@ export function useGeneratedContent<T>(
       })
       .catch((error: unknown) => {
         if (active) {
-          setLoadState({
+          setLoadState(partialItems.length ? {
+            status: "ready", items: partialItems,
+            message: error instanceof Error ? error.message : fallbackErrorMessage,
+          } : {
             status: "error",
             message: error instanceof Error ? error.message : fallbackErrorMessage,
           });

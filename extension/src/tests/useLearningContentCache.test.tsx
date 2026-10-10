@@ -52,6 +52,26 @@ afterEach(() => {
 });
 
 describe("useLearningContentCache", () => {
+  it("replays partial flashcards to a returning view without duplicating generation", async () => {
+    let finish!: (items: import("../types/learning").Flashcard[]) => void;
+    const cards = [{ flashcardId: "one", front: "Front", back: "Back", hint: "Hint", topic: "Topic",
+      sourceTimestamp: { chunkId: "chunk-1", startSec: 0, endSec: 1 } }];
+    vi.mocked(generateFlashcards).mockImplementation((_video, _generate, _signal, _stage, _regenerate, _pages, onItems) => {
+      onItems?.(cards);
+      return new Promise(resolve => { finish = resolve; });
+    });
+    const { result } = renderHook(() => useLearningContentCache(vi.fn() as GenerateContent));
+    const first = vi.fn();
+    const request = result.current.loadFlashcards(video, { onItems: first });
+    expect(first).toHaveBeenCalledWith(cards);
+    const returning = vi.fn();
+    const joined = result.current.loadFlashcards(video, { onItems: returning });
+    expect(returning).toHaveBeenCalledWith(cards);
+    expect(generateFlashcards).toHaveBeenCalledOnce();
+    finish(cards);
+    await Promise.all([request, joined]);
+  });
+
   it("keeps chapter decks separate and only generates a chapter when selected", async () => {
     generateQuizMock.mockResolvedValueOnce(savedQuiz).mockResolvedValueOnce([{...savedQuiz[0], questionId: "chapter2"}]);
     const {result} = renderHook(() => useLearningContentCache(vi.fn() as GenerateContent));

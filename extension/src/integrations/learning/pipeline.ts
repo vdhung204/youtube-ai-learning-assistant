@@ -209,6 +209,7 @@ export async function generateFlashcards(
   onStage?: (stage: LearningLoadStage) => void,
   regenerate = false,
   flashcardPages = new Map<string, Promise<Flashcard[]>>(),
+  onItems?: (items: Flashcard[]) => void,
 ): Promise<Flashcard[]> {
   return measureLearning("pipeline_total", "flashcard", async () => {
     const cards: Flashcard[] = [];
@@ -229,6 +230,8 @@ export async function generateFlashcards(
         }));
         return mapFlashcards(validated, context).map(toLearningFlashcard);
       }));
+      onItems?.(distinctItems(cards, c => c.front).map((c, index) => ({ ...c,
+        flashcardId: `${learningScopeKey(video)}:f:${index}` })));
     }
     return distinctItems(cards, c => c.front).map((c, index) => ({...c,
       flashcardId: `${learningScopeKey(video)}:f:${index}`}));
